@@ -1,0 +1,39 @@
+{
+  "name": "mock-xmlhttprequest",
+  "version": "1.0.1",
+  "description": "XMLHttpRequest mock for testing",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "lint": "node node_modules/.bin/eslint .",
+    "test": "node node_modules/.bin/mocha",
+    "posttest": "npm run lint",
+    "predeploy": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/berniegp/mock-xmlhttprequest.git"
+  },
+  "keywords": [
+    "xhr",
+    "xmlhttprequest",
+    "test",
+    "mock",
+    "fake",
+    "ajax",
+    "request"
+  ],
+  "author": "Bertrand Guay-Paquet <bernie@step.polymtl.ca>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/berniegp/mock-xmlhttprequest/issues"
+  },
+  "homepage": "https://github.com/berniegp/mock-xmlhttprequest#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "eslint": "^3.8.1",
+    "mocha": "^3.1.2"
+  }
+}
