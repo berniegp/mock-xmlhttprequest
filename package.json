@@ -7,10 +7,9 @@
     "test": "test"
   },
   "scripts": {
-    "lint": "node node_modules/.bin/eslint .",
-    "test": "node node_modules/.bin/mocha",
-    "posttest": "npm run lint",
-    "predeploy": "npm test"
+    "lint": "node_modules/.bin/eslint .",
+    "test": "node_modules/.bin/mocha",
+    "posttest": "npm run lint"
   },
   "repository": {
     "type": "git",

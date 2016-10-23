@@ -20,7 +20,6 @@ module.exports = {
 
     camelcase: ['error', {properties: 'always'}],
     indent: ['error', 2],
-    'linebreak-style': ['error', 'unix'],
     'new-cap': ['error', {
       newIsCap: true,
       capIsNew: false,
