@@ -66,7 +66,6 @@ global.XMLHttpRequest = MockXMLHttpRequest;
 
 // Cleanup after the tests
 delete global.XMLHttpRequest;
-
 ```
 
 ### Hooks
