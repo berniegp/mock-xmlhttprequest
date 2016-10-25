@@ -6,7 +6,7 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 ## Installation
 via [npm (node package manager)](https://github.com/npm/npm)
 
-	$ npm install sinon
+	$ npm install mock-xmlhttprequest
 
 ## Quick Start
 ```javascript
