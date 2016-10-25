@@ -227,10 +227,7 @@ describe('MockXhr', function() {
       xhr.abort();
 
       assert.lengthOf(events, 0, 'no abort event');
-      // Browsers always set the state to UNSENT unless open() was called
-      // during the 'abort' event.
-      // See https://github.com/whatwg/xhr/issues/88
-      assert.equal(xhr.readyState, 0, 'final state UNSENT');
+      assert.equal(xhr.readyState, 1, 'final state OPENED');
     });
 
     it('should fire progress events and an abort event on send()-abort()', function() {

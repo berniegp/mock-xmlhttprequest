@@ -87,11 +87,8 @@ MockXhr.prototype.open = function(method, url) {
 
   this._terminateRequest();
 
-  // Not in the spec, but matches browser behavior
-  // See https://github.com/whatwg/xhr/issues/94
-  this.sendFlag = false;
-
   // Set variables
+  this.sendFlag = false;
   this.method = method;
   this.url = url;
   this.requestHeaders.reset();
@@ -190,10 +187,7 @@ MockXhr.prototype.abort = function() {
     this._requestErrorSteps('abort');
   }
 
-  // Browsers always set the state to UNSENT unless open() was called during
-  // the 'abort' event.
-  // See https://github.com/whatwg/xhr/issues/88
-  if (!this.url) {
+  if (this._readyState === MockXhr.DONE) {
     // No readystatechange event is dispatched.
     this._readyState = MockXhr.UNSENT;
   }
