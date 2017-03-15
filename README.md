@@ -11,7 +11,7 @@ via [npm (node package manager)](https://github.com/npm/npm)
 ## Quick Start
 ```javascript
 var assert = require('assert');
-var MockXMLHttpRequest  =  require('mock-xmlhttprequest');
+var MockXMLHttpRequest = require('mock-xmlhttprequest');
 
 // Install in global context so "new XMLHttpRequest()" works in MyModuleUsingXhr
 global.XMLHttpRequest = MockXMLHttpRequest;
@@ -20,13 +20,13 @@ var MyModuleUsingXhr = require('./MyModuleUsingXhr');
 
 // Mock JSON response
 MockXMLHttpRequest.onSend = function(xhr) {
-	var response = {
-		result: 'success',
-	};
-	var responseHeaders = {
-		'Content-Type': 'application/json',
-	}l
-	xhr.respond(200, responseHeaders, JSON.stringify(response));
+  var response = {
+    result: 'success',
+  };
+  var responseHeaders = {
+    'Content-Type': 'application/json',
+  }l
+  xhr.respond(200, responseHeaders, JSON.stringify(response));
 };
 
 var result = MyModuleUsingXhr.someAjaxMethod();
@@ -59,7 +59,7 @@ assert.equal(result, 'success');
 ### Unit Test Setup
 ```javascript
 // MyModuleTest.js
-var MockXMLHttpRequest  =  require('mock-xmlhttprequest');
+var MockXMLHttpRequest = require('mock-xmlhttprequest');
 
 // To test code that uses XMLHttpRequest directly with 'new XMLHttpRequest()'
 global.XMLHttpRequest = MockXMLHttpRequest;
@@ -85,13 +85,13 @@ This callback is invoked in an empty callstack (using `setTimeout`). You will pr
 ```javascript
 // Global hook for all requests
 MockXMLHttpRequest.onCreate = function(xhr) {
-	// this === xhr
+  // this === xhr
 };
 
 // Hook local to an instance of MockXMLHttpRequest
 // var xhr = ...
 xhr.onSend = function(xhr) {
-	// this === xhr
+  // this === xhr
 };
 ```
 
