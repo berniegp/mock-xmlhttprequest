@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/berniegp/mock-xmlhttprequest.svg?branch=master)](https://travis-ci.org/berniegp/mock-xmlhttprequest)
+
 # mock-xmlhttprequest
 XMLHttpRequest mock for testing
 
