@@ -87,7 +87,7 @@ it('local MockXMLHttpRequest onSend and xhr onSend should both be called', funct
 
       done();
     } catch(err) {done(err);}
-  }, 50);
+  }, 100);
 });
 
 describe('does not call global', function() {
