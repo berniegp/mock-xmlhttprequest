@@ -37,10 +37,11 @@ var MockXhr = function() {
   this._upload = new EventTarget(this);
   this._response = this._networkErrorResponse();
 
+  this.global = this.global || MockXhr;
+
   // Hook for XMLHttpRequest creation
-  if (typeof MockXhr.onCreate === 'function') {
-    MockXhr.onCreate(this);
-  }
+  if (typeof this.global.onCreate === 'function')
+    this.global.onCreate(this);
 };
 MockXhr.prototype = Object.create(EventTarget.prototype, {
   readyState: {
@@ -168,9 +169,9 @@ MockXhr.prototype.send = function(body) {
       instanceOnSend.call(xhr, xhr);
     }, 0);
   }
-  if (typeof MockXhr.onSend === 'function') {
+  if (typeof this.global.onSend === 'function') {
     // Save the callback in case it changes on the global object
-    var globalOnSend = MockXhr.onSend;
+    var globalOnSend = this.global.onSend;
     setTimeout(function() {
       globalOnSend.call(xhr, xhr);
     }, 0);
