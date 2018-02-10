@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/berniegp/mock-xmlhttprequest.svg?branch=master)](https://travis-ci.org/berniegp/mock-xmlhttprequest)
+
 # mock-xmlhttprequest
 XMLHttpRequest mock for testing
 
@@ -127,7 +129,7 @@ Simulates a network error. Will set the request state to `DONE` and fire an `err
 
 No other mock response methods may be called after this one.
 
-### Run Tests
+### Run Unit Tests
 
 	$ npm test
 

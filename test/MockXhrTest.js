@@ -317,6 +317,8 @@ describe('MockXhr', function() {
     it('should call MockXMLHttpRequest.onSend()', function(done) {
       try {
         var xhr;
+
+        // Add a "global" onSend callback
         MockXhr.onSend = function(arg) {
           assert.equal(this, xhr, 'context');
           assert.equal(arg, xhr, 'argument');
@@ -332,6 +334,8 @@ describe('MockXhr', function() {
 
     it('should call xhr.onSend() method', function(done) {
       var xhr = new MockXhr();
+
+      // Add a request-local onSend callback
       xhr.onSend = function(arg) {
         assert.equal(this, xhr, 'context');
         assert.equal(arg, xhr, 'argument');
@@ -339,6 +343,38 @@ describe('MockXhr', function() {
       };
       xhr.open('GET', '/url');
       xhr.send();
+    });
+
+    it('should call MockXMLHttpRequest.onSend() and xhr.onSend()', function(done) {
+      try {
+        var xhr;
+        var callbackCount = 0;
+
+        // Add a "global" onSend callback
+        MockXhr.onSend = function(arg) {
+          assert.equal(this, xhr, 'context');
+          assert.equal(arg, xhr, 'argument');
+          if (++callbackCount === 2)
+          {
+            done();
+          }
+        };
+        xhr = new MockXhr();
+
+        // Add a request-local onSend callback
+        xhr.onSend = function(arg) {
+          assert.equal(this, xhr, 'context');
+          assert.equal(arg, xhr, 'argument');
+          if (++callbackCount === 2)
+          {
+            done();
+          }
+        };
+        xhr.open('GET', '/url');
+        xhr.send();
+      } finally {
+        delete MockXhr.onSend;
+      }
     });
 
     it('should call MockXMLHttpRequest.onCreate', function(done) {
