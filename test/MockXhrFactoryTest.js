@@ -56,35 +56,39 @@ describe('different instances should have different', function() {
   });
 });
 
-// it.only('local MockXMLHttpRequest onSend and xhr onSend should both be called', function() {
-//   function func0(){++func0.called};
-//   func0.called = 0;
-//   function func1(){++func1.called};
-//   func1.called = 0;
-//   function func2(){++func2.called};
-//   func2.called = 0;
+it('local MockXMLHttpRequest onSend and xhr onSend should both be called', function(done) {
+  function func0(){++func0.called;}
+  func0.called = 0;
+  function func1(){++func1.called;}
+  func1.called = 0;
+  function func2(){++func2.called;}
+  func2.called = 0;
 
-//   var mock = MockXhrFactory();
-//   console.log('mock', mock)
-//   console.log('mock.open', mock.open)
-//   mock.onSend = func0;
+  var LocalMock = MockXhrFactory();
+  LocalMock.onSend = func0;
 
-//   var xhr1 = mock.open('get', '/hi')
-//   xhr1.onSend = func1;
+  var xhr1 = new LocalMock();
+  xhr1.open('get', '/hi');
+  xhr1.onSend = func1;
 
-//   var xhr2 = mock.open('get', '/hi')
-//   xhr2.onSend = func2;
+  var xhr2 = new LocalMock();
+  xhr2.open('get', '/hi');
+  xhr2.onSend = func2;
 
-//   xhr1.send()
-//   assert.equal(func0.called, 1)
-//   assert.equal(func1.called, 1)
-//   assert.equal(func2.called, 0)
+  xhr1.send('stuff1');
+  xhr2.send('stuff2');
 
-//   xhr2.send()
-//   assert.equal(func0.called, 2)
-//   assert.equal(func1.called, 1)
-//   assert.equal(func2.called, 1)
-// })
+
+  setTimeout(function() {
+    try {
+      assert.equal(func0.called, 2);
+      assert.equal(func1.called, 1);
+      assert.equal(func2.called, 1);
+
+      done();
+    } catch(err) {done(err);}
+  }, 50);
+});
 
 describe('does not call global', function() {
 
