@@ -13,7 +13,7 @@ via [npm (node package manager)](https://github.com/npm/npm)
 ## Quick Start
 ```javascript
 var assert = require('assert');
-var MockXMLHttpRequest = require('mock-xmlhttprequest');
+var MockXMLHttpRequest = require('mock-xmlhttprequest').newMockXhr();
 
 // Install in global context so "new XMLHttpRequest()" works in MyModuleUsingXhr
 global.XMLHttpRequest = MockXMLHttpRequest;
@@ -64,7 +64,7 @@ assert.equal(result, 'success');
 var MockXMLHttpRequest = require('mock-xmlhttprequest');
 
 // To test code that uses XMLHttpRequest directly with 'new XMLHttpRequest()'
-global.XMLHttpRequest = MockXMLHttpRequest;
+global.XMLHttpRequest = MockXMLHttpRequest.newMockXhr();
 
 // Cleanup after the tests
 delete global.XMLHttpRequest;
@@ -72,27 +72,47 @@ delete global.XMLHttpRequest;
 
 ### Hooks
 
+The hooks defined in this library can be set at these locations:
+- On an instance of `MockXMLHttpRequest` (i.e. a mocked `XMLHttpRequest`).
+- On a local `XMLHttpRequest` mock returned by `MockXMLHttpRequest.newMockXhr()`.
+- Globally, directly on the `MockXMLHttpRequest` object (from `require('mock-xmlhttprequest')`). Note that each call to `require('mock-xmlhttprequest')` in a node process will return the same instance of `MockXMLHttpRequest`. This means that hooks set directly on `MockXMLHttpRequest` need to be removed manually when no longer needed. This method is therefore not recommended.
+
 #### MockXMLHttpRequest.onCreate(xhr)
 Called when an instance of `MockXMLHttpRequest` is created. This makes it possible to capture `XMLHttpRequest`s created in the module under test.
 
 ```javascript
+var MockXMLHttpRequest = require('mock-xmlhttprequest');
+var LocalXMLHttpRequestMock = MockXMLHttpRequest.newMockXhr();
+
+// Global hook for all requests from the local mock
+LocalXMLHttpRequestMock.onCreate = function(xhr) { /*...*/ };
+
+// Global hook for all requests from all mocks
 MockXMLHttpRequest.onCreate = function(xhr) { /*...*/ };
 ```
 
 #### MockXMLHttpRequest.onSend(xhr)
 Called when `XMLHttpRequest.send()` has done its processing and the test case should start using the mock reponse methods. In a real `XMLHttpRequest`, this would be where the actual http request takes place.
 
-This callback is invoked in an empty callstack (using `setTimeout`). You will probably need to use your test framework's asynchronous test support (e.g. for Mocha: https://mochajs.org/#asynchronous-code).
+This callback is invoked in an empty callstack (using `setTimeout()`). You will probably need to use your test framework's asynchronous test support (e.g. for Mocha: https://mochajs.org/#asynchronous-code).
 
 ```javascript
-// Global hook for all requests
-MockXMLHttpRequest.onCreate = function(xhr) {
+var MockXMLHttpRequest = require('mock-xmlhttprequest');
+var LocalXMLHttpRequestMock = MockXMLHttpRequest.newMockXhr();
+
+// Global hook for all requests from the local mock
+LocalXMLHttpRequestMock.onCreate = function(xhr) {
   // this === xhr
 };
 
 // Hook local to an instance of MockXMLHttpRequest
-// var xhr = ...
+var xhr = new LocalXMLHttpRequestMock(); // or, more likely, captured in the onCreate() hook
 xhr.onSend = function(xhr) {
+  // this === xhr
+};
+
+// Global hook for all requests from all mocks
+MockXMLHttpRequest.onCreate = function(xhr) {
   // this === xhr
 };
 ```

@@ -571,4 +571,43 @@ MockXhr.statusCodes = {
   505: 'HTTP Version Not Supported'
 };
 
+/**
+ * Create a new "local" MockXhr instance. This makes it easier to have
+ * self-contained unit tests since they don't need to remove registered hook
+ * functions.
+ *
+ * @return {MockXhr} Local MockXhr instance
+ */
+MockXhr.newMockXhr = function() {
+  var LocalMockXhr = function() {
+    MockXhr.call(this);
+
+    // Call the local onCreate hook on the new mock instance
+    if (typeof LocalMockXhr.onCreate === 'function')
+    {
+      LocalMockXhr.onCreate(this);
+    }
+  };
+  LocalMockXhr.prototype = Object.create(MockXhr.prototype);
+  LocalMockXhr.prototype.constructor = LocalMockXhr;
+
+  // Override the parent method to enable the local MockXhr instance's
+  // onSend() hook
+  LocalMockXhr.prototype.send = function() {
+    Object.getPrototypeOf(LocalMockXhr.prototype).send.apply(this, arguments);
+
+    // Execute in an empty callstack
+    var xhr = this;
+    if (typeof LocalMockXhr.onSend === 'function') {
+      // Save the callback in case it changes on the LocalMockXhr object
+      var globalOnSend = LocalMockXhr.onSend;
+      setTimeout(function() {
+        globalOnSend.call(xhr, xhr);
+      }, 0);
+    }
+  };
+
+  return LocalMockXhr;
+};
+
 module.exports = MockXhr;

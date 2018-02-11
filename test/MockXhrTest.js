@@ -599,3 +599,185 @@ describe('MockXhr', function() {
     });
   });
 });
+
+describe('MockXhr.newMockXhr()', function() {
+  describe('Isolation', function() {
+    it('should not return the global MockXhr object', function() {
+      var LocalMockXhr = MockXhr.newMockXhr();
+      assert.notEqual(LocalMockXhr, MockXhr);
+    });
+
+    it('should return different objects on each call', function() {
+      var LocalMockXhr1 = MockXhr.newMockXhr();
+      var LocalMockXhr2 = MockXhr.newMockXhr();
+      assert.notEqual(LocalMockXhr1, LocalMockXhr2);
+    });
+
+    it('should isolate MockXMLHttpRequest.onCreate()', function() {
+      var LocalMockXhr1 = MockXhr.newMockXhr();
+      var onCreate1Called = false;
+      LocalMockXhr1.onCreate = function() {
+        onCreate1Called = true;
+      };
+
+      var LocalMockXhr2 = MockXhr.newMockXhr();
+      var onCreate2Called = false;
+      LocalMockXhr2.onCreate = function() {
+        onCreate2Called = true;
+      };
+
+      new LocalMockXhr2();
+
+      assert.isNotOk(onCreate1Called, 'onCreate() from first mock not called');
+      assert.isOk(onCreate2Called, 'onCreate() from second mock called');
+    });
+
+    it('should isolate MockXMLHttpRequest.onSend()', function(done) {
+      var xhr;
+      var onSend1Called = false;
+
+      var LocalMockXhr1 = MockXhr.newMockXhr();
+      LocalMockXhr1.onSend = function() {
+        onSend1Called = true;
+        assert.isNotOk(onSend1Called, 'onCreate() from first mock not called');
+      };
+
+      var LocalMockXhr2 = MockXhr.newMockXhr();
+      LocalMockXhr2.onSend = function() {
+        // Wait for the callstack to clear before asserting that the other
+        // hook is not called.
+        setTimeout(function() {
+          assert.isNotOk(onSend1Called, 'onCreate() from first mock not called');
+          done();
+        }, 0);
+      };
+
+      xhr = new LocalMockXhr2();
+      xhr.open('GET', '/url');
+      xhr.send();
+    });
+  });
+
+  describe('Hooks', function() {
+    it('should call global and local onCreate()', function() {
+      try {
+        var onCreateCalled = false;
+        MockXhr.onCreate = function() {
+          onCreateCalled = true;
+        };
+
+        var LocalMockXhr = MockXhr.newMockXhr();
+        var onCreateLocalCalled = false;
+        LocalMockXhr.onCreate = function() {
+          onCreateLocalCalled = true;
+        };
+
+        new LocalMockXhr();
+
+        assert.isOk(onCreateCalled, 'global onCreate() called');
+        assert.isOk(onCreateLocalCalled, 'local onCreate() called');
+      } finally {
+        delete MockXhr.onCreate;
+      }
+    });
+
+    it('should call global and local onSend()', function(done) {
+      try {
+        var xhr;
+        var onSendCalled = false;
+        var onSendLocalCalled = false;
+
+        // Add a "global" onSend callback
+        MockXhr.onSend = function(arg) {
+          assert.equal(this, xhr, 'context');
+          assert.equal(arg, xhr, 'argument');
+          onSendCalled = true;
+          if (onSendCalled && onSendLocalCalled)
+          {
+            done();
+          }
+        };
+
+        // Add a "local" onSend callback
+        var LocalMockXhr = MockXhr.newMockXhr();
+        LocalMockXhr.onSend = function(arg) {
+          assert.equal(this, xhr, 'context');
+          assert.equal(arg, xhr, 'argument');
+          onSendLocalCalled = true;
+          if (onSendCalled && onSendLocalCalled)
+          {
+            done();
+          }
+        };
+
+        xhr = new LocalMockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+      } finally {
+        delete MockXhr.onSend;
+      }
+    });
+
+    it('should call xhr.onSend() method', function(done) {
+      var LocalMockXhr = MockXhr.newMockXhr();
+      var xhr = new LocalMockXhr();
+
+      // Add a request-local onSend callback
+      xhr.onSend = function(arg) {
+        assert.equal(this, xhr, 'context');
+        assert.equal(arg, xhr, 'argument');
+        done();
+      };
+      xhr.open('GET', '/url');
+      xhr.send();
+    });
+
+    it('should call global onSend(), local onSend() and xhr.onSend()', function(done) {
+      try {
+        var xhr;
+        var onSendCalled = false;
+        var onSendLocalCalled = false;
+        var onSendXhrCalled = false;
+
+        // Add a "global" onSend callback
+        MockXhr.onSend = function(arg) {
+          assert.equal(this, xhr, 'context');
+          assert.equal(arg, xhr, 'argument');
+          onSendCalled = true;
+          if (onSendCalled && onSendLocalCalled && onSendXhrCalled)
+          {
+            done();
+          }
+        };
+
+        var LocalMockXhr = MockXhr.newMockXhr();
+        LocalMockXhr.onSend = function(arg) {
+          assert.equal(this, xhr, 'context');
+          assert.equal(arg, xhr, 'argument');
+          onSendLocalCalled = true;
+          if (onSendCalled && onSendLocalCalled && onSendXhrCalled)
+          {
+            done();
+          }
+        };
+
+        xhr = new LocalMockXhr();
+
+        // Add a request-local onSend callback
+        xhr.onSend = function(arg) {
+          assert.equal(this, xhr, 'context');
+          assert.equal(arg, xhr, 'argument');
+          onSendXhrCalled = true;
+          if (onSendCalled && onSendLocalCalled && onSendXhrCalled)
+          {
+            done();
+          }
+        };
+        xhr.open('GET', '/url');
+        xhr.send();
+      } finally {
+        delete MockXhr.onSend;
+      }
+    });
+  });
+});
