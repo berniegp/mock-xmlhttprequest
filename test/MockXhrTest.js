@@ -308,7 +308,7 @@ describe('MockXhr', function() {
           onCreateCalled = true;
         };
         new MockXhr();
-        assert.isOk(onCreateCalled, 'onCreate called');
+        assert.isOk(onCreateCalled, 'onCreate() called');
       } finally {
         delete MockXhr.onCreate;
       }
@@ -348,13 +348,15 @@ describe('MockXhr', function() {
     it('should call MockXMLHttpRequest.onSend() and xhr.onSend()', function(done) {
       try {
         var xhr;
-        var callbackCount = 0;
+        var onSendCalled = false;
+        var onSendXhrCalled = false;
 
         // Add a "global" onSend callback
         MockXhr.onSend = function(arg) {
           assert.equal(this, xhr, 'context');
           assert.equal(arg, xhr, 'argument');
-          if (++callbackCount === 2)
+          onSendCalled = true;
+          if (onSendCalled && onSendXhrCalled)
           {
             done();
           }
@@ -365,7 +367,8 @@ describe('MockXhr', function() {
         xhr.onSend = function(arg) {
           assert.equal(this, xhr, 'context');
           assert.equal(arg, xhr, 'argument');
-          if (++callbackCount === 2)
+          onSendXhrCalled = true;
+          if (onSendCalled && onSendXhrCalled)
           {
             done();
           }
@@ -375,27 +378,6 @@ describe('MockXhr', function() {
       } finally {
         delete MockXhr.onSend;
       }
-    });
-
-    it('should call MockXMLHttpRequest.onCreate', function(done) {
-      var xhr;
-      try {
-        var onCreateCalled = false;
-        MockXhr.onCreate = function() {
-          onCreateCalled = true;
-        };
-        xhr = new MockXhr();
-        assert.isOk(onCreateCalled, 'onCreate called');
-      } finally {
-        delete MockXhr.onCreate;
-      }
-      xhr.onSend = function(arg) {
-        assert.equal(this, xhr, 'context');
-        assert.equal(arg, xhr, 'argument');
-        done();
-      };
-      xhr.open('GET', '/url');
-      xhr.send();
     });
   });
 
