@@ -104,12 +104,12 @@ Fires a request upload progress event where `transmitted` is the number of bytes
 
 May only be called when the request body is not null and the upload is not complete. Can be followed by any other mock response method.
 
-#### respond([status = 200], [headers = {}], [body = null], [statusTest = 'OK'])
+#### respond([status = 200], [headers = {}], [body = null], [statusText = 'OK'])
 Completes response method which sets the response headers and body. Will fire the appropriate 'readystatechange', `progress`, `load`, etc. (upload) events. The state of the request will be set to `DONE`.
 
 No other mock response methods may be called after this one.
 
-#### setResponseHeaders([status = 200], [headers = {}], [statusTest = 'OK'])
+#### setResponseHeaders([status = 200], [headers = {}], [statusText = 'OK'])
 Sets only the response headers. Will fire the appropriate 'readystatechange', `progress`, `load`, etc. (upload) events. Will set the request state to `HEADERS_RECEIVED`.
 
 Should be followed by either `downloadProgress()`, `setResponseBody()` or `setNetworkError()`.
