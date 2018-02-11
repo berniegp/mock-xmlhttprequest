@@ -157,7 +157,7 @@ MockXhr.prototype.send = function(body) {
     this._fireUploadEvent('loadstart', 0, this._getRequestBodySize());
   }
 
-  // Other interactions are done through the mock response methods
+  // Other interactions are done through the mock's response methods
 
   // Hook for XMLHttpRequest.send(). Execute in an empty callstack
   var xhr = this;
