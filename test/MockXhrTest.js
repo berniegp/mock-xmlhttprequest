@@ -1,6 +1,6 @@
 var assert = require('chai').assert;
 
-var MockXhr = require('../src/MockXhr');
+var MockXhr = require('../index');
 
 describe('MockXhr', function() {
   var xhrEvents = [

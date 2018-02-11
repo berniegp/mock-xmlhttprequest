@@ -5,8 +5,10 @@ var assert = chai.assert;
 
 var sinon = require('sinon');
 
-var MockXhrFactory = require('../src/MockXhrFactory');
-var MockXhr = require('../src/MockXhr');
+var MockXhr = require('../index');
+var MockXhrFactory = MockXhr.MockXhrFactory;
+
+
 
 it('factory should not return the global MockXhr object', function() {
   assert.notEqual(
