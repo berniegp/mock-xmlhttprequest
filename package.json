@@ -33,6 +33,8 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "eslint": "^3.19.0",
-    "mocha": "^3.5.3"
+    "mocha": "^3.5.3",
+    "sinon": "^4.3.0",
+    "sinon-chai": "^2.14.0"
   }
 }

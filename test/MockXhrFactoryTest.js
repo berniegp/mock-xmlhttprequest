@@ -1,4 +1,9 @@
-var assert = require('chai').assert;
+var chai = require('chai');
+chai.use(require('sinon-chai'));
+chai.should();
+var assert = chai.assert;
+
+var sinon = require('sinon');
 
 var MockXhrFactory = require('../src/MockXhrFactory');
 var MockXhr = require('../src/MockXhr');
@@ -56,39 +61,85 @@ describe('different instances should have different', function() {
   });
 });
 
-it('local MockXMLHttpRequest onSend and xhr onSend should both be called', function(done) {
-  function func0(){++func0.called;}
-  func0.called = 0;
-  function func1(){++func1.called;}
-  func1.called = 0;
-  function func2(){++func2.called;}
-  func2.called = 0;
+describe('isolation of', function() {
+  function OnComplete(callback) {
+    this.callback = callback;
+    this.awaitCount = 0;
+  }
+  OnComplete.prototype.await = function() {
+    ++this.awaitCount;
+    return this.resolve.bind(this);
+  };
+  OnComplete.prototype.resolve = function resolve() {
+    if (--this.awaitCount === 0) this.callback();
+  };
 
-  var LocalMock = MockXhrFactory();
-  LocalMock.onSend = func0;
+  it('factory instances', function(done) {
+    var allSends = new OnComplete();
 
-  var xhr1 = new LocalMock();
-  xhr1.open('get', '/hi');
-  xhr1.onSend = func1;
+    var func0 = sinon.spy(allSends.await());
+    var func1 = sinon.spy(allSends.await());
 
-  var xhr2 = new LocalMock();
-  xhr2.open('get', '/hi');
-  xhr2.onSend = func2;
+    allSends.callback = function() {
+      try {
+        func0.should.have.been.calledOnce;
+        func1.should.have.been.calledOnce;
+        done();
+      } catch(err) {
+        done(err);
+      }
+    };
 
-  xhr1.send('stuff1');
-  xhr2.send('stuff2');
+    var LocalMock0 = MockXhrFactory();
+    LocalMock0.onSend = func0;
+    var xhr0 = new LocalMock0();
+    xhr0.open('get', '0url');
 
+    var LocalMock1 = MockXhrFactory();
+    LocalMock1.onSend = func1;
+    var xhr1 = new LocalMock1();
+    xhr1.open('get', '1url');
 
-  setTimeout(function() {
-    try {
-      assert.equal(func0.called, 2);
-      assert.equal(func1.called, 1);
-      assert.equal(func2.called, 1);
+    xhr0.send('0');
+    xhr1.send('1');
+  });
 
-      done();
-    } catch(err) {done(err);}
-  }, 100);
+  it('local xhr onSend', function(done) {
+    var allSends = new OnComplete();
+
+    var func0 = sinon.spy(allSends.await());
+    var func1 = sinon.spy(allSends.await());
+    var func2 = sinon.spy(allSends.await());
+
+    allSends.callback = function() {
+      try {
+        func0.should.have.been.calledOnce;
+        func1.should.have.been.calledOnce;
+        func2.should.have.been.calledOnce;
+        done();
+      } catch(err) {
+        done(err);
+      }
+    };
+
+    var LocalMock = MockXhrFactory();
+    LocalMock.onSend = func0;
+
+    var xhr1 = new LocalMock();
+    xhr1.open('get', '/hi');
+    xhr1.onSend = func1;
+
+    var xhr2 = new LocalMock();
+    xhr2.open('get', '/hi');
+    xhr2.onSend = func2;
+
+    xhr1.send('stuff1');
+    xhr2.send('stuff2');
+  });
 });
+
+
+
 
 describe('does not call global', function() {
 
@@ -105,10 +156,6 @@ describe('does not call global', function() {
     };
 
     new Mock();
-
-    setTimeout(function() {
-      done(new Error('instance\'s onCreate not called'));
-    }, 50);
   });
 
   it('MockXhr.onSend', function(done) {
@@ -128,10 +175,6 @@ describe('does not call global', function() {
     var mockInstance = new Mock();
     mockInstance.open('GET', '/url');
     mockInstance.send();
-
-    setTimeout(function() {
-      done(new Error('instance\'s onSend not called'));
-    }, 50);
   });
 
 });
