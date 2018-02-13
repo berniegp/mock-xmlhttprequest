@@ -6,4 +6,7 @@
 
 'use strict';
 
-module.exports = require('./src/MockXhr');
+var MockXMLHttpRequest = require('./src/MockXhr');
+MockXMLHttpRequest.MockXhrFactory = require('./src/MockXhrFactory');
+
+module.exports = MockXMLHttpRequest;
