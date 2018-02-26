@@ -39,22 +39,22 @@ assert.equal(result, 'success');
 
 ### Supported
 - events and states
-- open(), setRequestHeader(), send() and abort()
+- `open()`, `setRequestHeader()`, `send()` and `abort()`
 - upload and download progress events
-- response status, statusText, headers and body
+- response status, `statusText`, headers and body
 - simulating a network error
 
 ### Not supported
-- removeEventListener() not implemented (https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener)
-- dispatchEvent() does not return a result. (https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent)
-- synchronous requests (async == false)
-- parsing the url and setting the username and password
-- the timeout attribute and associated logic
-- withCredentials
-- responseUrl (the final request url with redirects)
-- Setting responseType (only the empty string responseType is used)
-- overrideMimeType
-- responseXml
+- `removeEventListener()` not implemented (https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener)
+- `dispatchEvent()` does not return a result. (https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent)
+- synchronous requests (`async` == false)
+- parsing the url and setting the `username` and `password`
+- the `timeout` attribute and associated logic
+- `withCredentials`
+- `responseUrl` (the final request url with redirects)
+- Setting `responseType` (only the empty string responseType is used)
+- `overrideMimeType`
+- `responseXml`
 
 ## Usage
 
