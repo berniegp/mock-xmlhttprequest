@@ -88,7 +88,7 @@ MockXhr.prototype.open = function(method, url) {
   this._terminateRequest();
 
   // Set variables
-  this.sendFlag = false;
+  this._sendFlag = false;
   this.method = method;
   this.url = url;
   this.requestHeaders.reset();
@@ -101,7 +101,7 @@ MockXhr.prototype.open = function(method, url) {
 
 // https://xhr.spec.whatwg.org/#the-setrequestheader()-method
 MockXhr.prototype.setRequestHeader = function(name, value) {
-  if (this._readyState !== MockXhr.OPENED || this.sendFlag) {
+  if (this._readyState !== MockXhr.OPENED || this._sendFlag) {
     throwError('InvalidStateError');
   }
   if (typeof name !== 'string' || typeof value !== 'string') {
@@ -120,7 +120,7 @@ MockXhr.prototype.send = function(body) {
   if (body === undefined) {
     body = null;
   }
-  if (this._readyState !== MockXhr.OPENED || this.sendFlag) {
+  if (this._readyState !== MockXhr.OPENED || this._sendFlag) {
     throwError('InvalidStateError');
   }
   if (this.method === 'GET' || this.method === 'HEAD') {
@@ -149,11 +149,11 @@ MockXhr.prototype.send = function(body) {
   }
 
   this.body = body;
-  this.uploadCompleteFlag = this.body === null;
-  this.sendFlag = true;
+  this._uploadCompleteFlag = this.body === null;
+  this._sendFlag = true;
 
   this._fireEvent('loadstart', 0, 0);
-  if (!this.uploadCompleteFlag) {
+  if (!this._uploadCompleteFlag) {
     this._fireUploadEvent('loadstart', 0, this._getRequestBodySize());
   }
 
@@ -181,7 +181,7 @@ MockXhr.prototype.send = function(body) {
 MockXhr.prototype.abort = function() {
   this._terminateRequest();
 
-  if ((this._readyState === MockXhr.OPENED && this.sendFlag)||
+  if ((this._readyState === MockXhr.OPENED && this._sendFlag)||
       this._readyState === MockXhr.HEADERS_RECEIVED ||
       this._readyState === MockXhr.LOADING) {
     this._requestErrorSteps('abort');
@@ -265,7 +265,7 @@ MockXhr.prototype._fireReadyStateChange = function() {
 // Process request end-of-body task. When the whole request is sent
 // https://xhr.spec.whatwg.org/#the-send()-method
 MockXhr.prototype._requestEndOfBody= function() {
-  this.uploadCompleteFlag = true;
+  this._uploadCompleteFlag = true;
 
   // Don't check the status of the "upload listener flag"
   // See https://github.com/whatwg/xhr/issues/95
@@ -304,7 +304,7 @@ MockXhr.prototype._handleResponseEndOfBody = function() {
   var length = this._response.body ? this._response.body.length : 0;
   this._fireEvent('progress', length, length);
   this._readyState = MockXhr.DONE;
-  this.sendFlag = false;
+  this._sendFlag = false;
   this._fireReadyStateChange();
   this._fireEvent('load', length, length);
   this._fireEvent('loadend', length, length);
@@ -312,7 +312,7 @@ MockXhr.prototype._handleResponseEndOfBody = function() {
 
 // https://xhr.spec.whatwg.org/#handle-errors
 MockXhr.prototype._handleResponseErrors = function() {
-  if (!this.sendFlag) {
+  if (!this._sendFlag) {
     return;
   }
   if (this._isNetworkErrorResponse()) {
@@ -325,7 +325,7 @@ MockXhr.prototype._handleResponseErrors = function() {
       break;
     case 'fatal':
       this._readyState = MockXhr.DONE;
-      this.sendFlag = false;
+      this._sendFlag = false;
       this._response = this._networkErrorResponse();
       break;
     }
@@ -336,11 +336,11 @@ MockXhr.prototype._handleResponseErrors = function() {
 // https://xhr.spec.whatwg.org/#request-error-steps
 MockXhr.prototype._requestErrorSteps = function(event) {
   this._readyState = MockXhr.DONE;
-  this.sendFlag = false;
+  this._sendFlag = false;
   this._response = this._networkErrorResponse();
   this._fireReadyStateChange();
-  if (!this.uploadCompleteFlag) {
-    this.uploadCompleteFlag = true;
+  if (!this._uploadCompleteFlag) {
+    this._uploadCompleteFlag = true;
 
     // Don't check the status of the "upload listener flag"
     // See https://github.com/whatwg/xhr/issues/95
@@ -362,7 +362,7 @@ MockXhr.prototype._requestErrorSteps = function(event) {
  * @param  {number} transmitted bytes transmitted
  */
 MockXhr.prototype.uploadProgress = function(transmitted) {
-  if (!this.sendFlag || this.uploadCompleteFlag) {
+  if (!this._sendFlag || this._uploadCompleteFlag) {
     throw new Error('Mock usage error detected.');
   }
   // Don't check the status of the "upload listener flag"
@@ -392,7 +392,7 @@ MockXhr.prototype.respond = function(status, headers, body, statusText) {
  * @param  {string} statusText response http status text (optional)
  */
 MockXhr.prototype.setResponseHeaders = function(status, headers, statusText) {
-  if (this._readyState !== MockXhr.OPENED || !this.sendFlag) {
+  if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
     throw new Error('Mock usage error detected.');
   }
   if (this.body) {
@@ -438,7 +438,7 @@ MockXhr.prototype.downloadProgress = function(transmitted, length) {
  * @param {mixed} body response body (default null)
  */
 MockXhr.prototype.setResponseBody = function(body) {
-  if (!this.sendFlag ||
+  if (!this._sendFlag ||
     (this._readyState !== MockXhr.OPENED &&
     this._readyState !== MockXhr.HEADERS_RECEIVED &&
     this._readyState !== MockXhr.LOADING)) {
@@ -463,7 +463,7 @@ MockXhr.prototype.setResponseBody = function(body) {
  * Simulate a network error. Will set the state to DONE.
  */
 MockXhr.prototype.setNetworkError = function() {
-  if (!this.sendFlag) {
+  if (!this._sendFlag) {
     throw new Error('Mock usage error detected.');
   }
   this._processResponse(this._networkErrorResponse());
