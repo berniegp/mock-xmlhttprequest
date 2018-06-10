@@ -89,6 +89,7 @@ MockXhr.prototype.open = function(method, url) {
 
   // Set variables
   this._sendFlag = false;
+  this._uploadListenerFlag = false;
   this.method = method;
   this.url = url;
   this.requestHeaders.reset();
@@ -148,12 +149,13 @@ MockXhr.prototype.send = function(body) {
     }
   }
 
+  this._uploadListenerFlag = this._upload.hasListeners();
   this.body = body;
   this._uploadCompleteFlag = this.body === null;
   this._sendFlag = true;
 
   this._fireEvent('loadstart', 0, 0);
-  if (!this._uploadCompleteFlag) {
+  if (!this._uploadCompleteFlag && this._uploadListenerFlag) {
     this._fireUploadEvent('loadstart', 0, this._getRequestBodySize());
   }
 
@@ -267,13 +269,14 @@ MockXhr.prototype._fireReadyStateChange = function() {
 MockXhr.prototype._requestEndOfBody= function() {
   this._uploadCompleteFlag = true;
 
-  // Don't check the status of the "upload listener flag"
-  // See https://github.com/whatwg/xhr/issues/95
-  var length = this._getRequestBodySize();
-  var transmitted = length;
-  this._fireUploadEvent('progress', transmitted, length);
-  this._fireUploadEvent('load', transmitted, length);
-  this._fireUploadEvent('loadend', transmitted, length);
+  if (this._uploadListenerFlag) {
+    // If no listeners were registered before send(), these steps do not run.
+    var length = this._getRequestBodySize();
+    var transmitted = length;
+    this._fireUploadEvent('progress', transmitted, length);
+    this._fireUploadEvent('load', transmitted, length);
+    this._fireUploadEvent('loadend', transmitted, length);
+  }
 };
 
 // Process response task. When the response headers are received.
@@ -342,10 +345,11 @@ MockXhr.prototype._requestErrorSteps = function(event) {
   if (!this._uploadCompleteFlag) {
     this._uploadCompleteFlag = true;
 
-    // Don't check the status of the "upload listener flag"
-    // See https://github.com/whatwg/xhr/issues/95
-    this._fireUploadEvent(event, 0, 0);
-    this._fireUploadEvent('loadend', 0, 0);
+    if (this._uploadListenerFlag) {
+      // If no listeners were registered before send(), no upload events should be fired.
+      this._fireUploadEvent(event, 0, 0);
+      this._fireUploadEvent('loadend', 0, 0);
+    }
   }
   this._fireEvent(event, 0, 0);
   this._fireEvent('loadend', 0, 0);
@@ -365,9 +369,10 @@ MockXhr.prototype.uploadProgress = function(transmitted) {
   if (!this._sendFlag || this._uploadCompleteFlag) {
     throw new Error('Mock usage error detected.');
   }
-  // Don't check the status of the "upload listener flag"
-  // See https://github.com/whatwg/xhr/issues/95
-  this._fireUploadEvent('progress', transmitted, this._getRequestBodySize());
+  if (this._uploadListenerFlag) {
+    // If no listeners were registered before send(), no upload events should be fired.
+    this._fireUploadEvent('progress', transmitted, this._getRequestBodySize());
+  }
 };
 
 /**

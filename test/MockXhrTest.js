@@ -233,27 +233,37 @@ describe('MockXhr', function() {
     it('should fire progress events and an abort event on send()-abort()', function() {
       var xhr = new MockXhr();
       xhr.open('POST', '/url');
-      xhr.send('body');
       var events = recordEvents(xhr);
+      xhr.send('body');
 
       xhr.abort();
 
-      assert.deepEqual(events, ['readystatechange(4)',
-        'upload.abort(0,0,false)', 'upload.loadend(0,0,false)',
-        'abort(0,0,false)', 'loadend(0,0,false)'], 'fired events');
+      assert.deepEqual(events, [
+        'loadstart(0,0,false)',
+        'upload.loadstart(0,4,true)',
+        'readystatechange(4)',
+        'upload.abort(0,0,false)',
+        'upload.loadend(0,0,false)',
+        'abort(0,0,false)',
+        'loadend(0,0,false)'
+      ], 'fired events');
       assert.equal(xhr.readyState, 0);
     });
 
     it('should fire progress events and an abort event on send(null)-abort()', function() {
       var xhr = new MockXhr();
       xhr.open('GET', '/url');
-      xhr.send();
       var events = recordEvents(xhr);
+      xhr.send();
 
       xhr.abort();
 
-      assert.deepEqual(events, ['readystatechange(4)',
-        'abort(0,0,false)', 'loadend(0,0,false)'], 'fired events');
+      assert.deepEqual(events, [
+        'loadstart(0,0,false)',
+        'readystatechange(4)',
+        'abort(0,0,false)',
+        'loadend(0,0,false)'
+      ], 'fired events');
       assert.equal(xhr.readyState, 0);
     });
 
@@ -385,13 +395,31 @@ describe('MockXhr', function() {
     it('uploadProgress() should fire upload progress events', function() {
       var xhr = new MockXhr();
       xhr.open('POST', '/url');
-      xhr.send('body');
       var events = recordEvents(xhr);
+      xhr.send('body');
 
       xhr.uploadProgress(2);
       xhr.uploadProgress(3);
 
-      assert.deepEqual(events, ['upload.progress(2,4,true)', 'upload.progress(3,4,true)']);
+      assert.deepEqual(events, [
+        'loadstart(0,0,false)',
+        'upload.loadstart(0,4,true)',
+        'upload.progress(2,4,true)',
+        'upload.progress(3,4,true)'
+      ]);
+    });
+
+    it('uploadProgress() should not fire upload progress events if the upload listener flag is unset', function() {
+      var xhr = new MockXhr();
+      xhr.open('POST', '/url');
+      xhr.send('body');
+
+      // Add listeners AFTER the send() call
+      var events = recordEvents(xhr);
+
+      xhr.uploadProgress(2);
+
+      assert.deepEqual(events, []);
     });
 
     it('respond() should set response state, headers and body', function() {
@@ -413,20 +441,63 @@ describe('MockXhr', function() {
     it('respond() should fire upload progress events', function() {
       var xhr = new MockXhr();
       xhr.open('POST', '/url');
+      var events = recordEvents(xhr);
       xhr.send('body');
+
+      xhr.respond();
+
+      assert.deepEqual(events, [
+        'loadstart(0,0,false)',
+        'upload.loadstart(0,4,true)',
+        // respond() events - headers
+        'upload.progress(4,4,true)',
+        'upload.load(4,4,true)',
+        'upload.loadend(4,4,true)',
+        'readystatechange(2)',
+        // respond() events - end of body
+        'readystatechange(3)',
+        'progress(0,0,false)',
+        'readystatechange(4)',
+        'load(0,0,false)',
+        'loadend(0,0,false)'
+      ]);
+    });
+
+    it('respond() should set response state, headers and body', function() {
+      var xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+      var responseBody = 'response';
+
+      xhr.respond(201, {'R-Header': '123'}, responseBody);
+
+      assert.equal(xhr.getAllResponseHeaders(), 'r-header: 123', 'Response headers');
+      assert.equal(xhr.status, 201, 'xhr.status');
+      assert.equal(xhr.statusText, 'Created', 'xhr.statusText');
+      assert.equal(xhr.response, responseBody, 'xhr.response');
+      assert.equal(xhr.responseText, responseBody, 'xhr.responseText');
+      assert.equal(xhr.readyState, 4, 'readyState DONE');
+    });
+
+    it('respond() should not fire upload progress events if the upload listener flag is unset', function() {
+      var xhr = new MockXhr();
+      xhr.open('POST', '/url');
+      xhr.send('body');
+
+      // Add listeners AFTER the send() call
       var events = recordEvents(xhr);
 
       xhr.respond();
 
       assert.deepEqual(events, [
-        // respond() events - headers
-        'upload.progress(4,4,true)', 'upload.load(4,4,true)',
-        'upload.loadend(4,4,true)',
         'readystatechange(2)',
         // respond() events - end of body
-        'readystatechange(3)', 'progress(0,0,false)',
+        'readystatechange(3)',
+        'progress(0,0,false)',
         'readystatechange(4)',
-        'load(0,0,false)', 'loadend(0,0,false)']);
+        'load(0,0,false)',
+        'loadend(0,0,false)'
+      ]);
     });
 
     it('respond() with response body should fire progress events', function() {
@@ -438,30 +509,35 @@ describe('MockXhr', function() {
       xhr.respond(200, null, 'response');
 
       assert.deepEqual(events, [
-        // respond() events - headers
-        'upload.progress(4,4,true)', 'upload.load(4,4,true)',
-        'upload.loadend(4,4,true)',
         'readystatechange(2)',
         // respond() events - end of body
-        'readystatechange(3)', 'progress(8,8,true)',
+        'readystatechange(3)',
+        'progress(8,8,true)',
         'readystatechange(4)',
-        'load(8,8,true)', 'loadend(8,8,true)']);
+        'load(8,8,true)',
+        'loadend(8,8,true)'
+      ]);
     });
 
     it('respond() with send(null) should not fire upload progress events', function() {
       var xhr = new MockXhr();
       xhr.open('GET', '/url');
-      xhr.send();
       var events = recordEvents(xhr);
+      xhr.send();
 
       xhr.respond();
 
       assert.deepEqual(events, [
+        'loadstart(0,0,false)',
         // respond() events - headers
         'readystatechange(2)',
         // respond() events - end of body
-        'readystatechange(3)', 'progress(0,0,false)', 'readystatechange(4)',
-        'load(0,0,false)', 'loadend(0,0,false)']);
+        'readystatechange(3)',
+        'progress(0,0,false)',
+        'readystatechange(4)',
+        'load(0,0,false)',
+        'loadend(0,0,false)'
+      ]);
     });
 
     it('setResponseHeaders() should set response state and headers', function() {
@@ -504,9 +580,12 @@ describe('MockXhr', function() {
 
       assert.deepEqual(events, [
         // downloadProgress()
-        'readystatechange(3)', 'progress(2,8,true)',
+        'readystatechange(3)',
+        'progress(2,8,true)',
         // downloadProgress()
-        'readystatechange(3)', 'progress(4,8,true)']);
+        'readystatechange(3)',
+        'progress(4,8,true)'
+      ]);
       assert.equal(xhr.readyState, 3, 'readyState LOADING');
     });
 
@@ -539,8 +618,12 @@ describe('MockXhr', function() {
         // automatic call to setResponseHeaders()
         'readystatechange(2)',
         // respond() events - end of body
-        'readystatechange(3)', 'progress(8,8,true)', 'readystatechange(4)',
-        'load(8,8,true)', 'loadend(8,8,true)']);
+        'readystatechange(3)',
+        'progress(8,8,true)',
+        'readystatechange(4)',
+        'load(8,8,true)',
+        'loadend(8,8,true)'
+      ]);
     });
 
     describe('setNetworkError()', function() {
@@ -562,39 +645,70 @@ describe('MockXhr', function() {
       it('with request body should fire upload events', function() {
         var xhr = new MockXhr();
         xhr.open('POST', '/url');
+        var events = recordEvents(xhr);
         xhr.send('body');
+
+        xhr.setNetworkError();
+
+        assert.deepEqual(events, [
+          'loadstart(0,0,false)',
+          'upload.loadstart(0,4,true)',
+          'readystatechange(4)',
+          'upload.error(0,0,false)',
+          'upload.loadend(0,0,false)',
+          'error(0,0,false)',
+          'loadend(0,0,false)'
+        ]);
+      });
+
+      it('with request body should not fire upload events if the upload listener flag is unset', function() {
+        var xhr = new MockXhr();
+        xhr.open('POST', '/url');
+        xhr.send('body');
+
+        // Add listeners AFTER the send() call
         var events = recordEvents(xhr);
 
         xhr.setNetworkError();
 
-        assert.deepEqual(events, ['readystatechange(4)',
-          'upload.error(0,0,false)', 'upload.loadend(0,0,false)',
-          'error(0,0,false)', 'loadend(0,0,false)']);
+        assert.deepEqual(events, [
+          'readystatechange(4)',
+          'error(0,0,false)',
+          'loadend(0,0,false)'
+        ]);
       });
 
       it('without request body should not fire upload events', function() {
         var xhr = new MockXhr();
         xhr.open('GET', '/url');
-        xhr.send();
         var events = recordEvents(xhr);
+        xhr.send();
 
         xhr.setNetworkError();
 
-        assert.deepEqual(events, ['readystatechange(4)',
-          'error(0,0,false)', 'loadend(0,0,false)']);
+        assert.deepEqual(events, [
+          'loadstart(0,0,false)',
+          'readystatechange(4)',
+          'error(0,0,false)',
+          'loadend(0,0,false)'
+        ]);
       });
 
       it('should work after setResponseHeaders()', function() {
         var xhr = new MockXhr();
         xhr.open('GET', '/url');
         xhr.send();
-        xhr.setResponseHeaders();
         var events = recordEvents(xhr);
+        xhr.setResponseHeaders();
 
         xhr.setNetworkError();
 
-        assert.deepEqual(events, ['readystatechange(4)',
-          'error(0,0,false)', 'loadend(0,0,false)']);
+        assert.deepEqual(events, [
+          'readystatechange(2)',
+          'readystatechange(4)',
+          'error(0,0,false)',
+          'loadend(0,0,false)'
+        ]);
       });
     });
   });
