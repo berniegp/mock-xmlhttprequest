@@ -5,8 +5,8 @@ var HeadersContainer = require('../src/HeadersContainer');
 describe('HeadersContainer', function() {
   it('should store headers', function() {
     var headers = new HeadersContainer();
-    headers.addHeader('Head', '1');
-    assert.equal(headers.getHeader('Head'), '1');
+    headers.addHeader('header', '1');
+    assert.equal(headers.getHeader('header'), '1');
   });
 
   it('should return null for inexistant headers', function() {
@@ -16,21 +16,39 @@ describe('HeadersContainer', function() {
 
   it('headers should be case-insensitive', function() {
     var headers = new HeadersContainer();
-    headers.addHeader('Head', '1');
-    assert.equal(headers.getHeader('HEAD'), '1');
+    headers.addHeader('header', '1');
+    assert.equal(headers.getHeader('HEADER'), '1');
+    assert.equal(headers.getHeader('Header'), '1');
+    assert.equal(headers.getHeader('header'), '1');
   });
 
   it('should combine header vales', function() {
     var headers = new HeadersContainer();
-    headers.addHeader('Head', '1');
-    headers.addHeader('Head', '2');
-    assert.equal(headers.getHeader('Head'), '1, 2');
+    headers.addHeader('header', '1');
+    headers.addHeader('HEADER', '2');
+    assert.equal(headers.getHeader('header'), '1, 2');
   });
 
-  it('getAll() should concatenate all headers', function() {
+  it('getAll() should concatenate all headers with proper formatting', function() {
     var headers = new HeadersContainer();
-    headers.addHeader('Head', '1');
-    headers.addHeader('Head-2', 'a');
-    assert.equal(headers.getAll(), 'Head: 1\r\nHead-2: a');
+    headers.addHeader('HEADER', '1');
+    headers.addHeader('header-2', 'a');
+    assert.equal(headers.getAll(), 'header: 1\r\nheader-2: a');
+  });
+
+  it('getAll() should combine headers', function() {
+    var headers = new HeadersContainer();
+    headers.addHeader('header', '1');
+    headers.addHeader('header', '2');
+    headers.addHeader('header', '3');
+    assert.equal(headers.getAll(), 'header: 1, 2, 3');
+  });
+
+  it('getAll() should sort headers', function() {
+    var headers = new HeadersContainer();
+    headers.addHeader('header-2', 'b');
+    headers.addHeader('header-3', 'c');
+    headers.addHeader('header-1', 'a');
+    assert.equal(headers.getAll(), 'header-1: a\r\nheader-2: b\r\nheader-3: c');
   });
 });

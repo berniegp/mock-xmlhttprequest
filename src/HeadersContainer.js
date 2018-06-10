@@ -40,12 +40,24 @@ HeadersContainer.prototype.getHeader = function(name) {
  * @return {string} concatenated headers
  */
 HeadersContainer.prototype.getAll = function() {
-  var headers = '';
+  // Get unique header names and sort them
+  var headerNames = [];
   for (var i = 0; i < this._headers.length; i++) {
+    var headerName = this._headers[i].name.toLowerCase();
+    if (headerNames.indexOf(headerName) < 0)
+    {
+      headerNames.push(headerName);
+    }
+  }
+  headerNames.sort();
+
+  // Build the output with the combined header values
+  var headers = '';
+  for (i = 0; i < headerNames.length; i++) {
     if (headers.length > 0) {
       headers += '\r\n';
     }
-    headers += this._headers[i].name + ': ' + this._headers[i].value;
+    headers += headerNames[i] + ': ' + this.getHeader(headerNames[i]);
   }
   return headers;
 };

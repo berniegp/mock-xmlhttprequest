@@ -402,7 +402,7 @@ describe('MockXhr', function() {
 
       xhr.respond(201, {'R-Header': '123'}, responseBody);
 
-      assert.equal(xhr.getAllResponseHeaders(), 'R-Header: 123', 'Response headers');
+      assert.equal(xhr.getAllResponseHeaders(), 'r-header: 123', 'Response headers');
       assert.equal(xhr.status, 201, 'xhr.status');
       assert.equal(xhr.statusText, 'Created', 'xhr.statusText');
       assert.equal(xhr.response, responseBody, 'xhr.response');
@@ -472,7 +472,7 @@ describe('MockXhr', function() {
 
       xhr.setResponseHeaders(201, {'R-Header': '123'}, statusText);
 
-      assert.equal(xhr.getAllResponseHeaders(), 'R-Header: 123', 'Response headers');
+      assert.equal(xhr.getAllResponseHeaders(), 'r-header: 123', 'Response headers');
       assert.equal(xhr.status, 201, 'xhr.status');
       assert.equal(xhr.statusText, statusText, 'xhr.statusText');
       assert.equal(xhr.readyState, 2, 'readyState HEADERS_RECEIVED');
