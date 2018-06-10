@@ -19,11 +19,12 @@ function throwError(type, text) {
  *  - upload and download progress events
  *  - response status, statusText, headers and body
  *  - simulating a network error
+ *  - simulating a request time out
  *
  * MockXhr does not support:
  * - synchronous requests (async == false)
  * - parsing the url and setting the username and password
- * - the timeout attribute and associated logic
+ * - the timeout attribute (call MockXhr.setRequestTimeout() to trigger a timeout)
  * - withCredentials
  * - responseUrl (the final request url with redirects)
  * - Setting responseType (only the empty string responseType is used)
@@ -152,6 +153,7 @@ MockXhr.prototype.send = function(body) {
   this._uploadListenerFlag = this._upload.hasListeners();
   this.body = body;
   this._uploadCompleteFlag = this.body === null;
+  this._timedOutFlag = false;
   this._sendFlag = true;
 
   this._fireEvent('loadstart', 0, 0);
@@ -319,20 +321,13 @@ MockXhr.prototype._handleResponseErrors = function() {
   if (!this._sendFlag) {
     return;
   }
-  if (this._isNetworkErrorResponse()) {
+  if (this._timedOutFlag) {
+    // Timeout
+    this._requestErrorSteps('timeout');
+  }
+  else if (this._isNetworkErrorResponse()) {
     // Network error
     this._requestErrorSteps('error');
-  } else {
-    switch (this._response.terminationReason) {
-    case 'end-user abort':
-      this._requestErrorSteps('abort');
-      break;
-    case 'fatal':
-      this._readyState = MockXhr.DONE;
-      this._sendFlag = false;
-      this._response = this._networkErrorResponse();
-      break;
-    }
   }
 };
 
@@ -475,6 +470,17 @@ MockXhr.prototype.setNetworkError = function() {
   this._processResponse(this._networkErrorResponse());
 };
 
+/**
+ * Simulate a request timeout. Will set the state to DONE.
+ */
+MockXhr.prototype.setRequestTimeout = function() {
+  if (!this._sendFlag) {
+    throw new Error('Mock usage error detected.');
+  }
+  this._terminateRequest();
+  this._timedOutFlag = true;
+  this._processResponse(this._networkErrorResponse());
+};
 
 /////////////
 // Utility //

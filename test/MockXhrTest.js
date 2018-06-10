@@ -711,6 +711,128 @@ describe('MockXhr', function() {
         ]);
       });
     });
+
+    describe('setRequestTimeout()', function() {
+      describe('during request', function() {
+        it('should reset state', function() {
+          var xhr = new MockXhr();
+          xhr.open('GET', '/url');
+          xhr.send();
+
+          xhr.setRequestTimeout();
+
+          assert.equal(xhr.getAllResponseHeaders(), '', 'Response headers');
+          assert.equal(xhr.status, 0, 'xhr.status');
+          assert.equal(xhr.statusText, '', 'xhr.statusText');
+          assert.equal(xhr.response, '', 'xhr.response');
+          assert.equal(xhr.responseText, '', 'xhr.responseText');
+          assert.equal(xhr.readyState, 4, 'readyState DONE');
+        });
+
+        it('with request body should fire upload events', function() {
+          var xhr = new MockXhr();
+          xhr.open('POST', '/url');
+          var events = recordEvents(xhr);
+          xhr.send('body');
+
+          xhr.setRequestTimeout();
+
+          assert.deepEqual(events, [
+            'loadstart(0,0,false)',
+            'upload.loadstart(0,4,true)',
+            'readystatechange(4)',
+            'upload.timeout(0,0,false)',
+            'upload.loadend(0,0,false)',
+            'timeout(0,0,false)',
+            'loadend(0,0,false)'
+          ]);
+        });
+
+        it('with request body should not fire upload events if the upload listener flag is unset', function() {
+          var xhr = new MockXhr();
+          xhr.open('POST', '/url');
+          xhr.send('body');
+
+          // Add listeners AFTER the send() call
+          var events = recordEvents(xhr);
+
+          xhr.setRequestTimeout();
+
+          assert.deepEqual(events, [
+            'readystatechange(4)',
+            'timeout(0,0,false)',
+            'loadend(0,0,false)'
+          ]);
+        });
+
+        it('without request body should not fire upload events', function() {
+          var xhr = new MockXhr();
+          xhr.open('GET', '/url');
+          var events = recordEvents(xhr);
+          xhr.send();
+
+          xhr.setRequestTimeout();
+
+          assert.deepEqual(events, [
+            'loadstart(0,0,false)',
+            'readystatechange(4)',
+            'timeout(0,0,false)',
+            'loadend(0,0,false)'
+          ]);
+        });
+
+        it('should work after setResponseHeaders()', function() {
+          var xhr = new MockXhr();
+          xhr.open('GET', '/url');
+          xhr.send();
+          var events = recordEvents(xhr);
+          xhr.setResponseHeaders();
+
+          xhr.setRequestTimeout();
+
+          assert.deepEqual(events, [
+            'readystatechange(2)',
+            'readystatechange(4)',
+            'timeout(0,0,false)',
+            'loadend(0,0,false)'
+          ]);
+        });
+      });
+
+      describe('during response', function() {
+        it('should reset state', function() {
+          var xhr = new MockXhr();
+          xhr.open('GET', '/url');
+          xhr.send();
+          xhr.setResponseHeaders();
+
+          xhr.setRequestTimeout();
+
+          assert.equal(xhr.getAllResponseHeaders(), '', 'Response headers');
+          assert.equal(xhr.status, 0, 'xhr.status');
+          assert.equal(xhr.statusText, '', 'xhr.statusText');
+          assert.equal(xhr.response, '', 'xhr.response');
+          assert.equal(xhr.responseText, '', 'xhr.responseText');
+          assert.equal(xhr.readyState, 4, 'readyState DONE');
+        });
+
+        it('should fire timeout event', function() {
+          var xhr = new MockXhr();
+          xhr.open('POST', '/url');
+          xhr.send('body');
+          xhr.setResponseHeaders();
+          var events = recordEvents(xhr);
+
+          xhr.setRequestTimeout();
+
+          assert.deepEqual(events, [
+            'readystatechange(4)',
+            'timeout(0,0,false)',
+            'loadend(0,0,false)'
+          ]);
+        });
+      });
+    });
   });
 });
 

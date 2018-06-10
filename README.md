@@ -43,13 +43,14 @@ assert.equal(result, 'success');
 - upload and download progress events
 - response status, `statusText`, headers and body
 - simulating a network error
+- simulating a request time out
 
 ### Not supported
 - `removeEventListener()` not implemented (https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener)
 - `dispatchEvent()` does not return a result. (https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent)
 - synchronous requests (`async` == false)
 - parsing the url and setting the `username` and `password`
-- the `timeout` attribute and associated logic
+- the timeout attribute (call `MockXhr.setRequestTimeout()` to trigger a timeout)
 - `withCredentials`
 - `responseUrl` (the final request url with redirects)
 - Setting `responseType` (only the empty string responseType is used)
@@ -129,12 +130,12 @@ Complete response method which sets the response headers and body. Will fire the
 
 This is a shorthand for calling `setResponseHeaders()` and `setResponseBody()` in sequence.
 
-No other mock response methods may be called after this one.
+No other mock response methods may be called after this one until `open()` is called.
 
 #### setResponseHeaders([status = 200], [headers = {}], [statusText = 'OK'])
 Sets the response headers only. Will fire the appropriate 'readystatechange', `progress`, `load`, etc. (upload) events. Will set the request state to `HEADERS_RECEIVED`.
 
-Should be followed by either `downloadProgress()`, `setResponseBody()` or `setNetworkError()`.
+Should be followed by either `downloadProgress()`, `setResponseBody()`, `setNetworkError()` or `setRequestTimeout()`.
 
 #### downloadProgress(transmitted, length)
 Fires a response progress event. Will set the request state to `LOADING`.
@@ -144,12 +145,17 @@ Must be preceded by `setResponseHeaders()`.
 #### setResponseBody([body = null])
 Sets the response body. Calls `setResponseHeaders()` if not already called. Will fire the appropriate 'readystatechange', `progress`, `load`, etc. (upload) events. The state of the request will be set to `DONE`.
 
-No other mock response methods may be called after this one.
+No other mock response methods may be called after this one until `open()` is called.
 
 #### setNetworkError()
 Simulates a network error. Will set the request state to `DONE` and fire an `error` event  (amongst other events).
 
-No other mock response methods may be called after this one.
+No other mock response methods may be called after this one until `open()` is called.
+
+#### setRequestTimeout()
+Simulates a request time out. Will set the request state to `DONE` and fire a `timeout` event  (amongst other events).
+
+No other mock response methods may be called after this one until `open()` is called.
 
 ### Run Unit Tests
 
