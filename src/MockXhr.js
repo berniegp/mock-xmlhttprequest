@@ -230,10 +230,11 @@ MockXhr.prototype.getAllResponseHeaders = function() {
 };
 
 MockXhr.prototype._getResponseText = function() {
-  // Only supports responseType === ''
+  // Only supports responseType === '' or responseType === 'text'
   if (this._readyState !== MockXhr.LOADING && this._readyState !== MockXhr.DONE) {
     return '';
   }
+
   // Return the text response
   return this._response.body ? this._response.body : '';
 };
