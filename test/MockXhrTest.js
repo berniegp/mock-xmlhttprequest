@@ -34,6 +34,15 @@ describe('MockXhr', function() {
     return events;
   }
 
+  // Asserts that the response is a network error
+  function assertNetworkErrorResponse(xhr) {
+    assert.equal(xhr.getAllResponseHeaders(), '', 'Response headers');
+    assert.equal(xhr.status, 0, 'xhr.status == 0');
+    assert.equal(xhr.statusText, '', 'empty xhr.statusText');
+    assert.equal(xhr.response, '', 'empty xhr.response');
+    assert.equal(xhr.responseText, '', 'empty xhr.responseText');
+  }
+
   it('should have state constants', function() {
     assert.equal(MockXhr.UNSENT, 0);
     assert.equal(MockXhr.OPENED, 1);
@@ -47,11 +56,7 @@ describe('MockXhr', function() {
 
     assert.isOk(xhr.upload);
     assert.equal(xhr.readyState, MockXhr.UNSENT);
-    assert.equal(xhr.status, 0);
-    assert.equal(xhr.statusText, '');
-    assert.equal(xhr.responseType, '');
-    assert.equal(xhr.response, '');
-    assert.equal(xhr.responseText, '');
+    assertNetworkErrorResponse(xhr);
   });
 
   var readOnlyAttributes = [
@@ -108,7 +113,7 @@ describe('MockXhr', function() {
       assert.throws(tryMethod('CONNECT'), null, null, 'forbidden method throws');
       assert.throws(tryMethod('TRACE'), null, null, 'forbidden method throws');
       assert.throws(tryMethod('TRACK'), null, null, 'forbidden method throws');
-      assert.lengthOf(events, 0, 'no events dispatched');
+      assert.lengthOf(events, 0, 'no events fired');
     });
   });
 
@@ -214,7 +219,7 @@ describe('MockXhr', function() {
 
       xhr.send('body');
 
-      assert.deepEqual(events, ['loadstart(0,0,false)', 'upload.loadstart(0,4,true)']);
+      assert.deepEqual(events, ['loadstart(0,0,false)', 'upload.loadstart(0,4,true)'], 'fired events');
     });
   });
 
@@ -406,7 +411,7 @@ describe('MockXhr', function() {
         'upload.loadstart(0,4,true)',
         'upload.progress(2,4,true)',
         'upload.progress(3,4,true)'
-      ]);
+      ], 'fired events');
     });
 
     it('uploadProgress() should not fire upload progress events if the upload listener flag is unset', function() {
@@ -419,7 +424,7 @@ describe('MockXhr', function() {
 
       xhr.uploadProgress(2);
 
-      assert.deepEqual(events, []);
+      assert.deepEqual(events, [], 'no fired events');
     });
 
     it('respond() should set response state, headers and body', function() {
@@ -460,7 +465,7 @@ describe('MockXhr', function() {
         'readystatechange(4)',
         'load(0,0,false)',
         'loadend(0,0,false)'
-      ]);
+      ], 'fired events');
     });
 
     it('respond() should set response state, headers and body', function() {
@@ -497,7 +502,7 @@ describe('MockXhr', function() {
         'readystatechange(4)',
         'load(0,0,false)',
         'loadend(0,0,false)'
-      ]);
+      ], 'fired events');
     });
 
     it('respond() with response body should fire progress events', function() {
@@ -516,7 +521,7 @@ describe('MockXhr', function() {
         'readystatechange(4)',
         'load(8,8,true)',
         'loadend(8,8,true)'
-      ]);
+      ], 'fired events');
     });
 
     it('respond() with send(null) should not fire upload progress events', function() {
@@ -537,7 +542,7 @@ describe('MockXhr', function() {
         'readystatechange(4)',
         'load(0,0,false)',
         'loadend(0,0,false)'
-      ]);
+      ], 'fired events');
     });
 
     it('setResponseHeaders() should set response state and headers', function() {
@@ -565,7 +570,7 @@ describe('MockXhr', function() {
 
       xhr.setResponseHeaders();
 
-      assert.deepEqual(events, ['readystatechange(2)']);
+      assert.deepEqual(events, ['readystatechange(2)'], 'fired event');
     });
 
     it('downloadProgress() should provide download progress events', function() {
@@ -585,7 +590,7 @@ describe('MockXhr', function() {
         // downloadProgress()
         'readystatechange(3)',
         'progress(4,8,true)'
-      ]);
+      ], 'fired events');
       assert.equal(xhr.readyState, MockXhr.LOADING, 'readyState LOADING');
     });
 
@@ -623,7 +628,7 @@ describe('MockXhr', function() {
         'readystatechange(4)',
         'load(8,8,true)',
         'loadend(8,8,true)'
-      ]);
+      ], 'fired events');
     });
 
     describe('setNetworkError()', function() {
@@ -634,11 +639,7 @@ describe('MockXhr', function() {
 
         xhr.setNetworkError();
 
-        assert.equal(xhr.getAllResponseHeaders(), '', 'Response headers');
-        assert.equal(xhr.status, 0, 'xhr.status');
-        assert.equal(xhr.statusText, '', 'xhr.statusText');
-        assert.equal(xhr.response, '', 'xhr.response');
-        assert.equal(xhr.responseText, '', 'xhr.responseText');
+        assertNetworkErrorResponse(xhr);
         assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
       });
 
@@ -658,7 +659,7 @@ describe('MockXhr', function() {
           'upload.loadend(0,0,false)',
           'error(0,0,false)',
           'loadend(0,0,false)'
-        ]);
+        ], 'fired events');
       });
 
       it('with request body should not fire upload events if the upload listener flag is unset', function() {
@@ -675,7 +676,7 @@ describe('MockXhr', function() {
           'readystatechange(4)',
           'error(0,0,false)',
           'loadend(0,0,false)'
-        ]);
+        ], 'fired events');
       });
 
       it('without request body should not fire upload events', function() {
@@ -691,7 +692,7 @@ describe('MockXhr', function() {
           'readystatechange(4)',
           'error(0,0,false)',
           'loadend(0,0,false)'
-        ]);
+        ], 'fired events');
       });
 
       it('should work after setResponseHeaders()', function() {
@@ -708,7 +709,7 @@ describe('MockXhr', function() {
           'readystatechange(4)',
           'error(0,0,false)',
           'loadend(0,0,false)'
-        ]);
+        ], 'fired events');
       });
     });
 
@@ -721,11 +722,7 @@ describe('MockXhr', function() {
 
           xhr.setRequestTimeout();
 
-          assert.equal(xhr.getAllResponseHeaders(), '', 'Response headers');
-          assert.equal(xhr.status, 0, 'xhr.status');
-          assert.equal(xhr.statusText, '', 'xhr.statusText');
-          assert.equal(xhr.response, '', 'xhr.response');
-          assert.equal(xhr.responseText, '', 'xhr.responseText');
+          assertNetworkErrorResponse(xhr);
           assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
         });
 
@@ -745,7 +742,7 @@ describe('MockXhr', function() {
             'upload.loadend(0,0,false)',
             'timeout(0,0,false)',
             'loadend(0,0,false)'
-          ]);
+          ], 'fired events');
         });
 
         it('with request body should not fire upload events if the upload listener flag is unset', function() {
@@ -762,7 +759,7 @@ describe('MockXhr', function() {
             'readystatechange(4)',
             'timeout(0,0,false)',
             'loadend(0,0,false)'
-          ]);
+          ], 'fired events');
         });
 
         it('without request body should not fire upload events', function() {
@@ -778,7 +775,7 @@ describe('MockXhr', function() {
             'readystatechange(4)',
             'timeout(0,0,false)',
             'loadend(0,0,false)'
-          ]);
+          ], 'fired events');
         });
 
         it('should work after setResponseHeaders()', function() {
@@ -795,7 +792,7 @@ describe('MockXhr', function() {
             'readystatechange(4)',
             'timeout(0,0,false)',
             'loadend(0,0,false)'
-          ]);
+          ], 'fired events');
         });
       });
 
@@ -808,11 +805,7 @@ describe('MockXhr', function() {
 
           xhr.setRequestTimeout();
 
-          assert.equal(xhr.getAllResponseHeaders(), '', 'Response headers');
-          assert.equal(xhr.status, 0, 'xhr.status');
-          assert.equal(xhr.statusText, '', 'xhr.statusText');
-          assert.equal(xhr.response, '', 'xhr.response');
-          assert.equal(xhr.responseText, '', 'xhr.responseText');
+          assertNetworkErrorResponse(xhr);
           assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
         });
 
@@ -829,7 +822,7 @@ describe('MockXhr', function() {
             'readystatechange(4)',
             'timeout(0,0,false)',
             'loadend(0,0,false)'
-          ]);
+          ], 'fired events');
         });
       });
     });
