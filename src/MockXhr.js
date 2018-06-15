@@ -130,23 +130,26 @@ MockXhr.prototype.send = function(body) {
   }
 
   if (body !== null) {
-    // Set request body and Content-Type to the result of extracting body.
+    var extractedContentType = null;
+
+    // Document body type not supported
+
     // https://fetch.spec.whatwg.org/#concept-bodyinit-extract
-    if (this.requestHeaders.getHeader('Content-Type') === null) {
-      var mimeType = null;
-      // Approximate some support for mime type detection
+    {
+      var contentType = null;
       if (typeof body === 'string') {
-        mimeType = 'text/plain;charset=UTF-8';
+        contentType = 'text/plain;charset=UTF-8';
       } else if (body.type) {
         // As specified for Blob
-        mimeType = body.type;
+        contentType = body.type;
       }
-      // Document, BufferSource and FormData not handled
-      // Does not modify the Content-Type header charset as specified in the spec
 
-      if (mimeType !== null) {
-        this.requestHeaders.addHeader('Content-Type', mimeType);
-      }
+      // BufferSource, FormData, etc. not handled specially
+      extractedContentType = contentType;
+    }
+
+    if (this.requestHeaders.getHeader('Content-Type') === null && extractedContentType !== null) {
+      this.requestHeaders.addHeader('Content-Type', extractedContentType);
     }
   }
 
