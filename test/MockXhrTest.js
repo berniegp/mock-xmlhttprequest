@@ -46,7 +46,7 @@ describe('MockXhr', function() {
     var xhr = new MockXhr();
 
     assert.isOk(xhr.upload);
-    assert.equal(xhr.readyState, 0);
+    assert.equal(xhr.readyState, MockXhr.UNSENT);
     assert.equal(xhr.status, 0);
     assert.equal(xhr.statusText, '');
     assert.equal(xhr.responseType, '');
@@ -94,7 +94,7 @@ describe('MockXhr', function() {
 
       assert.equal(xhr.method, 'POST', 'second method');
       assert.equal(xhr.url, '/url2', 'second url');
-      assert.equal(xhr.readyState, 1);
+      assert.equal(xhr.readyState, MockXhr.OPENED);
       assert.deepEqual(events, ['readystatechange(1)'], 'readystatechange fired');
     });
 
@@ -227,7 +227,7 @@ describe('MockXhr', function() {
       xhr.abort();
 
       assert.lengthOf(events, 0, 'no abort event');
-      assert.equal(xhr.readyState, 1, 'final state OPENED');
+      assert.equal(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
     });
 
     it('should fire progress events and an abort event on send()-abort()', function() {
@@ -247,7 +247,7 @@ describe('MockXhr', function() {
         'abort(0,0,false)',
         'loadend(0,0,false)'
       ], 'fired events');
-      assert.equal(xhr.readyState, 0);
+      assert.equal(xhr.readyState, MockXhr.UNSENT);
     });
 
     it('should fire progress events and an abort event on send(null)-abort()', function() {
@@ -264,7 +264,7 @@ describe('MockXhr', function() {
         'abort(0,0,false)',
         'loadend(0,0,false)'
       ], 'fired events');
-      assert.equal(xhr.readyState, 0);
+      assert.equal(xhr.readyState, MockXhr.UNSENT);
     });
 
     it('should handle nested open() during abort()', function() {
@@ -283,8 +283,8 @@ describe('MockXhr', function() {
       abortFlag = true;
       xhr.abort();
 
-      assert.deepEqual(states, [1, 4, 1]);
-      assert.equal(xhr.readyState, 1);
+      assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
+      assert.equal(xhr.readyState, MockXhr.OPENED);
     });
 
     it('should handle nested open()-send() during abort()', function() {
@@ -305,8 +305,8 @@ describe('MockXhr', function() {
       abortFlag = true;
       xhr.abort();
 
-      assert.deepEqual(states, [1, 4, 1]);
-      assert.equal(xhr.readyState, 1);
+      assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
+      assert.equal(xhr.readyState, MockXhr.OPENED);
     });
   });
 
@@ -435,7 +435,7 @@ describe('MockXhr', function() {
       assert.equal(xhr.statusText, 'Created', 'xhr.statusText');
       assert.equal(xhr.response, responseBody, 'xhr.response');
       assert.equal(xhr.responseText, responseBody, 'xhr.responseText');
-      assert.equal(xhr.readyState, 4, 'readyState DONE');
+      assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
     });
 
     it('respond() should fire upload progress events', function() {
@@ -476,7 +476,7 @@ describe('MockXhr', function() {
       assert.equal(xhr.statusText, 'Created', 'xhr.statusText');
       assert.equal(xhr.response, responseBody, 'xhr.response');
       assert.equal(xhr.responseText, responseBody, 'xhr.responseText');
-      assert.equal(xhr.readyState, 4, 'readyState DONE');
+      assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
     });
 
     it('respond() should not fire upload progress events if the upload listener flag is unset', function() {
@@ -551,10 +551,10 @@ describe('MockXhr', function() {
       assert.equal(xhr.getAllResponseHeaders(), 'r-header: 123', 'Response headers');
       assert.equal(xhr.status, 201, 'xhr.status');
       assert.equal(xhr.statusText, statusText, 'xhr.statusText');
-      assert.equal(xhr.readyState, 2, 'readyState HEADERS_RECEIVED');
+      assert.equal(xhr.readyState, MockXhr.HEADERS_RECEIVED, 'readyState HEADERS_RECEIVED');
       assert.equal(xhr.response, '', 'no response yet');
       assert.equal(xhr.responseText, '', 'no response yet');
-      assert.equal(xhr.readyState, 2, 'readyState HEADERS_RECEIVED');
+      assert.equal(xhr.readyState, MockXhr.HEADERS_RECEIVED, 'readyState HEADERS_RECEIVED');
     });
 
     it('setResponseHeaders() should fire readystatechange', function() {
@@ -586,7 +586,7 @@ describe('MockXhr', function() {
         'readystatechange(3)',
         'progress(4,8,true)'
       ]);
-      assert.equal(xhr.readyState, 3, 'readyState LOADING');
+      assert.equal(xhr.readyState, MockXhr.LOADING, 'readyState LOADING');
     });
 
     it('setResponseBody() should set response state, headers and body', function() {
@@ -602,7 +602,7 @@ describe('MockXhr', function() {
       assert.equal(xhr.statusText, 'OK', 'xhr.statusText');
       assert.equal(xhr.response, responseBody, 'xhr.response');
       assert.equal(xhr.responseText, responseBody, 'xhr.responseText');
-      assert.equal(xhr.readyState, 4, 'readyState DONE');
+      assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
     });
 
     it('setResponseBody() should fire progress events', function() {
@@ -639,7 +639,7 @@ describe('MockXhr', function() {
         assert.equal(xhr.statusText, '', 'xhr.statusText');
         assert.equal(xhr.response, '', 'xhr.response');
         assert.equal(xhr.responseText, '', 'xhr.responseText');
-        assert.equal(xhr.readyState, 4, 'readyState DONE');
+        assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
       });
 
       it('with request body should fire upload events', function() {
@@ -726,7 +726,7 @@ describe('MockXhr', function() {
           assert.equal(xhr.statusText, '', 'xhr.statusText');
           assert.equal(xhr.response, '', 'xhr.response');
           assert.equal(xhr.responseText, '', 'xhr.responseText');
-          assert.equal(xhr.readyState, 4, 'readyState DONE');
+          assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
         });
 
         it('with request body should fire upload events', function() {
@@ -813,7 +813,7 @@ describe('MockXhr', function() {
           assert.equal(xhr.statusText, '', 'xhr.statusText');
           assert.equal(xhr.response, '', 'xhr.response');
           assert.equal(xhr.responseText, '', 'xhr.responseText');
-          assert.equal(xhr.readyState, 4, 'readyState DONE');
+          assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
         });
 
         it('should fire timeout event', function() {
