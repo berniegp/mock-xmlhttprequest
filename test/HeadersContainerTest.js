@@ -33,7 +33,7 @@ describe('HeadersContainer', function() {
     var headers = new HeadersContainer();
     headers.addHeader('HEADER', '1');
     headers.addHeader('header-2', 'a');
-    assert.equal(headers.getAll(), 'header: 1\r\nheader-2: a');
+    assert.equal(headers.getAll(), 'header: 1\r\nheader-2: a\r\n');
   });
 
   it('getAll() should combine headers', function() {
@@ -41,7 +41,7 @@ describe('HeadersContainer', function() {
     headers.addHeader('header', '1');
     headers.addHeader('header', '2');
     headers.addHeader('header', '3');
-    assert.equal(headers.getAll(), 'header: 1, 2, 3');
+    assert.equal(headers.getAll(), 'header: 1, 2, 3\r\n');
   });
 
   it('getAll() should sort headers', function() {
@@ -49,6 +49,6 @@ describe('HeadersContainer', function() {
     headers.addHeader('header-2', 'b');
     headers.addHeader('header-3', 'c');
     headers.addHeader('header-1', 'a');
-    assert.equal(headers.getAll(), 'header-1: a\r\nheader-2: b\r\nheader-3: c');
+    assert.equal(headers.getAll(), 'header-1: a\r\nheader-2: b\r\nheader-3: c\r\n');
   });
 });

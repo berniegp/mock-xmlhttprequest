@@ -54,10 +54,7 @@ HeadersContainer.prototype.getAll = function() {
   // Build the output with the combined header values
   var headers = '';
   for (i = 0; i < headerNames.length; i++) {
-    if (headers.length > 0) {
-      headers += '\r\n';
-    }
-    headers += headerNames[i] + ': ' + this.getHeader(headerNames[i]);
+    headers += headerNames[i] + ': ' + this.getHeader(headerNames[i]) + '\r\n';
   }
   return headers;
 };
