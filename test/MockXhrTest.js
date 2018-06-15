@@ -224,7 +224,7 @@ describe('MockXhr', function() {
   });
 
   describe('abort()', function() {
-    it('should not fire an abort event on open()-abort()', function() {
+    it('should follow the steps for open()-abort() sequence', function() {
       var xhr = new MockXhr();
       xhr.open('GET', '/url');
       var events = recordEvents(xhr);
@@ -235,7 +235,61 @@ describe('MockXhr', function() {
       assert.equal(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
     });
 
-    it('should fire progress events and an abort event on send()-abort()', function() {
+    it('should follow the steps for open()-send()-abort() sequence', function() {
+      var xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+      var events = recordEvents(xhr);
+
+      xhr.abort();
+
+      assert.deepEqual(events, [
+        'readystatechange(4)',
+        'abort(0,0,false)',
+        'loadend(0,0,false)'
+      ], 'fired events');
+      assertNetworkErrorResponse(xhr);
+      assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+    });
+
+    it('should follow the steps for open()-send()-HEADERS_RECEIVED-abort() sequence', function() {
+      var xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+      xhr.setResponseHeaders();
+      var events = recordEvents(xhr);
+
+      xhr.abort();
+
+      assert.deepEqual(events, [
+        'readystatechange(4)',
+        'abort(0,0,false)',
+        'loadend(0,0,false)'
+      ], 'fired events');
+      assertNetworkErrorResponse(xhr);
+      assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+    });
+
+    it('should follow the steps for open()-send()-LOADING-abort() sequence', function() {
+      var xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+      xhr.setResponseHeaders();
+      xhr.downloadProgress(2, 8);
+      var events = recordEvents(xhr);
+
+      xhr.abort();
+
+      assert.deepEqual(events, [
+        'readystatechange(4)',
+        'abort(0,0,false)',
+        'loadend(0,0,false)'
+      ], 'fired events');
+      assertNetworkErrorResponse(xhr);
+      assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+    });
+
+    it('should fire upload abort for send(body)-abort() sequence', function() {
       var xhr = new MockXhr();
       xhr.open('POST', '/url');
       var events = recordEvents(xhr);
@@ -252,24 +306,6 @@ describe('MockXhr', function() {
         'abort(0,0,false)',
         'loadend(0,0,false)'
       ], 'fired events');
-      assert.equal(xhr.readyState, MockXhr.UNSENT);
-    });
-
-    it('should fire progress events and an abort event on send(null)-abort()', function() {
-      var xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      var events = recordEvents(xhr);
-      xhr.send();
-
-      xhr.abort();
-
-      assert.deepEqual(events, [
-        'loadstart(0,0,false)',
-        'readystatechange(4)',
-        'abort(0,0,false)',
-        'loadend(0,0,false)'
-      ], 'fired events');
-      assert.equal(xhr.readyState, MockXhr.UNSENT);
     });
 
     it('should handle nested open() during abort()', function() {
@@ -289,7 +325,6 @@ describe('MockXhr', function() {
       xhr.abort();
 
       assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
-      assert.equal(xhr.readyState, MockXhr.OPENED);
     });
 
     it('should handle nested open()-send() during abort()', function() {
@@ -311,7 +346,6 @@ describe('MockXhr', function() {
       xhr.abort();
 
       assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
-      assert.equal(xhr.readyState, MockXhr.OPENED);
     });
   });
 
