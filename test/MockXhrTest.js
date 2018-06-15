@@ -289,6 +289,20 @@ describe('MockXhr', function() {
       assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
     });
 
+    it('should follow the steps for open()-send()-DONE-abort() sequence', function() {
+      var xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+      xhr.respond();
+
+      var events = recordEvents(xhr);
+      xhr.abort();
+
+      assert.deepEqual(events, [], 'no fired events');
+      assertNetworkErrorResponse(xhr);
+      assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+    });
+
     it('should fire upload abort for send(body)-abort() sequence', function() {
       var xhr = new MockXhr();
       xhr.open('POST', '/url');

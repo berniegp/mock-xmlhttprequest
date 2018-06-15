@@ -194,6 +194,7 @@ MockXhr.prototype.abort = function() {
   if (this._readyState === MockXhr.DONE) {
     // No readystatechange event is dispatched.
     this._readyState = MockXhr.UNSENT;
+    this._response = this._networkErrorResponse();
   }
 };
 
