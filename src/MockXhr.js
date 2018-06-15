@@ -162,6 +162,9 @@ MockXhr.prototype.send = function(body) {
   }
 
   // Other interactions are done through the mock's response methods
+  if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
+    return;
+  }
 
   // Hook for XMLHttpRequest.send(). Execute in an empty callstack
   var xhr = this;

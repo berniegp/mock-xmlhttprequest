@@ -221,6 +221,32 @@ describe('MockXhr', function() {
 
       assert.deepEqual(events, ['loadstart(0,0,false)', 'upload.loadstart(0,4,true)'], 'fired events');
     });
+
+    it('should handle re-open() during loadstart event handler', function() {
+      try {
+        var xhr = new MockXhr();
+
+        // Add onSend callbacks
+        xhr.onSend = function() {
+          assert.isOk(false, 'onSend() should not be called for aborted send()');
+        };
+        MockXhr.onSend = function() {
+          assert.isOk(false, 'onSend() should not be called for aborted send()');
+        };
+
+        // Aborted send() during the loadstart event handler
+        xhr.open('GET', '/url');
+        xhr.addEventListener('loadstart', function() {
+          // Open a new request
+          xhr.open('GET', '/url');
+        });
+        xhr.send();
+
+        assert.equal(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
+      } finally {
+        delete MockXhr.onSend;
+      }
+    });
   });
 
   describe('abort()', function() {
@@ -320,6 +346,32 @@ describe('MockXhr', function() {
         'abort(0,0,false)',
         'loadend(0,0,false)'
       ], 'fired events');
+    });
+
+    it('should handle abort() during loadstart event handler', function() {
+      try {
+        var xhr = new MockXhr();
+
+        // Add onSend callbacks
+        xhr.onSend = function() {
+          assert.isOk(false, 'onSend() should not be called for aborted send()');
+        };
+        MockXhr.onSend = function() {
+          assert.isOk(false, 'onSend() should not be called for aborted send()');
+        };
+
+        // Aborted send() during the loadstart event handler
+        xhr.open('GET', '/url');
+        xhr.addEventListener('loadstart', function() {
+          // Open a new request
+          xhr.abort();
+        });
+        xhr.send();
+
+        assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+      } finally {
+        delete MockXhr.onSend;
+      }
     });
 
     it('should handle nested open() during abort()', function() {
