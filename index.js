@@ -1,7 +1,7 @@
 /**
  * XMLHttpRequest mock for testing.
  *
- * Based on https://xhr.spec.whatwg.org version '24 October 2016'
+ * Based on https://xhr.spec.whatwg.org version '15 June 2018'
  */
 
 'use strict';
