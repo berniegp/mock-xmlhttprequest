@@ -627,6 +627,7 @@ function normalizeMethodName(method) {
   return method;
 }
 
+// Status code reason phrases from RFC 7231 §6.1, RFC 4918, RFC 5842, RFC 6585 and RFC 7538
 MockXhr.statusCodes = {
   100: 'Continue',
   101: 'Switching Protocols',
@@ -636,40 +637,50 @@ MockXhr.statusCodes = {
   203: 'Non-Authoritative Information',
   204: 'No Content',
   205: 'Reset Content',
-  206: 'Partial Content',
-  207: 'Multi-Status',
-  300: 'Multiple Choice',
+  206: 'Partial Content', // RFC 7233
+  207: 'Multi-Status', // RFC 4918
+  208: 'Already Reported', // RFC 5842
+  300: 'Multiple Choices',
   301: 'Moved Permanently',
   302: 'Found',
   303: 'See Other',
-  304: 'Not Modified',
+  304: 'Not Modified', // RFC 7232
   305: 'Use Proxy',
   307: 'Temporary Redirect',
+  308: 'Permanent Redirect', // RFC 7538
   400: 'Bad Request',
-  401: 'Unauthorized',
+  401: 'Unauthorized', // RFC 7235
   402: 'Payment Required',
   403: 'Forbidden',
   404: 'Not Found',
   405: 'Method Not Allowed',
   406: 'Not Acceptable',
-  407: 'Proxy Authentication Required',
+  407: 'Proxy Authentication Required', // RFC 7235
   408: 'Request Timeout',
   409: 'Conflict',
   410: 'Gone',
   411: 'Length Required',
-  412: 'Precondition Failed',
-  413: 'Request Entity Too Large',
-  414: 'Request-URI Too Long',
+  412: 'Precondition Failed', // RFC 7232
+  413: 'Payload Too Large',
+  414: 'URI Too Long',
   415: 'Unsupported Media Type',
-  416: 'Requested Range Not Satisfiable',
+  416: 'Range Not Satisfiable', // RFC 7233
   417: 'Expectation Failed',
-  422: 'Unprocessable Entity',
+  422: 'Unprocessable Entity', // RFC 4918
+  423: 'Locked', // RFC 4918
+  424: 'Failed Dependency', // RFC 4918
+  426: 'Upgrade Required',
+  428: 'Precondition Required', // RFC 6585
+  429: 'Too Many Requests', // RFC 6585
+  431: 'Request Header Fields Too Large', // RFC 6585
   500: 'Internal Server Error',
   501: 'Not Implemented',
   502: 'Bad Gateway',
   503: 'Service Unavailable',
   504: 'Gateway Timeout',
   505: 'HTTP Version Not Supported',
+  507: 'Insufficient Storage', // RFC 4918
+  511: 'Network Authentication Required', // RFC 6585
 };
 
 module.exports = MockXhr;
