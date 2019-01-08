@@ -3,7 +3,7 @@
 # mock-xmlhttprequest
 XMLHttpRequest mock for testing
 
-Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), version '15 June 2018'
+Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), version '28 November 2018'
 
 ## Installation
 via [npm (node package manager)](https://github.com/npm/npm)
