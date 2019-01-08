@@ -22,7 +22,7 @@ class EventTarget {
   }
 
   /**
-   * @return {boolean} whether any event listener is registered
+   * @returns {boolean} whether any event listener is registered
    */
   hasListeners() {
     return EventTarget.events.some((event) => {

@@ -25,7 +25,7 @@ class HeadersContainer {
    * Get header value. Header names are case-insensitive.
    *
    * @param  {string} name header name
-   * @return {string|null} header value or null
+   * @returns {string|null} header value or null
    */
   getHeader(name) {
     const value = this._headers.get(name.toLowerCase());
@@ -35,7 +35,7 @@ class HeadersContainer {
   /**
    * Get all headers as a string. Each header is on its own line.
    *
-   * @return {string} concatenated headers
+   * @returns {string} concatenated headers
    */
   getAll() {
     // Sort the header names. It's not mandated by RFC 7230 but it makes assertion testing easier

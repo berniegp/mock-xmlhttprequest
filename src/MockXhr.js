@@ -214,7 +214,7 @@ class MockXhr extends EventTarget {
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getresponseheader
    *
    * @param {string} name header name
-   * @return {string} header value
+   * @returns {string} header value
    */
   getResponseHeader(name) {
     return this._response.headers.getHeader(name);
@@ -224,7 +224,7 @@ class MockXhr extends EventTarget {
    * Get all response headers as a string.
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getallresponseheaders
    *
-   * @return {string} concatenated headers
+   * @returns {string} concatenated headers
    */
   getAllResponseHeaders() {
     return this._response.headers.getAll();
@@ -498,7 +498,7 @@ class MockXhr extends EventTarget {
    * self-contained unit tests since they don't need to remove registered hook
    * functions.
    *
-   * @return {MockXhr} Local MockXhr instance
+   * @returns {MockXhr} Local MockXhr instance
    */
   static newMockXhr() {
     return class LocalMockXhr extends MockXhr {
