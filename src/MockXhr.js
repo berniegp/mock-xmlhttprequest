@@ -1,6 +1,7 @@
 const Event = require('./Event');
 const EventTarget = require('./EventTarget');
 const HeadersContainer = require('./HeadersContainer');
+const Utils = require('./Utils');
 
 function throwError(type, text = '') {
   const exception = new Error(text);
@@ -52,10 +53,10 @@ class MockXhr extends EventTarget {
    * @param {string} url request url
    */
   open(method, url) {
-    if (this._methodForbidden(method)) {
+    if (Utils.isRequestMethodForbidden(method)) {
       throwError('SecurityError', `Method "${method}" forbidden.`);
     }
-    method = normalizeMethodName(method);
+    method = Utils.normalizeHTTPMethodName(method);
     // Skip parsing the url and setting the username and password
 
     this._terminateRequest();
@@ -88,7 +89,7 @@ class MockXhr extends EventTarget {
       throw new SyntaxError();
     }
 
-    if (!isForbiddenRequestHeader(name)) {
+    if (!Utils.isRequestHeaderForbidden(name)) {
       // Normalize value
       value = value.trim();
       this.requestHeaders.addHeader(name, value);
@@ -411,7 +412,7 @@ class MockXhr extends EventTarget {
       this._requestEndOfBody();
     }
     status = typeof status === 'number' ? status : 200;
-    const statusMessage = statusText !== undefined ? statusText : MockXhr.statusCodes[status];
+    const statusMessage = statusText !== undefined ? statusText : Utils.getStatusText(status);
     this._processResponse({
       status,
       statusMessage,
@@ -492,10 +493,6 @@ class MockXhr extends EventTarget {
     this._processResponse(this._networkErrorResponse());
   }
 
-  _methodForbidden(method) {
-    return /^(CONNECT|TRACE|TRACK)$/i.test(method);
-  }
-
   /**
    * Create a new "local" MockXhr instance. This makes it easier to have
    * self-contained unit tests since they don't need to remove registered hook
@@ -565,122 +562,5 @@ MockXhr.OPENED = 1;
 MockXhr.HEADERS_RECEIVED = 2;
 MockXhr.LOADING = 3;
 MockXhr.DONE = 4;
-
-/////////////
-// Utility //
-/////////////
-
-// Disallowed request headers for setRequestHeader()
-// See https://fetch.spec.whatwg.org/#forbidden-header-name
-const forbiddenHeaders = [
-  'Accept-Charset',
-  'Accept-Encoding',
-  'Access-Control-Request-Headers',
-  'Access-Control-Request-Method',
-  'Connection',
-  'Content-Length',
-  'Cookie',
-  'Cookie2',
-  'Date',
-  'DNT',
-  'Expect',
-  'Host',
-  'Keep-Alive',
-  'Origin',
-  'Referer',
-  'TE',
-  'Trailer',
-  'Transfer-Encoding',
-  'Upgrade',
-  'Via',
-];
-const forbiddenHeaderRegEx = new RegExp(`^(${forbiddenHeaders.join('|')}|Proxy-.*|Sec-.*)$`, 'i');
-
-/**
- * @param {string} name header name
- * @return {boolean} whether the request header name is forbidden
- */
-function isForbiddenRequestHeader(name) {
-  return forbiddenHeaderRegEx.test(name);
-}
-
-// Normalize method names as described in open()
-// See https://fetch.spec.whatwg.org/#concept-method-normalize
-const upperCaseMethods = [
-  'DELETE',
-  'GET',
-  'HEAD',
-  'OPTIONS',
-  'POST',
-  'PUT',
-];
-const upperCaseMethodsRegEx = new RegExp(`^(${upperCaseMethods.join('|')})$`, 'i');
-
-/**
- * @param {string} method method name
- * @return {string} normalized method name
- */
-function normalizeMethodName(method) {
-  if (upperCaseMethodsRegEx.test(method)) {
-    method = method.toUpperCase();
-  }
-  return method;
-}
-
-// Status code reason phrases from RFC 7231 §6.1, RFC 4918, RFC 5842, RFC 6585 and RFC 7538
-MockXhr.statusCodes = {
-  100: 'Continue',
-  101: 'Switching Protocols',
-  200: 'OK',
-  201: 'Created',
-  202: 'Accepted',
-  203: 'Non-Authoritative Information',
-  204: 'No Content',
-  205: 'Reset Content',
-  206: 'Partial Content', // RFC 7233
-  207: 'Multi-Status', // RFC 4918
-  208: 'Already Reported', // RFC 5842
-  300: 'Multiple Choices',
-  301: 'Moved Permanently',
-  302: 'Found',
-  303: 'See Other',
-  304: 'Not Modified', // RFC 7232
-  305: 'Use Proxy',
-  307: 'Temporary Redirect',
-  308: 'Permanent Redirect', // RFC 7538
-  400: 'Bad Request',
-  401: 'Unauthorized', // RFC 7235
-  402: 'Payment Required',
-  403: 'Forbidden',
-  404: 'Not Found',
-  405: 'Method Not Allowed',
-  406: 'Not Acceptable',
-  407: 'Proxy Authentication Required', // RFC 7235
-  408: 'Request Timeout',
-  409: 'Conflict',
-  410: 'Gone',
-  411: 'Length Required',
-  412: 'Precondition Failed', // RFC 7232
-  413: 'Payload Too Large',
-  414: 'URI Too Long',
-  415: 'Unsupported Media Type',
-  416: 'Range Not Satisfiable', // RFC 7233
-  417: 'Expectation Failed',
-  422: 'Unprocessable Entity', // RFC 4918
-  423: 'Locked', // RFC 4918
-  424: 'Failed Dependency', // RFC 4918
-  426: 'Upgrade Required',
-  428: 'Precondition Required', // RFC 6585
-  429: 'Too Many Requests', // RFC 6585
-  431: 'Request Header Fields Too Large', // RFC 6585
-  500: 'Internal Server Error',
-  501: 'Not Implemented',
-  502: 'Bad Gateway',
-  503: 'Service Unavailable',
-  504: 'Gateway Timeout',
-  505: 'HTTP Version Not Supported',
-  507: 'Insufficient Storage', // RFC 4918
-  511: 'Network Authentication Required', // RFC 6585
-};
 
 module.exports = MockXhr;
