@@ -1,20 +1,79 @@
-'use strict';
-
 /**
- * Contructor for EventTarget which can dispatch events.
+ * An EventTarget object represents a target to which an event can be dispatched when something has
+ * occurred.
+ *
+ * Based on https://dom.spec.whatwg.org/#interface-eventtarget
  *
  * Limitations:
  * - No removeEventListener() support
  *   https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener
  * - dispatchEvent() does not return a result
  *   https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent
- *
- * @param {object} eventContext "this" in event handlers
  */
-var EventTarget = function(eventContext) {
-  this._eventContext = eventContext || this;
-  this._eventListeners = {};
-};
+class EventTarget {
+  /**
+   * Contructor
+   *
+   * @param {*} eventContext optional "this" for event handlers
+   */
+  constructor(eventContext = this) {
+    this._eventContext = eventContext;
+    this._eventListeners = {};
+  }
+
+  /**
+   * @return {boolean} whether any event listener is registered
+   */
+  hasListeners() {
+    return EventTarget.events.some((event) => {
+      return this._eventListeners[event] || this[`on${event}`];
+    });
+  }
+
+  /**
+   * Add an event listener.
+   *
+   * @param {string} type event type ('load', 'abort', etc)
+   * @param {function} callback listener callback function
+   */
+  addEventListener(type, callback) {
+    if (callback) {
+      this._eventListeners[type] = this._eventListeners[type] || [];
+      this._eventListeners[type].push(callback);
+    }
+  }
+
+  /**
+   * Calls all the listeners for the event.
+   *
+   * @param {object} event event
+   */
+  dispatchEvent(event) {
+    // Only the event listeners registered at this point should be called. Storing them here avoids
+    // problems with listeners that modify the registered listeners.
+    const listeners = [];
+    if (this._eventListeners[event.type]) {
+      listeners.push(...this._eventListeners[event.type]);
+    }
+
+    // Handle event listeners added as object properties (e.g. obj.onload = ...)
+    if (EventTarget.events.includes(event.type)) {
+      const listener = this[`on${event.type}`];
+      if (listener) {
+        listeners.push(listener);
+      }
+    }
+
+    // Call the listeners
+    listeners.forEach((listener) => {
+      if (typeof listener === 'function') {
+        listener.call(this._eventContext, event);
+      } else {
+        listener.handleEvent();
+      }
+    });
+  }
+}
 
 /**
  * XMLHttpRequest events
@@ -28,57 +87,5 @@ EventTarget.events = [
   'timeout',
   'loadend',
 ];
-
-/**
- * @param  {string}  type event type ('load', 'abort', etc)
- * @return {boolean}      whether listeners exist for the event type
- */
-EventTarget.prototype.hasListeners = function() {
-  for (var i = 0; i < EventTarget.events.length; i++) {
-    var event = EventTarget.events[i];
-    if (this._eventListeners[event] || this['on' + event]) {
-      return true;
-    }
-  }
-  return false;
-};
-
-EventTarget.prototype.addEventListener = function(type, callback) {
-  if (callback) {
-    this._eventListeners[type] = this._eventListeners[type] || [];
-    this._eventListeners[type].push(callback);
-  }
-};
-
-/**
- * Calls all the listeners for the event.
- *
- * @param  {object} event event
- */
-EventTarget.prototype.dispatchEvent = function(event) {
-  var listeners = [];
-  if (this._eventListeners[event.type]) {
-    // This avoids event listeners added after this point from being run.
-    for (var i = 0; i < this._eventListeners[event.type].length; i++) {
-      listeners.push(this._eventListeners[event.type][i]);
-    }
-  }
-
-  // Handle event listeners added as object properties (e.g. obj.onload = ...)
-  if (EventTarget.events.indexOf(event.type) !== -1) {
-    var handler = this['on' + event.type];
-    if (handler) {
-      listeners.push(handler);
-    }
-  }
-
-  for (i = 0; i < listeners.length; i++) {
-    if (typeof listeners[i] === 'function') {
-      listeners[i].call(this._eventContext, event);
-    } else {
-      listeners[i].handleEvent();
-    }
-  }
-};
 
 module.exports = EventTarget;

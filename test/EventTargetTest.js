@@ -1,10 +1,9 @@
-var assert = require('chai').assert;
+const { assert } = require('chai');
 
-var EventTarget = require('../src/EventTarget');
+const EventTarget = require('../src/EventTarget');
 
-describe('EventTarget', function() {
-
-  var xhrEvents = [
+describe('EventTarget', () => {
+  const xhrEvents = [
     'loadstart',
     'progress',
     'abort',
@@ -13,21 +12,21 @@ describe('EventTarget', function() {
     'timeout',
     'loadend',
   ];
-  describe('dispatchEvent()', function() {
 
-    xhrEvents.forEach(function(eventName) {
-      it('should support the XMLHttpRequest event ' + eventName, function() {
-        var eventTarget = new EventTarget();
-        var event = { type: eventName };
+  describe('dispatchEvent()', () => {
+    xhrEvents.forEach((eventName) => {
+      it(`should support the XMLHttpRequest event ${eventName}`, () => {
+        const eventTarget = new EventTarget();
+        const event = { type: eventName };
 
-        var propertyHandlerCalled = false;
-        eventTarget['on' + eventName] = function(e) {
+        let propertyHandlerCalled = false;
+        eventTarget[`on${eventName}`] = function onEventListener(e) {
           propertyHandlerCalled = true;
           assert.equal(this, eventTarget);
           assert.equal(e, event, 'event parameter');
         };
-        var listenerCalled = false;
-        eventTarget.addEventListener(eventName, function(e) {
+        let listenerCalled = false;
+        eventTarget.addEventListener(eventName, function propertyEventListener(e) {
           listenerCalled = true;
           assert.equal(this, eventTarget);
           assert.equal(e, event, 'event parameter');
@@ -39,47 +38,43 @@ describe('EventTarget', function() {
       });
     });
 
-    it('should not call listeners added in callback', function() {
-      var eventTarget = new EventTarget();
+    it('should not call listeners added in callback', () => {
+      const eventTarget = new EventTarget();
 
-      eventTarget.onerror = function() {
-        eventTarget.addEventListener('error', function() {
+      eventTarget.onerror = () => {
+        eventTarget.addEventListener('error', () => {
           assert.fail('listened added in callback should not be called');
         });
       };
       eventTarget.dispatchEvent({ type: 'error' });
     });
 
-    it('should call handleEvent() method on listener', function() {
-      var eventTarget = new EventTarget();
-      var called = false;
-      eventTarget.onerror = {
-        handleEvent: function() {
-          called = true;
-        }
-      };
+    it('should call handleEvent() method on listener', () => {
+      const eventTarget = new EventTarget();
+      let called = false;
+      eventTarget.onerror = { handleEvent: () => { called = true; } };
       eventTarget.dispatchEvent({ type: 'error' });
       assert.isOk(called, 'handleEvent() called');
     });
 
-    it('should have XMLHttpRequest as context for upload events', function() {
-      var context = {};
-      var eventTarget = new EventTarget(context);
-      eventTarget.onprogress = function() {
+    it('should use custom context as "this" for upload events', () => {
+      const context = {};
+      const eventTarget = new EventTarget(context);
+      eventTarget.onprogress = function listener() {
         assert.equal(this, context, 'custom context');
       };
       eventTarget.dispatchEvent({ type: 'progress' });
     });
   });
 
-  it('hasListeners()', function() {
-    var eventTarget = new EventTarget();
+  it('hasListeners()', () => {
+    const eventTarget = new EventTarget();
     assert.notOk(eventTarget.hasListeners());
-    eventTarget.onerror = function() {};
+    eventTarget.onerror = () => {};
     assert.isOk(eventTarget.hasListeners());
     delete eventTarget.onerror;
     assert.notOk(eventTarget.hasListeners());
-    eventTarget.addEventListener('error', function() {});
+    eventTarget.addEventListener('error', () => {});
     assert.isOk(eventTarget.hasListeners());
   });
 });

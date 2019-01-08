@@ -1,31 +1,43 @@
 module.exports = {
-  root: true,
-  extends: ['eslint:recommended'],
-  env: {
-    node: true,
-  },
-  rules: {
-    ////////////////////
-    // Best practices //
-    ////////////////////
+    root: true,
+    extends: "airbnb-base",
+    env: {
+        node: true,
+    },
+    rules: {
+        // Allow to use braces if desired
+        'arrow-body-style': 0,
 
-    // Prohibit use of == and != in favor of === and !==.
-    eqeqeq: ['error', 'always', {null: 'ignore'}],
-    // Prohibit use of a variable before it is defined.
-    'no-use-before-define': ['error', 'nofunc'],
+        // Generally makes sense, but too strict to enforce
+        'class-methods-use-this': 0,
 
-    ///////////
-    // Style //
-    ///////////
+        // Trailing commas on function arguments is just silly
+        'comma-dangle': ['error', {
+            arrays: 'always-multiline',
+            objects: 'always-multiline',
+            imports: 'always-multiline',
+            exports: 'always-multiline',
+            functions: 'never',
+        }],
 
-    camelcase: ['error', {properties: 'always'}],
-    indent: ['error', 2],
-    'new-cap': ['error', {
-      newIsCap: true,
-      capIsNew: false,
-    }],
-    'no-trailing-spaces': ['error'],
-    quotes: ['error', 'single'],
-    semi: ['error', 'always'],
-  },
+        // Saving 2 characters is not worth the potential errors
+        'curly': 'error',
+
+        // Finding good names is hard so allow reuse
+        'no-param-reassign': 0,
+
+        // Increment with += 1 is just too long to type
+        'no-plusplus': 0,
+
+        // This is still the best way to express the private api intent
+        'no-underscore-dangle': ['error', { 'allowAfterThis': true }],
+
+        // Allow functions to be used before defined because:
+        // 1) they are hoisted;
+        // 2) it allows code ordering that moves helper functions to the bottom.
+        'no-use-before-define': ['error', { functions: false, classes: true, variables: true }],
+
+        // To allow comment blocks that are actually section headers
+        'spaced-comment': ["error", "always", { "exceptions": ["/"] }],
+    }
 };
