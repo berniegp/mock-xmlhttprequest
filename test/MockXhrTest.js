@@ -1,9 +1,9 @@
-var assert = require('chai').assert;
+const { assert } = require('chai');
 
-var MockXhr = require('../src/MockXhr');
+const MockXhr = require('../src/MockXhr');
 
-describe('MockXhr', function() {
-  var xhrEvents = [
+describe('MockXhr', () => {
+  const xhrEvents = [
     'loadstart',
     'progress',
     'abort',
@@ -15,21 +15,18 @@ describe('MockXhr', function() {
 
   // Returns an array which contains all events fired by the xhr
   function recordEvents(xhr) {
-    var events = [];
-    var recordEvent = function(e, prefix) {
+    const events = [];
+    const recordEvent = (e, prefix) => {
       prefix = prefix ? 'upload.' : '';
-      events.push(prefix + e.type + '(' + e.loaded + ',' + e.total +
-        ',' + e.lengthComputable +')');
+      events.push(`${prefix}${e.type}(${e.loaded},${e.total},${e.lengthComputable})`);
     };
-    var recordUploadEvent = function(event) {
-      recordEvent(event, 'upload');
-    };
-    for (var i = 0; i < xhrEvents.length; i++) {
-      xhr.addEventListener(xhrEvents[i], recordEvent);
-      xhr.upload.addEventListener(xhrEvents[i], recordUploadEvent);
-    }
-    xhr.addEventListener('readystatechange', function() {
-      events.push('readystatechange(' + this.readyState + ')');
+    const recordUploadEvent = (event) => { recordEvent(event, 'upload'); };
+    xhrEvents.forEach((event) => {
+      xhr.addEventListener(event, recordEvent);
+      xhr.upload.addEventListener(event, recordUploadEvent);
+    });
+    xhr.addEventListener('readystatechange', function readystatechange() {
+      events.push(`readystatechange(${this.readyState})`);
     });
     return events;
   }
@@ -43,7 +40,7 @@ describe('MockXhr', function() {
     assert.equal(xhr.responseText, '', 'empty xhr.responseText');
   }
 
-  it('should have state constants', function() {
+  it('should have state constants', () => {
     assert.equal(MockXhr.UNSENT, 0);
     assert.equal(MockXhr.OPENED, 1);
     assert.equal(MockXhr.HEADERS_RECEIVED, 2);
@@ -51,29 +48,29 @@ describe('MockXhr', function() {
     assert.equal(MockXhr.DONE, 4);
   });
 
-  it('should have supported attributes', function() {
-    var xhr = new MockXhr();
+  it('should have supported attributes', () => {
+    const xhr = new MockXhr();
 
     assert.isOk(xhr.upload);
     assert.equal(xhr.readyState, MockXhr.UNSENT);
     assertNetworkErrorResponse(xhr);
   });
 
-  var readOnlyAttributes = [
-    'upload', 'readyState', 'status', 'statusText', 'response', 'responseText'
+  const readOnlyAttributes = [
+    'upload', 'readyState', 'status', 'statusText', 'response', 'responseText',
   ];
-  readOnlyAttributes.forEach(function(attribute) {
-    it(attribute + ' should be readonly', function() {
-      var xhr = new MockXhr();
-      var initial = xhr[attribute];
+  readOnlyAttributes.forEach((attribute) => {
+    it(`${attribute} should be readonly`, () => {
+      const xhr = new MockXhr();
+      const initial = xhr[attribute];
       xhr[attribute] = 'testing';
       assert.equal(xhr[attribute], initial);
     });
   });
 
-  describe('open()', function() {
-    it('should record url and method', function() {
-      var xhr = new MockXhr();
+  describe('open()', () => {
+    it('should record url and method', () => {
+      const xhr = new MockXhr();
 
       xhr.open('get', '/url');
 
@@ -81,18 +78,18 @@ describe('MockXhr', function() {
       assert.equal(xhr.url, '/url');
     });
 
-    it('should change state', function() {
-      var xhr = new MockXhr();
-      var events = recordEvents(xhr);
+    it('should change state', () => {
+      const xhr = new MockXhr();
+      const events = recordEvents(xhr);
 
       xhr.open('get', '/url');
 
       assert.deepEqual(events, ['readystatechange(1)'], 'readystatechange fired');
     });
 
-    it('should be re-entrant', function() {
-      var xhr = new MockXhr();
-      var events = recordEvents(xhr);
+    it('should be re-entrant', () => {
+      const xhr = new MockXhr();
+      const events = recordEvents(xhr);
 
       xhr.open('get', '/url');
       xhr.open('post', '/url2');
@@ -103,12 +100,12 @@ describe('MockXhr', function() {
       assert.deepEqual(events, ['readystatechange(1)'], 'readystatechange fired');
     });
 
-    it('should reject forbidden methods', function() {
-      var xhr = new MockXhr();
-      var events = recordEvents(xhr);
+    it('should reject forbidden methods', () => {
+      const xhr = new MockXhr();
+      const events = recordEvents(xhr);
 
-      var tryMethod = function(method) {
-        return function() { xhr.open(method, '/url'); };
+      const tryMethod = (method) => {
+        return () => { xhr.open(method, '/url'); };
       };
       assert.throws(tryMethod('CONNECT'), null, null, 'forbidden method throws');
       assert.throws(tryMethod('TRACE'), null, null, 'forbidden method throws');
@@ -117,22 +114,22 @@ describe('MockXhr', function() {
     });
   });
 
-  describe('setRequestHeader()', function() {
-    it('should record header value', function() {
-      var xhr = new MockXhr();
+  describe('setRequestHeader()', () => {
+    it('should record header value', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
 
       xhr.setRequestHeader('Head', '1');
       assert.equal(xhr.requestHeaders.getHeader('HEAD'), '1', 'header is case-insensitive');
     });
 
-    it('should throw InvalidStateError if not opened', function() {
-      assert.throws(function() {
+    it('should throw InvalidStateError if not opened', () => {
+      assert.throws(() => {
         new MockXhr().setRequestHeader('Head', '1');
       });
     });
 
-    var forbiddenHeaders = [
+    const forbiddenHeaders = [
       'Accept-Charset',
       'Accept-Encoding',
       'Access-Control-Request-Headers',
@@ -154,9 +151,9 @@ describe('MockXhr', function() {
       'Upgrade',
       'Via',
     ];
-    forbiddenHeaders.forEach(function(header) {
-      it('should reject forbidden header ' + header, function() {
-        var xhr = new MockXhr();
+    forbiddenHeaders.forEach((header) => {
+      it(`should reject forbidden header ${header}`, () => {
+        const xhr = new MockXhr();
         xhr.open('GET', '/url');
         xhr.setRequestHeader(header, '1');
         assert.equal(xhr.requestHeaders.getHeader(header), null,
@@ -165,11 +162,11 @@ describe('MockXhr', function() {
     });
   });
 
-  describe('send()', function() {
-    it('should record the request body', function() {
-      var xhr = new MockXhr();
+  describe('send()', () => {
+    it('should record the request body', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
-      var body = {
+      const body = {
         body: 'body',
       };
 
@@ -178,8 +175,8 @@ describe('MockXhr', function() {
       assert.equal(xhr.body, body, 'Recorded request body');
     });
 
-    it('should set Content-Type for string body', function() {
-      var xhr = new MockXhr();
+    it('should set Content-Type for string body', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
 
       xhr.send('body');
@@ -188,10 +185,10 @@ describe('MockXhr', function() {
         'text/plain;charset=UTF-8', 'Content-Type set');
     });
 
-    it('should use body mime type in request header', function() {
-      var xhr = new MockXhr();
+    it('should use body mime type in request header', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
-      var body = {
+      const body = {
         type: 'image/jpeg',
       };
 
@@ -201,8 +198,8 @@ describe('MockXhr', function() {
         'Content-Type set');
     });
 
-    it('should not set Content-Type for null body', function() {
-      var xhr = new MockXhr();
+    it('should not set Content-Type for null body', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
 
       xhr.send();
@@ -212,31 +209,31 @@ describe('MockXhr', function() {
         'Content-Type not set');
     });
 
-    it('should fire loadstart events', function() {
-      var xhr = new MockXhr();
+    it('should fire loadstart events', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.send('body');
 
       assert.deepEqual(events, ['loadstart(0,0,false)', 'upload.loadstart(0,4,true)'], 'fired events');
     });
 
-    it('should handle re-open() during loadstart event handler', function() {
+    it('should handle re-open() during loadstart event handler', () => {
       try {
-        var xhr = new MockXhr();
+        const xhr = new MockXhr();
 
         // Add onSend callbacks
-        xhr.onSend = function() {
+        xhr.onSend = () => {
           assert.isOk(false, 'onSend() should not be called for aborted send()');
         };
-        MockXhr.onSend = function() {
+        MockXhr.onSend = () => {
           assert.isOk(false, 'onSend() should not be called for aborted send()');
         };
 
         // Aborted send() during the loadstart event handler
         xhr.open('GET', '/url');
-        xhr.addEventListener('loadstart', function() {
+        xhr.addEventListener('loadstart', () => {
           // Open a new request
           xhr.open('GET', '/url');
         });
@@ -249,11 +246,11 @@ describe('MockXhr', function() {
     });
   });
 
-  describe('abort()', function() {
-    it('should follow the steps for open()-abort() sequence', function() {
-      var xhr = new MockXhr();
+  describe('abort()', () => {
+    it('should follow the steps for open()-abort() sequence', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.abort();
 
@@ -261,67 +258,67 @@ describe('MockXhr', function() {
       assert.equal(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
     });
 
-    it('should follow the steps for open()-send()-abort() sequence', function() {
-      var xhr = new MockXhr();
+    it('should follow the steps for open()-send()-abort() sequence', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.abort();
 
       assert.deepEqual(events, [
         'readystatechange(4)',
         'abort(0,0,false)',
-        'loadend(0,0,false)'
+        'loadend(0,0,false)',
       ], 'fired events');
       assertNetworkErrorResponse(xhr);
       assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
     });
 
-    it('should follow the steps for open()-send()-HEADERS_RECEIVED-abort() sequence', function() {
-      var xhr = new MockXhr();
+    it('should follow the steps for open()-send()-HEADERS_RECEIVED-abort() sequence', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
       xhr.setResponseHeaders();
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.abort();
 
       assert.deepEqual(events, [
         'readystatechange(4)',
         'abort(0,0,false)',
-        'loadend(0,0,false)'
+        'loadend(0,0,false)',
       ], 'fired events');
       assertNetworkErrorResponse(xhr);
       assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
     });
 
-    it('should follow the steps for open()-send()-LOADING-abort() sequence', function() {
-      var xhr = new MockXhr();
+    it('should follow the steps for open()-send()-LOADING-abort() sequence', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
       xhr.setResponseHeaders();
       xhr.downloadProgress(2, 8);
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.abort();
 
       assert.deepEqual(events, [
         'readystatechange(4)',
         'abort(0,0,false)',
-        'loadend(0,0,false)'
+        'loadend(0,0,false)',
       ], 'fired events');
       assertNetworkErrorResponse(xhr);
       assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
     });
 
-    it('should follow the steps for open()-send()-DONE-abort() sequence', function() {
-      var xhr = new MockXhr();
+    it('should follow the steps for open()-send()-DONE-abort() sequence', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
       xhr.respond();
 
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
       xhr.abort();
 
       assert.deepEqual(events, [], 'no fired events');
@@ -329,10 +326,10 @@ describe('MockXhr', function() {
       assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
     });
 
-    it('should fire upload abort for send(body)-abort() sequence', function() {
-      var xhr = new MockXhr();
+    it('should fire upload abort for send(body)-abort() sequence', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
       xhr.send('body');
 
       xhr.abort();
@@ -344,25 +341,25 @@ describe('MockXhr', function() {
         'upload.abort(0,0,false)',
         'upload.loadend(0,0,false)',
         'abort(0,0,false)',
-        'loadend(0,0,false)'
+        'loadend(0,0,false)',
       ], 'fired events');
     });
 
-    it('should handle abort() during loadstart event handler', function() {
+    it('should handle abort() during loadstart event handler', () => {
       try {
-        var xhr = new MockXhr();
+        const xhr = new MockXhr();
 
         // Add onSend callbacks
-        xhr.onSend = function() {
+        xhr.onSend = () => {
           assert.isOk(false, 'onSend() should not be called for aborted send()');
         };
-        MockXhr.onSend = function() {
+        MockXhr.onSend = () => {
           assert.isOk(false, 'onSend() should not be called for aborted send()');
         };
 
         // Aborted send() during the loadstart event handler
         xhr.open('GET', '/url');
-        xhr.addEventListener('loadstart', function() {
+        xhr.addEventListener('loadstart', () => {
           // Open a new request
           xhr.abort();
         });
@@ -374,11 +371,11 @@ describe('MockXhr', function() {
       }
     });
 
-    it('should handle nested open() during abort()', function() {
-      var xhr = new MockXhr();
-      var states = [];
-      var abortFlag = false;
-      xhr.onreadystatechange = function() {
+    it('should handle nested open() during abort()', () => {
+      const xhr = new MockXhr();
+      const states = [];
+      let abortFlag = false;
+      xhr.onreadystatechange = () => {
         states.push(xhr.readyState);
         if (abortFlag) {
           xhr.open('GET', '/url');
@@ -393,14 +390,14 @@ describe('MockXhr', function() {
       assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
     });
 
-    it('should handle nested open()-send() during abort()', function() {
-      var xhr = new MockXhr();
-      var states = [];
-      var abortFlag = false;
-      xhr.onreadystatechange = function() {
+    it('should handle nested open()-send() during abort()', () => {
+      const xhr = new MockXhr();
+      const states = [];
+      let abortFlag = false;
+      xhr.onreadystatechange = () => {
         states.push(xhr.readyState);
         if (abortFlag) {
-          abortFlag =false;
+          abortFlag = false;
           xhr.open('GET', '/url');
           xhr.send();
         }
@@ -415,31 +412,34 @@ describe('MockXhr', function() {
     });
   });
 
-  describe('Hooks', function() {
-    it('should call MockXMLHttpRequest.onCreate()', function() {
+  describe('Hooks', () => {
+    it('should call MockXMLHttpRequest.onCreate()', () => {
       try {
-        var onCreateCalled = false;
-        MockXhr.onCreate = function() {
+        let onCreateCalled = false;
+        MockXhr.onCreate = () => {
           onCreateCalled = true;
         };
-        new MockXhr();
+
+        const xhr = new MockXhr();
+
+        assert.isOk(xhr);
         assert.isOk(onCreateCalled, 'onCreate() called');
       } finally {
         delete MockXhr.onCreate;
       }
     });
 
-    it('should call MockXMLHttpRequest.onSend()', function(done) {
+    it('should call MockXMLHttpRequest.onSend()', (done) => {
       try {
-        var xhr;
+        const xhr = new MockXhr();
 
         // Add a "global" onSend callback
-        MockXhr.onSend = function(arg) {
+        MockXhr.onSend = function onSend(arg) {
           assert.equal(this, xhr, 'context');
           assert.equal(arg, xhr, 'argument');
           done();
         };
-        xhr = new MockXhr();
+
         xhr.open('GET', '/url');
         xhr.send();
       } finally {
@@ -447,47 +447,42 @@ describe('MockXhr', function() {
       }
     });
 
-    it('should call xhr.onSend() method', function(done) {
-      var xhr = new MockXhr();
+    it('should call xhr.onSend() method', (done) => {
+      const xhr = new MockXhr();
 
       // Add a request-local onSend callback
-      xhr.onSend = function(arg) {
+      xhr.onSend = function onSend(arg) {
         assert.equal(this, xhr, 'context');
         assert.equal(arg, xhr, 'argument');
         done();
       };
+
       xhr.open('GET', '/url');
       xhr.send();
     });
 
-    it('should call MockXMLHttpRequest.onSend() and xhr.onSend()', function(done) {
+    it('should call MockXMLHttpRequest.onSend() and xhr.onSend()', (done) => {
       try {
-        var xhr;
-        var onSendCalled = false;
-        var onSendXhrCalled = false;
+        const xhr = new MockXhr();
+        let onSendCalled = false;
+        let onSendXhrCalled = false;
 
         // Add a "global" onSend callback
-        MockXhr.onSend = function(arg) {
-          assert.equal(this, xhr, 'context');
-          assert.equal(arg, xhr, 'argument');
+        MockXhr.onSend = () => {
           onSendCalled = true;
-          if (onSendCalled && onSendXhrCalled)
-          {
+          if (onSendCalled && onSendXhrCalled) {
             done();
           }
         };
-        xhr = new MockXhr();
 
         // Add a request-local onSend callback
-        xhr.onSend = function(arg) {
-          assert.equal(this, xhr, 'context');
-          assert.equal(arg, xhr, 'argument');
+        xhr.onSend = () => {
           onSendXhrCalled = true;
-          if (onSendCalled && onSendXhrCalled)
-          {
+          if (onSendCalled && onSendXhrCalled) {
             done();
           }
         };
+
         xhr.open('GET', '/url');
         xhr.send();
       } finally {
@@ -496,11 +491,11 @@ describe('MockXhr', function() {
     });
   });
 
-  describe('Mock responses', function() {
-    it('uploadProgress() should fire upload progress events', function() {
-      var xhr = new MockXhr();
+  describe('Mock responses', () => {
+    it('uploadProgress() should fire upload progress events', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
       xhr.send('body');
 
       xhr.uploadProgress(2);
@@ -510,30 +505,30 @@ describe('MockXhr', function() {
         'loadstart(0,0,false)',
         'upload.loadstart(0,4,true)',
         'upload.progress(2,4,true)',
-        'upload.progress(3,4,true)'
+        'upload.progress(3,4,true)',
       ], 'fired events');
     });
 
-    it('uploadProgress() should not fire upload progress events if the upload listener flag is unset', function() {
-      var xhr = new MockXhr();
+    it('uploadProgress() should not fire upload progress events if the upload listener flag is unset', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
       xhr.send('body');
 
       // Add listeners AFTER the send() call
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.uploadProgress(2);
 
       assert.deepEqual(events, [], 'no fired events');
     });
 
-    it('respond() should set response state, headers and body', function() {
-      var xhr = new MockXhr();
+    it('respond() should set response state, headers and body', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
-      var responseBody = 'response';
+      const responseBody = 'response';
 
-      xhr.respond(201, {'R-Header': '123'}, responseBody);
+      xhr.respond(201, { 'R-Header': '123' }, responseBody);
 
       assert.equal(xhr.getAllResponseHeaders(), 'r-header: 123\r\n', 'Response headers');
       assert.equal(xhr.status, 201, 'xhr.status');
@@ -543,10 +538,10 @@ describe('MockXhr', function() {
       assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
     });
 
-    it('respond() should fire upload progress events', function() {
-      var xhr = new MockXhr();
+    it('respond() should fire upload progress events', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
       xhr.send('body');
 
       xhr.respond();
@@ -564,17 +559,17 @@ describe('MockXhr', function() {
         'progress(0,0,false)',
         'readystatechange(4)',
         'load(0,0,false)',
-        'loadend(0,0,false)'
+        'loadend(0,0,false)',
       ], 'fired events');
     });
 
-    it('respond() should set response state, headers and body', function() {
-      var xhr = new MockXhr();
+    it('respond() should set response state, headers and body', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
-      var responseBody = 'response';
+      const responseBody = 'response';
 
-      xhr.respond(201, {'R-Header': '123'}, responseBody);
+      xhr.respond(201, { 'R-Header': '123' }, responseBody);
 
       assert.equal(xhr.getAllResponseHeaders(), 'r-header: 123\r\n', 'Response headers');
       assert.equal(xhr.status, 201, 'xhr.status');
@@ -584,13 +579,13 @@ describe('MockXhr', function() {
       assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
     });
 
-    it('respond() should not fire upload progress events if the upload listener flag is unset', function() {
-      var xhr = new MockXhr();
+    it('respond() should not fire upload progress events if the upload listener flag is unset', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
       xhr.send('body');
 
       // Add listeners AFTER the send() call
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.respond();
 
@@ -601,15 +596,15 @@ describe('MockXhr', function() {
         'progress(0,0,false)',
         'readystatechange(4)',
         'load(0,0,false)',
-        'loadend(0,0,false)'
+        'loadend(0,0,false)',
       ], 'fired events');
     });
 
-    it('respond() with response body should fire progress events', function() {
-      var xhr = new MockXhr();
+    it('respond() with response body should fire progress events', () => {
+      const xhr = new MockXhr();
       xhr.open('POST', '/url');
       xhr.send('body');
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.respond(200, null, 'response');
 
@@ -620,14 +615,14 @@ describe('MockXhr', function() {
         'progress(8,8,true)',
         'readystatechange(4)',
         'load(8,8,true)',
-        'loadend(8,8,true)'
+        'loadend(8,8,true)',
       ], 'fired events');
     });
 
-    it('respond() with send(null) should not fire upload progress events', function() {
-      var xhr = new MockXhr();
+    it('respond() with send(null) should not fire upload progress events', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
       xhr.send();
 
       xhr.respond();
@@ -641,17 +636,17 @@ describe('MockXhr', function() {
         'progress(0,0,false)',
         'readystatechange(4)',
         'load(0,0,false)',
-        'loadend(0,0,false)'
+        'loadend(0,0,false)',
       ], 'fired events');
     });
 
-    it('setResponseHeaders() should set response state and headers', function() {
-      var xhr = new MockXhr();
+    it('setResponseHeaders() should set response state and headers', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
-      var statusText = 'Custom Created';
+      const statusText = 'Custom Created';
 
-      xhr.setResponseHeaders(201, {'R-Header': '123'}, statusText);
+      xhr.setResponseHeaders(201, { 'R-Header': '123' }, statusText);
 
       assert.equal(xhr.getAllResponseHeaders(), 'r-header: 123\r\n', 'Response headers');
       assert.equal(xhr.status, 201, 'xhr.status');
@@ -662,23 +657,23 @@ describe('MockXhr', function() {
       assert.equal(xhr.readyState, MockXhr.HEADERS_RECEIVED, 'readyState HEADERS_RECEIVED');
     });
 
-    it('setResponseHeaders() should fire readystatechange', function() {
-      var xhr = new MockXhr();
+    it('setResponseHeaders() should fire readystatechange', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.setResponseHeaders();
 
       assert.deepEqual(events, ['readystatechange(2)'], 'fired event');
     });
 
-    it('downloadProgress() should provide download progress events', function() {
-      var xhr = new MockXhr();
+    it('downloadProgress() should provide download progress events', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
       xhr.setResponseHeaders();
-      var events = recordEvents(xhr);
+      const events = recordEvents(xhr);
 
       xhr.downloadProgress(2, 8);
       xhr.downloadProgress(4, 8);
@@ -689,16 +684,16 @@ describe('MockXhr', function() {
         'progress(2,8,true)',
         // downloadProgress()
         'readystatechange(3)',
-        'progress(4,8,true)'
+        'progress(4,8,true)',
       ], 'fired events');
       assert.equal(xhr.readyState, MockXhr.LOADING, 'readyState LOADING');
     });
 
-    it('setResponseBody() should set response state, headers and body', function() {
-      var xhr = new MockXhr();
+    it('setResponseBody() should set response state, headers and body', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
-      var responseBody = 'response';
+      const responseBody = 'response';
 
       xhr.setResponseBody(responseBody);
 
@@ -710,12 +705,12 @@ describe('MockXhr', function() {
       assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
     });
 
-    it('setResponseBody() should fire progress events', function() {
-      var xhr = new MockXhr();
+    it('setResponseBody() should fire progress events', () => {
+      const xhr = new MockXhr();
       xhr.open('GET', '/url');
       xhr.send();
-      var responseBody = 'response';
-      var events = recordEvents(xhr);
+      const responseBody = 'response';
+      const events = recordEvents(xhr);
 
       xhr.setResponseBody(responseBody);
 
@@ -727,13 +722,13 @@ describe('MockXhr', function() {
         'progress(8,8,true)',
         'readystatechange(4)',
         'load(8,8,true)',
-        'loadend(8,8,true)'
+        'loadend(8,8,true)',
       ], 'fired events');
     });
 
-    describe('setNetworkError()', function() {
-      it('should reset state', function() {
-        var xhr = new MockXhr();
+    describe('setNetworkError()', () => {
+      it('should reset state', () => {
+        const xhr = new MockXhr();
         xhr.open('GET', '/url');
         xhr.send();
 
@@ -743,10 +738,10 @@ describe('MockXhr', function() {
         assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
       });
 
-      it('with request body should fire upload events', function() {
-        var xhr = new MockXhr();
+      it('with request body should fire upload events', () => {
+        const xhr = new MockXhr();
         xhr.open('POST', '/url');
-        var events = recordEvents(xhr);
+        const events = recordEvents(xhr);
         xhr.send('body');
 
         xhr.setNetworkError();
@@ -758,31 +753,31 @@ describe('MockXhr', function() {
           'upload.error(0,0,false)',
           'upload.loadend(0,0,false)',
           'error(0,0,false)',
-          'loadend(0,0,false)'
+          'loadend(0,0,false)',
         ], 'fired events');
       });
 
-      it('with request body should not fire upload events if the upload listener flag is unset', function() {
-        var xhr = new MockXhr();
+      it('with request body should not fire upload events if the upload listener flag is unset', () => {
+        const xhr = new MockXhr();
         xhr.open('POST', '/url');
         xhr.send('body');
 
         // Add listeners AFTER the send() call
-        var events = recordEvents(xhr);
+        const events = recordEvents(xhr);
 
         xhr.setNetworkError();
 
         assert.deepEqual(events, [
           'readystatechange(4)',
           'error(0,0,false)',
-          'loadend(0,0,false)'
+          'loadend(0,0,false)',
         ], 'fired events');
       });
 
-      it('without request body should not fire upload events', function() {
-        var xhr = new MockXhr();
+      it('without request body should not fire upload events', () => {
+        const xhr = new MockXhr();
         xhr.open('GET', '/url');
-        var events = recordEvents(xhr);
+        const events = recordEvents(xhr);
         xhr.send();
 
         xhr.setNetworkError();
@@ -791,15 +786,15 @@ describe('MockXhr', function() {
           'loadstart(0,0,false)',
           'readystatechange(4)',
           'error(0,0,false)',
-          'loadend(0,0,false)'
+          'loadend(0,0,false)',
         ], 'fired events');
       });
 
-      it('should work after setResponseHeaders()', function() {
-        var xhr = new MockXhr();
+      it('should work after setResponseHeaders()', () => {
+        const xhr = new MockXhr();
         xhr.open('GET', '/url');
         xhr.send();
-        var events = recordEvents(xhr);
+        const events = recordEvents(xhr);
         xhr.setResponseHeaders();
 
         xhr.setNetworkError();
@@ -808,15 +803,15 @@ describe('MockXhr', function() {
           'readystatechange(2)',
           'readystatechange(4)',
           'error(0,0,false)',
-          'loadend(0,0,false)'
+          'loadend(0,0,false)',
         ], 'fired events');
       });
     });
 
-    describe('setRequestTimeout()', function() {
-      describe('during request', function() {
-        it('should reset state', function() {
-          var xhr = new MockXhr();
+    describe('setRequestTimeout()', () => {
+      describe('during request', () => {
+        it('should reset state', () => {
+          const xhr = new MockXhr();
           xhr.open('GET', '/url');
           xhr.send();
 
@@ -826,10 +821,10 @@ describe('MockXhr', function() {
           assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
         });
 
-        it('with request body should fire upload events', function() {
-          var xhr = new MockXhr();
+        it('with request body should fire upload events', () => {
+          const xhr = new MockXhr();
           xhr.open('POST', '/url');
-          var events = recordEvents(xhr);
+          const events = recordEvents(xhr);
           xhr.send('body');
 
           xhr.setRequestTimeout();
@@ -841,31 +836,31 @@ describe('MockXhr', function() {
             'upload.timeout(0,0,false)',
             'upload.loadend(0,0,false)',
             'timeout(0,0,false)',
-            'loadend(0,0,false)'
+            'loadend(0,0,false)',
           ], 'fired events');
         });
 
-        it('with request body should not fire upload events if the upload listener flag is unset', function() {
-          var xhr = new MockXhr();
+        it('with request body should not fire upload events if the upload listener flag is unset', () => {
+          const xhr = new MockXhr();
           xhr.open('POST', '/url');
           xhr.send('body');
 
           // Add listeners AFTER the send() call
-          var events = recordEvents(xhr);
+          const events = recordEvents(xhr);
 
           xhr.setRequestTimeout();
 
           assert.deepEqual(events, [
             'readystatechange(4)',
             'timeout(0,0,false)',
-            'loadend(0,0,false)'
+            'loadend(0,0,false)',
           ], 'fired events');
         });
 
-        it('without request body should not fire upload events', function() {
-          var xhr = new MockXhr();
+        it('without request body should not fire upload events', () => {
+          const xhr = new MockXhr();
           xhr.open('GET', '/url');
-          var events = recordEvents(xhr);
+          const events = recordEvents(xhr);
           xhr.send();
 
           xhr.setRequestTimeout();
@@ -874,15 +869,15 @@ describe('MockXhr', function() {
             'loadstart(0,0,false)',
             'readystatechange(4)',
             'timeout(0,0,false)',
-            'loadend(0,0,false)'
+            'loadend(0,0,false)',
           ], 'fired events');
         });
 
-        it('should work after setResponseHeaders()', function() {
-          var xhr = new MockXhr();
+        it('should work after setResponseHeaders()', () => {
+          const xhr = new MockXhr();
           xhr.open('GET', '/url');
           xhr.send();
-          var events = recordEvents(xhr);
+          const events = recordEvents(xhr);
           xhr.setResponseHeaders();
 
           xhr.setRequestTimeout();
@@ -891,14 +886,14 @@ describe('MockXhr', function() {
             'readystatechange(2)',
             'readystatechange(4)',
             'timeout(0,0,false)',
-            'loadend(0,0,false)'
+            'loadend(0,0,false)',
           ], 'fired events');
         });
       });
 
-      describe('during response', function() {
-        it('should reset state', function() {
-          var xhr = new MockXhr();
+      describe('during response', () => {
+        it('should reset state', () => {
+          const xhr = new MockXhr();
           xhr.open('GET', '/url');
           xhr.send();
           xhr.setResponseHeaders();
@@ -909,19 +904,19 @@ describe('MockXhr', function() {
           assert.equal(xhr.readyState, MockXhr.DONE, 'readyState DONE');
         });
 
-        it('should fire timeout event', function() {
-          var xhr = new MockXhr();
+        it('should fire timeout event', () => {
+          const xhr = new MockXhr();
           xhr.open('POST', '/url');
           xhr.send('body');
           xhr.setResponseHeaders();
-          var events = recordEvents(xhr);
+          const events = recordEvents(xhr);
 
           xhr.setRequestTimeout();
 
           assert.deepEqual(events, [
             'readystatechange(4)',
             'timeout(0,0,false)',
-            'loadend(0,0,false)'
+            'loadend(0,0,false)',
           ], 'fired events');
         });
       });
@@ -929,80 +924,80 @@ describe('MockXhr', function() {
   });
 });
 
-describe('MockXhr.newMockXhr()', function() {
-  describe('Isolation', function() {
-    it('should not return the global MockXhr object', function() {
-      var LocalMockXhr = MockXhr.newMockXhr();
+describe('MockXhr.newMockXhr()', () => {
+  describe('Isolation', () => {
+    it('should not return the global MockXhr object', () => {
+      const LocalMockXhr = MockXhr.newMockXhr();
       assert.notEqual(LocalMockXhr, MockXhr);
     });
 
-    it('should return different objects on each call', function() {
-      var LocalMockXhr1 = MockXhr.newMockXhr();
-      var LocalMockXhr2 = MockXhr.newMockXhr();
+    it('should return different objects on each call', () => {
+      const LocalMockXhr1 = MockXhr.newMockXhr();
+      const LocalMockXhr2 = MockXhr.newMockXhr();
       assert.notEqual(LocalMockXhr1, LocalMockXhr2);
     });
 
-    it('should isolate MockXMLHttpRequest.onCreate()', function() {
-      var LocalMockXhr1 = MockXhr.newMockXhr();
-      var onCreate1Called = false;
-      LocalMockXhr1.onCreate = function() {
+    it('should isolate MockXMLHttpRequest.onCreate()', () => {
+      const LocalMockXhr1 = MockXhr.newMockXhr();
+      let onCreate1Called = false;
+      LocalMockXhr1.onCreate = () => {
         onCreate1Called = true;
       };
 
-      var LocalMockXhr2 = MockXhr.newMockXhr();
-      var onCreate2Called = false;
-      LocalMockXhr2.onCreate = function() {
+      const LocalMockXhr2 = MockXhr.newMockXhr();
+      let onCreate2Called = false;
+      LocalMockXhr2.onCreate = () => {
         onCreate2Called = true;
       };
 
-      new LocalMockXhr2();
+      const xhr = new LocalMockXhr2();
 
+      assert.isOk(xhr);
       assert.isNotOk(onCreate1Called, 'onCreate() from first mock not called');
       assert.isOk(onCreate2Called, 'onCreate() from second mock called');
     });
 
-    it('should isolate MockXMLHttpRequest.onSend()', function(done) {
-      var xhr;
-      var onSend1Called = false;
+    it('should isolate MockXMLHttpRequest.onSend()', (done) => {
+      let onSend1Called = false;
 
-      var LocalMockXhr1 = MockXhr.newMockXhr();
-      LocalMockXhr1.onSend = function() {
+      const LocalMockXhr1 = MockXhr.newMockXhr();
+      LocalMockXhr1.onSend = () => {
         onSend1Called = true;
-        assert.isNotOk(onSend1Called, 'onCreate() from first mock not called');
       };
 
-      var LocalMockXhr2 = MockXhr.newMockXhr();
-      LocalMockXhr2.onSend = function() {
-        // Wait for the callstack to clear before asserting that the other
+      const LocalMockXhr2 = MockXhr.newMockXhr();
+      LocalMockXhr2.onSend = () => {
+        // Wait for the call stack to clear before asserting that the other
         // hook is not called.
-        setTimeout(function() {
+        setTimeout(() => {
           assert.isNotOk(onSend1Called, 'onCreate() from first mock not called');
           done();
         }, 0);
       };
 
-      xhr = new LocalMockXhr2();
+      const xhr = new LocalMockXhr2();
       xhr.open('GET', '/url');
       xhr.send();
     });
   });
 
-  describe('Hooks', function() {
-    it('should call global and local onCreate()', function() {
+  describe('Hooks', () => {
+    it('should call global and local onCreate()', () => {
       try {
-        var onCreateCalled = false;
-        MockXhr.onCreate = function() {
-          onCreateCalled = true;
-        };
-
-        var LocalMockXhr = MockXhr.newMockXhr();
-        var onCreateLocalCalled = false;
-        LocalMockXhr.onCreate = function() {
+        const LocalMockXhr = MockXhr.newMockXhr();
+        let onCreateLocalCalled = false;
+        LocalMockXhr.onCreate = () => {
           onCreateLocalCalled = true;
         };
 
-        new LocalMockXhr();
+        let onCreateCalled = false;
+        MockXhr.onCreate = () => {
+          onCreateCalled = true;
+        };
 
+        const xhr = new LocalMockXhr();
+
+        assert.isOk(xhr);
         assert.isOk(onCreateCalled, 'global onCreate() called');
         assert.isOk(onCreateLocalCalled, 'local onCreate() called');
       } finally {
@@ -1010,95 +1005,39 @@ describe('MockXhr.newMockXhr()', function() {
       }
     });
 
-    it('should call global and local onSend()', function(done) {
+    it('should call global onSend(), local onSend() and xhr.onSend()', (done) => {
       try {
-        var xhr;
-        var onSendCalled = false;
-        var onSendLocalCalled = false;
+        let onSendCalled = false;
+        let onSendLocalCalled = false;
+        let onSendXhrCalled = false;
 
-        // Add a "global" onSend callback
-        MockXhr.onSend = function(arg) {
-          assert.equal(this, xhr, 'context');
-          assert.equal(arg, xhr, 'argument');
-          onSendCalled = true;
-          if (onSendCalled && onSendLocalCalled)
-          {
-            done();
-          }
-        };
-
-        // Add a "local" onSend callback
-        var LocalMockXhr = MockXhr.newMockXhr();
-        LocalMockXhr.onSend = function(arg) {
+        const LocalMockXhr = MockXhr.newMockXhr();
+        const xhr = new LocalMockXhr();
+        LocalMockXhr.onSend = function onSendLocal(arg) {
           assert.equal(this, xhr, 'context');
           assert.equal(arg, xhr, 'argument');
           onSendLocalCalled = true;
-          if (onSendCalled && onSendLocalCalled)
-          {
+          if (onSendCalled && onSendLocalCalled && onSendXhrCalled) {
             done();
           }
         };
 
-        xhr = new LocalMockXhr();
-        xhr.open('GET', '/url');
-        xhr.send();
-      } finally {
-        delete MockXhr.onSend;
-      }
-    });
-
-    it('should call xhr.onSend() method', function(done) {
-      var LocalMockXhr = MockXhr.newMockXhr();
-      var xhr = new LocalMockXhr();
-
-      // Add a request-local onSend callback
-      xhr.onSend = function(arg) {
-        assert.equal(this, xhr, 'context');
-        assert.equal(arg, xhr, 'argument');
-        done();
-      };
-      xhr.open('GET', '/url');
-      xhr.send();
-    });
-
-    it('should call global onSend(), local onSend() and xhr.onSend()', function(done) {
-      try {
-        var xhr;
-        var onSendCalled = false;
-        var onSendLocalCalled = false;
-        var onSendXhrCalled = false;
-
         // Add a "global" onSend callback
-        MockXhr.onSend = function(arg) {
+        MockXhr.onSend = function onSend(arg) {
           assert.equal(this, xhr, 'context');
           assert.equal(arg, xhr, 'argument');
           onSendCalled = true;
-          if (onSendCalled && onSendLocalCalled && onSendXhrCalled)
-          {
+          if (onSendCalled && onSendLocalCalled && onSendXhrCalled) {
             done();
           }
         };
-
-        var LocalMockXhr = MockXhr.newMockXhr();
-        LocalMockXhr.onSend = function(arg) {
-          assert.equal(this, xhr, 'context');
-          assert.equal(arg, xhr, 'argument');
-          onSendLocalCalled = true;
-          if (onSendCalled && onSendLocalCalled && onSendXhrCalled)
-          {
-            done();
-          }
-        };
-
-        xhr = new LocalMockXhr();
 
         // Add a request-local onSend callback
-        xhr.onSend = function(arg) {
+        xhr.onSend = function onSendXhr(arg) {
           assert.equal(this, xhr, 'context');
           assert.equal(arg, xhr, 'argument');
           onSendXhrCalled = true;
-          if (onSendCalled && onSendLocalCalled && onSendXhrCalled)
-          {
+          if (onSendCalled && onSendLocalCalled && onSendXhrCalled) {
             done();
           }
         };

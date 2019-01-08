@@ -1,96 +1,70 @@
-'use strict';
-
 /**
- * Header container constructor
- *
- * @param {object} headers initial headers
+ * HTTP header container
  */
-var HeadersContainer = function(headers) {
-  this._headers = [];
-  if (headers && headers instanceof Object) {
-    for (var header in headers) {
-      if (headers.hasOwnProperty(header)) {
-        this._headers.push({
-          name: header,
-          value: headers[header],
-        });
-      }
+class HeadersContainer {
+  /**
+   * @param {object} headers initial headers
+   */
+  constructor(headers) {
+    this._headers = new Map();
+    if (headers && headers instanceof Object) {
+      Object.keys(headers).forEach((key) => {
+        this.addHeader(key, headers[key]);
+      });
     }
   }
-};
 
-HeadersContainer.prototype.reset = function() {
-  this._headers = [];
-};
+  /**
+   * Reset the container to its empty state.
+   */
+  reset() {
+    this._headers.clear();
+  }
 
-/**
- * Get header value. Headers are case-insensitive.
- *
- * @param  {string} name header name
- * @return {object}      header value or null
- */
-HeadersContainer.prototype.getHeader = function(name) {
-  var header = this._getHeader(name);
-  return header !== null ? header.value : null;
-};
+  /**
+   * Get header value. Header names are case-insensitive.
+   *
+   * @param  {string} name header name
+   * @return {string|null} header value or null
+   */
+  getHeader(name) {
+    const value = this._headers.get(name.toLowerCase());
+    return value !== undefined ? value : null;
+  }
 
-/**
- * Get all headers as string. Each header is on its own line.
- *
- * @return {string} concatenated headers
- */
-HeadersContainer.prototype.getAll = function() {
-  // Get unique header names and sort them
-  var headerNames = [];
-  for (var i = 0; i < this._headers.length; i++) {
-    var headerName = this._headers[i].name.toLowerCase();
-    if (headerNames.indexOf(headerName) < 0)
-    {
-      headerNames.push(headerName);
+  /**
+   * Get all headers as a string. Each header is on its own line.
+   *
+   * @return {string} concatenated headers
+   */
+  getAll() {
+    // Sort the header names. It's not mandated by RFC 7230 but it makes assertion testing easier
+    // and, most importantly, it is required by getAllResponseHeaders() of XMLHttpRequest.
+    // See https://xhr.spec.whatwg.org/#the-getallresponseheaders()-method
+    const headerNames = [...this._headers.keys()].sort();
+
+    // Combine the header values
+    const headers = headerNames.reduce((result, name) => {
+      const headerValue = this._headers.get(name);
+      return `${result}${name}: ${headerValue}\r\n`;
+    }, '');
+    return headers;
+  }
+
+  /**
+   * Add a header value, combining it with any previous value for the same header name.
+   *
+   * @param {string} name header name
+   * @param {string} value header value
+   */
+  addHeader(name, value) {
+    name = name.toLowerCase();
+    const currentValue = this._headers.get(name);
+    if (currentValue) {
+      value = `${currentValue}, ${value}`;
     }
+    this._headers.set(name, value);
   }
-  headerNames.sort();
-
-  // Build the output with the combined header values
-  var headers = '';
-  for (i = 0; i < headerNames.length; i++) {
-    headers += headerNames[i] + ': ' + this.getHeader(headerNames[i]) + '\r\n';
-  }
-  return headers;
-};
-
-/**
- * Add a header value, possibly concatenating with previous value
- *
- * @param {string} name  header name
- * @param {string} value header value
- */
-HeadersContainer.prototype.addHeader = function(name, value) {
-  var header = this._getHeader(name);
-  if (header) {
-    header.value += ', ' + value;
-  } else {
-    this._headers.push({
-      name: name,
-      value: value,
-    });
-  }
-};
-
-/**
- * Case-insensitive search.
- *
- * @param  {string} name header name
- * @return {object}      header object or null
- */
-HeadersContainer.prototype._getHeader = function(name) {
-  name = name.toLowerCase();
-  for (var i = 0; i < this._headers.length; i++) {
-    if (this._headers[i].name.toLowerCase() === name) {
-      return this._headers[i];
-    }
-  }
-  return null;
-};
+}
 
 module.exports = HeadersContainer;
