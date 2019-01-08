@@ -129,6 +129,12 @@ class MockXhr extends EventTarget {
         extractedContentType = contentType;
       }
 
+      /*
+      * Skipping step "4. If author request headers contains `Content-Type`, then:"
+      * Parsing mime type strings and overriding the charset to UTF-8 seems like a lot of work
+      * for little gain. If I'm wrong, please open an issue or better yet a pull request.
+      */
+
       if (this.requestHeaders.getHeader('Content-Type') === null && extractedContentType !== null) {
         this.requestHeaders.addHeader('Content-Type', extractedContentType);
       }
