@@ -1,6 +1,10 @@
-/**
- * XMLHttpRequest mock for testing.
- *
- * Based on https://xhr.spec.whatwg.org version '28 November 2018'
- */
-module.exports = require('./src/MockXhr');
+const Factories = require('./src/Factories');
+const MockXhr = require('./src/MockXhr');
+
+module.exports = {
+  // Access to the request mock class
+  MockXhr,
+
+  // Factory method
+  newMockXhr: Factories.newMockXhr,
+};
