@@ -10,7 +10,10 @@ function throwError(type, text = '') {
 }
 
 /**
- * MockXhr supports:
+ * XMLHttpRequest mock for testing.
+ * Based on https://xhr.spec.whatwg.org version '28 November 2018'.
+ *
+ * Supports:
  *  - events and states
  *  - open(), setRequestHeader(), send() and abort()
  *  - upload and download progress events
@@ -18,7 +21,7 @@ function throwError(type, text = '') {
  *  - simulating a network error
  *  - simulating a request time out
  *
- * MockXhr does not support:
+ * Does not support:
  * - synchronous requests (async == false)
  * - parsing the url and setting the username and password
  * - the timeout attribute (call MockXhr.setRequestTimeout() to trigger a timeout)
@@ -497,39 +500,6 @@ class MockXhr extends EventTarget {
     this._terminateRequest();
     this._timedOutFlag = true;
     this._processResponse(this._networkErrorResponse());
-  }
-
-  /**
-   * Create a new "local" MockXhr instance. This makes it easier to have
-   * self-contained unit tests since they don't need to remove registered hook
-   * functions.
-   *
-   * @returns {MockXhr} Local MockXhr instance
-   */
-  static newMockXhr() {
-    return class LocalMockXhr extends MockXhr {
-      constructor() {
-        super();
-
-        // Call the local onCreate hook on the new mock instance
-        if (typeof LocalMockXhr.onCreate === 'function') {
-          LocalMockXhr.onCreate(this);
-        }
-      }
-
-      // Override the parent method to enable the local MockXhr instance's
-      // onSend() hook
-      send(...args) {
-        super.send(...args);
-
-        // Execute in an empty callstack
-        if (typeof LocalMockXhr.onSend === 'function') {
-          // Save the callback in case it changes before it has a chance to run
-          const { onSend } = LocalMockXhr;
-          setTimeout(() => onSend.call(this, this), 0);
-        }
-      }
-    };
   }
 }
 
