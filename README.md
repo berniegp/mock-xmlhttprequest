@@ -193,6 +193,9 @@ Add a [route](#routes) for the `method` HTTP method.
 #### setDefaultHandler(handler)
 Set a default request handler for requests that don't match any route.
 
+#### setDefault404()
+Return 404 responses for requests that don't match any route.
+
 #### getRequestLog()
 Returns the list of all requests received by the server. Each entry has `{ method, url }`. Can be useful for debugging.
 

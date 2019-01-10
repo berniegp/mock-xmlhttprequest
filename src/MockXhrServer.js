@@ -128,6 +128,15 @@ class MockXhrServer {
   }
 
   /**
+   * Return 404 responses for requests that don't match any route.
+   *
+   * @returns {MockXhrServer} this
+   */
+  setDefault404() {
+    return this.setDefaultHandler({ status: 404 });
+  }
+
+  /**
    * @returns {object[]} list of requests received by the server. Entries: { method, url }
    */
   getRequestLog() {

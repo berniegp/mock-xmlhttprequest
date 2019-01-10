@@ -317,6 +317,19 @@ describe('MockXhrServer', () => {
     });
   });
 
+  describe('setDefault404()', () => {
+    it('should return 404 for unmatched requests', () => {
+      const tester = new ServerTester();
+      const server = new MockXhrServer(tester);
+
+      server.setDefault404();
+      tester.doRequest('method', '/path');
+
+      assert.equal(tester.responses.length, 1, 'handler called');
+      assert.deepEqual(tester.responses[0].status, 404);
+    });
+  });
+
   describe('getRequestLog()', () => {
     it('should return all received requests', () => {
       const tester = new ServerTester();
