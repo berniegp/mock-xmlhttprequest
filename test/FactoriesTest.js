@@ -1,7 +1,7 @@
 const { assert } = require('chai');
 
 const MockXhr = require('../src/MockXhr');
-const { newMockXhr } = require('../src/Factories');
+const { newMockXhr, newServer } = require('../src/Factories');
 
 describe('Factories', () => {
   describe('newMockXhr()', () => {
@@ -127,6 +127,80 @@ describe('Factories', () => {
           delete MockXhr.onSend;
         }
       });
+    });
+
+    it('should work with the quick start code', (done) => {
+      const MockXMLHttpRequest = newMockXhr();
+
+      // Mock JSON response
+      MockXMLHttpRequest.onSend = (xhr) => {
+        const responseHeaders = { 'Content-Type': 'application/json' };
+        const response = '{ "message": "Success!" }';
+        xhr.respond(200, responseHeaders, response);
+      };
+
+      function someAjaxMethod(XMLHttpRequest) {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', '/my/url');
+          xhr.onload = () => resolve(JSON.parse(xhr.response));
+          xhr.onerror = () => reject(xhr.statusText);
+          xhr.send();
+        });
+      }
+
+      const global = {};
+
+      // Install in the global context so "new XMLHttpRequest()" uses the XMLHttpRequest mock
+      global.XMLHttpRequest = MockXMLHttpRequest;
+
+      // Do something that send()s an XMLHttpRequest to '/my/url'
+      someAjaxMethod(global.XMLHttpRequest).then((result) => {
+        assert.equal(result.message, 'Success!');
+        done();
+      });
+
+      // Remove the mock class from the global context
+      delete global.XMLHttpRequest;
+    });
+  });
+
+  describe('newServer()', () => {
+    it('should work with the quick start code', (done) => {
+      const server = newServer({
+        get: ['/my/url', {
+          // status: 200 is the default
+          headers: { 'Content-Type': 'application/json' },
+          body: '{ "message": "Success!" }',
+        }],
+      });
+
+      function someAjaxMethod(XMLHttpRequest) {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('GET', '/my/url');
+          xhr.onload = () => resolve(JSON.parse(xhr.response));
+          xhr.onerror = () => reject(xhr.statusText);
+          xhr.send();
+        });
+      }
+
+      try {
+        const global = {};
+
+        // Install the server's XMLHttpRequest mock in the "global" context.
+        // "new XMLHttpRequest()" will then create a mock request to which the server will reply.
+        server.install(global);
+
+        // Do something that send()s an XMLHttpRequest to '/my/url'
+        someAjaxMethod(global.XMLHttpRequest).then((result) => {
+          assert.equal(result.message, 'Success!');
+          done();
+        });
+      } finally {
+        // Restore the original XMLHttpRequest from the context given to install()
+        server.remove();
+      }
     });
   });
 });
