@@ -107,7 +107,7 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 ## Usage
 
 ### Mock Server
-The mock server is the easiest way to define responses for one or more requests. Handlers can be registered for any HTTP method and URL without having to dig in the lower-level [hooks](INTERNAL) of this library.
+The mock server is the easiest way to define responses for one or more requests. Handlers can be registered for any HTTP method and URL without having to dig in the lower-level [hooks](#hooks) of this library.
 
 #### Basic Setup
 The basic structure of tests using the mock server is:
@@ -150,7 +150,7 @@ This can be:
 ##### Request Handler
 This can be:
 - An `object` with the response properties. The default values are: ` { status: 200, headers: {}, body: null, statusText: 'OK' }`. An empty object is also allowed here to accept all default values.
-- A `function` (signature `handler(xhr)`) that calls the [mock response methods](INTERNAL) directly.
+- A `function` (signature `handler(xhr)`) that calls the [mock response methods](#mock-response-methods) directly.
 - An array of `object` and `function` request handlers. In this case, the first matching request gets the first handler, the second gets the second handler and so on. The last handler is reused if the number of matching requests exceeds the number of handlers in the array.
 
 These handlers are equivalent:
@@ -176,19 +176,19 @@ newServer({
 ```
 
 #### get(matcher, handler)
-Add a [route](INTERNAL) for the `GET` HTTP method.
+Add a [route](#routes) for the `GET` HTTP method.
 
 #### post(matcher, handler)
-Add a [route](INTERNAL) for the `POST` HTTP method.
+Add a [route](#routes) for the `POST` HTTP method.
 
 #### put(matcher, handler)
-Add a [route](INTERNAL) for the `PUT` HTTP method.
+Add a [route](#routes) for the `PUT` HTTP method.
 
 #### delete(matcher, handler)
-Add a [route](INTERNAL) for the `DELETE` HTTP method.
+Add a [route](#routes) for the `DELETE` HTTP method.
 
 #### addHandler(method, matcher, handler)
-Add a [route](INTERNAL) for the `method` HTTP method.
+Add a [route](#routes) for the `method` HTTP method.
 
 #### setDefaultHandler(handler)
 Set a default request handler for requests that don't match any route.
