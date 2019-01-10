@@ -1,4 +1,5 @@
 const MockXhr = require('./MockXhr');
+const MockXhrServer = require('./MockXhrServer');
 
 /**
  * Create a new "local" MockXhr subclass. This makes it easier to have self-contained unit tests
@@ -33,6 +34,16 @@ function newMockXhr() {
   };
 }
 
+/**
+ * Create a new mock server using MockXhr.
+ *
+ * @returns {MockXhrServer} new mock server
+ */
+function newServer(routes) {
+  return new MockXhrServer(newMockXhr(), routes);
+}
+
 module.exports = {
   newMockXhr,
+  newServer,
 };

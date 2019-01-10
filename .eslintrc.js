@@ -23,11 +23,17 @@ module.exports = {
         // Saving 2 characters is not worth the potential errors
         'curly': 'error',
 
+        // A chain of 'if' and 'else if' statements is clearer than multiple individual 'if' blocks
+        'no-else-return': [ 'error', { allowElseIf: true } ],
+
         // Finding good names is hard so allow reuse
         'no-param-reassign': 0,
 
         // Increment with += 1 is just too long to type
         'no-plusplus': 0,
+
+        // Finding good names is hard so allow reuse
+        'no-shadow': 0,
 
         // This is still the best way to express the private api intent
         'no-underscore-dangle': ['error', { 'allowAfterThis': true }],
