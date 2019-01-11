@@ -1,3 +1,5 @@
+'use strict';
+
 const Event = require('./Event');
 const EventTarget = require('./EventTarget');
 const HeadersContainer = require('./HeadersContainer');

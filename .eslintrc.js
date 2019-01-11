@@ -1,8 +1,12 @@
 module.exports = {
     root: true,
-    extends: "airbnb-base",
+    extends: 'airbnb-base',
     env: {
         node: true,
+    },
+    parserOptions: {
+      ecmaVersion: 2015,
+      sourceType: 'script',
     },
     rules: {
         // Allow to use braces if desired
@@ -24,7 +28,7 @@ module.exports = {
         'curly': 'error',
 
         // A chain of 'if' and 'else if' statements is clearer than multiple individual 'if' blocks
-        'no-else-return': [ 'error', { allowElseIf: true } ],
+        'no-else-return': ['error', { allowElseIf: true }],
 
         // Finding good names is hard so allow reuse
         'no-param-reassign': 0,
@@ -44,6 +48,9 @@ module.exports = {
         'no-use-before-define': ['error', { functions: false, classes: true, variables: true }],
 
         // To allow comment blocks that are actually section headers
-        'spaced-comment': ["error", "always", { "exceptions": ["/"] }],
+        'spaced-comment': ['error', 'always', { 'exceptions': ['/'] }],
+
+        // The code doesn't go through Babel so 'use strict' is not added automatically
+        strict: ['error', 'safe'],
     }
 };

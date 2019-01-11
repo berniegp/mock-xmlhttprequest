@@ -1,3 +1,5 @@
+'use strict';
+
 const { assert } = require('chai');
 
 const EventTarget = require('../src/EventTarget');

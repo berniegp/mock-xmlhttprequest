@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * An EventTarget object represents a target to which an event can be dispatched when something has
  * occurred.

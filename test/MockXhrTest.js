@@ -1,3 +1,5 @@
+'use strict';
+
 const { assert } = require('chai');
 
 const MockXhr = require('../src/MockXhr');
@@ -63,7 +65,7 @@ describe('MockXhr', () => {
     it(`${attribute} should be readonly`, () => {
       const xhr = new MockXhr();
       const initial = xhr[attribute];
-      xhr[attribute] = 'testing';
+      assert.throw(() => { xhr[attribute] = 'testing'; });
       assert.equal(xhr[attribute], initial);
     });
   });

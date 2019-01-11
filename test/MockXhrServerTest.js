@@ -1,3 +1,5 @@
+'use strict';
+
 const { assert } = require('chai');
 
 const MockXhrServer = require('../src/MockXhrServer');

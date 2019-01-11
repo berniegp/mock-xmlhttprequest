@@ -1,3 +1,5 @@
+'use strict';
+
 const Factories = require('./src/Factories');
 const MockXhr = require('./src/MockXhr');
 const MockXhrServer = require('./src/MockXhrServer');

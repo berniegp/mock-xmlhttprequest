@@ -1,3 +1,5 @@
+'use strict';
+
 // Disallowed request headers for setRequestHeader()
 const forbiddenHeaders = [
   'Accept-Charset',

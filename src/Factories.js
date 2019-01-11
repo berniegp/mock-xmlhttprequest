@@ -1,3 +1,5 @@
+'use strict';
+
 const MockXhr = require('./MockXhr');
 const MockXhrServer = require('./MockXhrServer');
 
