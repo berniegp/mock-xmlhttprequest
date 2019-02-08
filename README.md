@@ -1,7 +1,9 @@
 [![Build Status](https://travis-ci.org/berniegp/mock-xmlhttprequest.svg?branch=master)](https://travis-ci.org/berniegp/mock-xmlhttprequest)
 
 # mock-xmlhttprequest
-XMLHttpRequest mock for testing
+`XMLHttpRequest` mock for testing that provides a simple interface to simulate interactions with `XMLHttpRequest` without any outside dependency or interaction with the browser. It is meant as a drop-in replacement for `XMLHttpRequest` when testing code that depends on it.
+
+This library implements the `XMLHttpRequest` interface that handles requests and events as specified in the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org) without actually sending anything over the network. [Mock response methods](#mock-response-methods) and [Hooks](#hooks) are provided to simulate responses, upload progress, etc. The mock response methods are higher level and automatically handle lower-level processing like emitting events and setting the `readystate` property.
 
 ## Table of Contents
 - [Installation](#installation)
