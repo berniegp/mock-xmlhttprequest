@@ -16,7 +16,7 @@ class EventTarget {
   /**
    * Contructor
    *
-   * @param {*} eventContext optional "this" for event handlers
+   * @param {?object} eventContext optional "this" for event handlers
    */
   constructor(eventContext = this) {
     this._eventContext = eventContext;
@@ -36,7 +36,7 @@ class EventTarget {
    * Add an event listener.
    *
    * @param {string} type event type ('load', 'abort', etc)
-   * @param {function} callback listener callback function
+   * @param {Function} callback listener callback function
    */
   addEventListener(type, callback) {
     if (callback) {

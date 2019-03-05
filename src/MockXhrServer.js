@@ -7,6 +7,12 @@ const Utils = require('./Utils');
  * matching and request handlers to make test harness creation easier.
  */
 class MockXhrServer {
+  /**
+   * Constructor
+   *
+   * @param {MockXhr} xhrMock XMLHttpRequest mock
+   * @param {?object} routes routes
+   */
   constructor(xhrMock, routes = {}) {
     this.xhrMock = xhrMock;
     this._requests = [];
@@ -51,8 +57,8 @@ class MockXhrServer {
   /**
    * Add a GET request handler.
    *
-   * @param {string|RegExp|function} matcher url matcher
-   * @param {object|function|object[]|function[]} handler request handler
+   * @param {string|RegExp|Function} matcher url matcher
+   * @param {object|Function|object[]|Function[]} handler request handler
    * @returns {MockXhrServer} this
    */
   get(matcher, handler) {
@@ -62,8 +68,8 @@ class MockXhrServer {
   /**
    * Add a POST request handler.
    *
-   * @param {string|RegExp|function} matcher url matcher
-   * @param {object|function|Array} handler request handler
+   * @param {string|RegExp|Function} matcher url matcher
+   * @param {object|Function|object[]|Function[]} handler request handler
    * @returns {MockXhrServer} this
    */
   post(matcher, handler) {
@@ -73,8 +79,8 @@ class MockXhrServer {
   /**
    * Add a PUT request handler.
    *
-   * @param {string|RegExp|function} matcher url matcher
-   * @param {object|function|Array} handler request handler
+   * @param {string|RegExp|Function} matcher url matcher
+   * @param {object|Function|object[]|Function[]} handler request handler
    * @returns {MockXhrServer} this
    */
   put(matcher, handler) {
@@ -84,8 +90,8 @@ class MockXhrServer {
   /**
    * Add a DELETE request handler.
    *
-   * @param {string|RegExp|function} matcher url matcher
-   * @param {object|function|Array} handler request handler
+   * @param {string|RegExp|Function} matcher url matcher
+   * @param {object|Function|object[]|Function[]} handler request handler
    * @returns {MockXhrServer} this
    */
   delete(matcher, handler) {
@@ -96,8 +102,8 @@ class MockXhrServer {
    * Add a request handler.
    *
    * @param {string} method HTTP method
-   * @param {string|RegExp|function} matcher url matcher
-   * @param {object|function|Array} handler request handler
+   * @param {string|RegExp|Function} matcher url matcher
+   * @param {object|Function|object[]|Function[]} handler request handler
    * @returns {MockXhrServer} this
    */
   addHandler(method, matcher, handler) {
@@ -118,7 +124,7 @@ class MockXhrServer {
   /**
    * Set the default request handler for requests that don't match any route.
    *
-   * @param {object|function|Array} handler request handler
+   * @param {object|Function|object[]|Function[]} handler request handler
    * @returns {MockXhrServer} this
    */
   setDefaultHandler(handler) {

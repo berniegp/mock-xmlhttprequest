@@ -399,9 +399,9 @@ class MockXhr extends EventTarget {
    * state to DONE.
    *
    * @param {number} status response http status (default 200)
-   * @param {object} headers name-value headers (optional)
-   * @param {*} body response body (default null)
-   * @param {string} statusText response http status text (optional)
+   * @param {?object} headers name-value headers (optional)
+   * @param {?*} body response body (default null)
+   * @param {?string} statusText response http status text (optional)
    */
   respond(status, headers, body, statusText) {
     this.setResponseHeaders(status, headers, statusText);
@@ -412,8 +412,8 @@ class MockXhr extends EventTarget {
    * Set only the response headers. Will change the state to HEADERS_RECEIVED.
    *
    * @param {number} status response http status (default 200)
-   * @param {object} headers name-value headers (optional)
-   * @param {string} statusText response http status text (optional)
+   * @param {?object} headers name-value headers (optional)
+   * @param {?string} statusText response http status text (optional)
    */
   setResponseHeaders(status, headers, statusText) {
     if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
@@ -458,7 +458,7 @@ class MockXhr extends EventTarget {
   /**
    * Set the response body. Will set the state to DONE.
    *
-   * @param {*} body response body (default null)
+   * @param {?*} body response body (default null)
    */
   setResponseBody(body = null) {
     if (!this._sendFlag
