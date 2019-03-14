@@ -164,7 +164,7 @@ describe('MockXhrServer', () => {
 
       assert.equal(tester.responses.length, 4, 'handler called');
       assert.deepEqual(tester.responses[0], response);
-      assert.deepEqual(tester.responses[1].status, 404);
+      assert.equal(tester.responses[1].status, 404);
       assert.deepEqual(tester.responses[2], response);
       assert.deepEqual(tester.responses[3], response);
     });
@@ -310,7 +310,7 @@ describe('MockXhrServer', () => {
 
       assert.equal(tester.responses.length, 4, 'handler called');
       assert.deepEqual(tester.responses[0], response);
-      assert.deepEqual(tester.responses[1].status, 404);
+      assert.equal(tester.responses[1].status, 404);
       assert.deepEqual(tester.responses[2], response);
       assert.deepEqual(tester.responses[3], response);
     });
