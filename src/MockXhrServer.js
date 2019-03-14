@@ -153,7 +153,12 @@ class MockXhrServer {
 
   _handleRequest(xhr) {
     // Record the request for easier debugging
-    this._requests.push({ method: xhr.method, url: xhr.url });
+    this._requests.push({
+      method: xhr.method,
+      url: xhr.url,
+      headers: xhr.requestHeaders.getHash(),
+      body: xhr.body,
+    });
 
     const route = this._findFirstMatchingRoute(xhr) || this._defaultRoute;
     if (route) {

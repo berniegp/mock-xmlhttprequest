@@ -72,4 +72,26 @@ describe('HeadersContainer', () => {
       assert.equal(headers.getAll(), 'header-1: a\r\nheader-2: b\r\nheader-3: c\r\n');
     });
   });
+
+  describe('getHash()', () => {
+    it('should return all headers with proper formatting', () => {
+      const headers = new HeadersContainer();
+      headers.addHeader('HEADER', '1');
+      headers.addHeader('header-2', 'a');
+      assert.deepEqual(headers.getHash(), {
+        header: '1',
+        'header-2': 'a',
+      });
+    });
+
+    it('should combine headers', () => {
+      const headers = new HeadersContainer();
+      headers.addHeader('header', '1');
+      headers.addHeader('header', '2');
+      headers.addHeader('header', '3');
+      assert.deepEqual(headers.getHash(), {
+        header: '1, 2, 3',
+      });
+    });
+  });
 });

@@ -2,17 +2,21 @@
 
 const { assert } = require('chai');
 
+const HeadersContainer = require('../src/HeadersContainer');
 const MockXhrServer = require('../src/MockXhrServer');
 
 describe('MockXhrServer', () => {
+  // Bare minimum xhrMock to give to MockXhrServer
   class ServerTester {
     constructor() {
       this.responses = [];
     }
 
-    doRequest(method, url) {
+    doRequest(method, url, headers = {}, body = null) {
       this.method = method;
       this.url = url;
+      this.requestHeaders = new HeadersContainer(headers);
+      this.body = body;
       this.onSend(this);
     }
 
@@ -352,13 +356,19 @@ describe('MockXhrServer', () => {
       server.addHandler('method', '/path', handler);
       tester.doRequest('method', '/path1');
       tester.doRequest('get', '/path2');
-      tester.doRequest('POST', '/post');
+      tester.doRequest('POST', '/post', { header: '123' }, 'body');
 
       const log = server.getRequestLog();
       assert.equal(log.length, 3, 'handler called');
-      assert.deepEqual(log[0], { method: 'method', url: '/path1' });
-      assert.deepEqual(log[1], { method: 'get', url: '/path2' });
-      assert.deepEqual(log[2], { method: 'POST', url: '/post' });
+      assert.deepEqual(log[0], {
+        method: 'method', url: '/path1', headers: {}, body: null,
+      });
+      assert.deepEqual(log[1], {
+        method: 'get', url: '/path2', headers: {}, body: null,
+      });
+      assert.deepEqual(log[2], {
+        method: 'POST', url: '/post', headers: { header: '123' }, body: 'body',
+      });
     });
   });
 });

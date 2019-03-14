@@ -211,9 +211,11 @@ Set a default request handler for requests that don't match any route.
 Return 404 responses for requests that don't match any route.
 
 #### getRequestLog()
-Returns the list of all requests received by the server. Each entry has `{ method, url }`. Can be useful for debugging.
+Returns the list of all requests received by the server. Each entry has `{ method, url, body, headers }`. Can be useful for debugging or asserting the order and contents of the sent mock requests.
 
 ### Mock response methods
+
+These methods can be called on `MockXhr` (i.e. the `XMLHttpRequest` mock) instances.
 
 #### uploadProgress(transmitted)
 Fires a request upload progress event where `transmitted` is the number of bytes transmitted.

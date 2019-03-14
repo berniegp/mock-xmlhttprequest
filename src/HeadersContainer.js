@@ -54,6 +54,19 @@ class HeadersContainer {
   }
 
   /**
+   * Get all headers as an object.
+   *
+   * @returns {object} headers
+   */
+  getHash() {
+    const headers = {};
+    this._headers.forEach((value, name) => {
+      headers[name] = value;
+    });
+    return headers;
+  }
+
+  /**
    * Add a header value, combining it with any previous value for the same header name.
    *
    * @param {string} name header name
