@@ -159,13 +159,13 @@ Any `string` with a valid HTTP request method is allowed. This includes standard
 This can be:
 - A `string` (e.g. '/get') in which case it must match exactly the request URL.
 - A `RegExp` against which the request URL is tested.
-- A `function` (signature `matches(url)`) which must return true if the request URL matches.
+- A `Function` (signature `matches(url)`) which must return true if the request URL matches.
 
 ##### Request Handler
 This can be:
 - An `object` with the response properties. The default values are: ` { status: 200, headers: {}, body: null, statusText: 'OK' }`. An empty object is also allowed here to accept all default values.
-- A `function` (signature `handler(xhr)`) that calls the [mock response methods](#mock-response-methods) directly.
-- An array of `object` and `function` request handlers. In this case, the first matching request gets the first handler, the second gets the second handler and so on. The last handler is reused if the number of matching requests exceeds the number of handlers in the array.
+- A `Function` (signature `handler(xhr)`) that calls the [mock response methods](#mock-response-methods) directly.
+- An array of `object` and `Function` request handlers. In this case, the first matching request gets the first handler, the second gets the second handler and so on. The last handler is reused if the number of matching requests exceeds the number of handlers in the array.
 
 These handlers are equivalent:
 ```javascript
