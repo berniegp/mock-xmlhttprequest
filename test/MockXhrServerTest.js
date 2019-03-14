@@ -48,7 +48,17 @@ describe('MockXhrServer', () => {
   });
 
   describe('install() and remove()', () => {
-    it('should set and restore XMLHttpRequest', () => {
+    it('should set and restore XMLHttpRequest on default global context', () => {
+      const xhrMock = {};
+
+      const server = new MockXhrServer(xhrMock).install();
+      assert.equal(global.XMLHttpRequest, xhrMock, 'XMLHttpRequest property replaced');
+
+      server.remove();
+      assert.isUndefined(global.XMLHttpRequest, 'XMLHttpRequest property deleted');
+    });
+
+    it('should set and restore XMLHttpRequest on given context', () => {
       const context = { XMLHttpRequest: 1 };
       const xhrMock = {};
 
@@ -59,7 +69,7 @@ describe('MockXhrServer', () => {
       assert.equal(context.XMLHttpRequest, 1, 'XMLHttpRequest property restored');
     });
 
-    it('should set and delete XMLHttpRequest', () => {
+    it('should set and delete XMLHttpRequest on custom context', () => {
       const context = {};
       const xhrMock = {};
 

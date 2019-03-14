@@ -177,8 +177,9 @@ describe('Factories', () => {
         }],
       });
 
-      function someAjaxMethod(XMLHttpRequest) {
+      function someAjaxMethod() {
         return new Promise((resolve, reject) => {
+          // eslint-disable-next-line no-undef
           const xhr = new XMLHttpRequest();
           xhr.open('GET', '/my/url');
           xhr.onload = () => resolve(JSON.parse(xhr.response));
@@ -188,14 +189,12 @@ describe('Factories', () => {
       }
 
       try {
-        const global = {};
-
         // Install the server's XMLHttpRequest mock in the "global" context.
         // "new XMLHttpRequest()" will then create a mock request to which the server will reply.
-        server.install(global);
+        server.install();
 
         // Do something that send()s an XMLHttpRequest to '/my/url'
-        someAjaxMethod(global.XMLHttpRequest).then((result) => {
+        someAjaxMethod().then((result) => {
           assert.equal(result.message, 'Success!');
           done();
         });

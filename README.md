@@ -43,7 +43,7 @@ const server = MockXMLHttpRequest.newServer({
     headers: { 'Content-Type': 'application/json' },
     body: '{ "message": "Success!" }',
   }],
-}).install(global);
+}).install( /* optional context; defaults to global */ );
 
 // Do something that send()s an XMLHttpRequest to '/my/url'
 const result = MyModuleUsingXhr.someAjaxMethod();
@@ -116,19 +116,31 @@ The basic structure of tests using the mock server is:
 
 ```javascript
 const server = require('mock-xmlhttprequest').newServer( /* routes */ );
-
 try {
-  server.install(global);
-
-  // Setup routes
-  // Test
+  server.install( /* optional context; defaults to global */ );
+  // Test code that creates XMLHttpRequests
 } finally {
+  // Make sure not to do this before the test code is done creating XMLHttpRequests!
   server.remove();
 }
 ```
 
-- `install(context)` installs the server's XMLHttpRequest mock in the given context (e.g. `global` or `window`).
+- `install(context = global)` installs the server's XMLHttpRequest mock in the given context (e.g. `global` in node or `window` in the browser).
 - `remove()` reverts what `install()` did.
+
+The server also exposes the property `xhrMock` to give access to its XMLHttpRequest mock. This allows  injecting the mock with custom code instead of using `install()`. Example:
+
+```javascript
+const server = require('mock-xmlhttprequest').newServer( /* routes */ );
+const savedFactory = MyClass.xhrFactory;
+try {
+  MyClass.xhrFactory = () => new server.xhrMock();
+  // Test code that creates XMLHttpRequests through MyClass.xhrFactory()
+} finally {
+  // Make sure not to do this before the test code is done using the factory!
+  MyClass.xhrFactory = savedFactory;
+}
+```
 
 #### Routes
 Routes are defined by these 3 elements:

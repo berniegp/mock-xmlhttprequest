@@ -30,7 +30,7 @@ class MockXhrServer {
    * @param {object} context context object (e.g. global, window)
    * @returns {MockXhrServer} this
    */
-  install(context) {
+  install(context = global) {
     this._savedXMLHttpRequest = context.XMLHttpRequest;
     this._savedContext = context;
     context.XMLHttpRequest = this.xhrMock;
