@@ -198,6 +198,9 @@ class MockXhr extends EventTarget {
     }
   }
 
+  /**
+   * @returns {object} new network error response object
+   */
   _networkErrorResponse() {
     return {
       type: 'error',
