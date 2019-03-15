@@ -414,6 +414,126 @@ describe('MockXhr', () => {
     });
   });
 
+  describe('timeout attribute', () => {
+    it('can get and set its value', () => {
+      const xhr = new MockXhr();
+      const timeout = 10;
+      assert.equal(xhr.timeout, 0, 'initial value is 0');
+      xhr.timeout = timeout;
+      assert.equal(xhr.timeout, timeout);
+    });
+
+    it('will trigger a timeout if set before send()', (done) => {
+      const xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      const events = recordEvents(xhr);
+      xhr.timeout = 1;
+      xhr.addEventListener('timeout', () => {
+        assert.deepEqual(events, [
+          'loadstart(0,0,false)',
+          'readystatechange(4)',
+          'timeout(0,0,false)',
+        ], 'fired events');
+        done();
+      });
+
+      xhr.send();
+    });
+
+    it('will trigger a timeout if set after send()', (done) => {
+      const xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+      xhr.timeout = 1;
+      xhr.addEventListener('timeout', () => {
+        done();
+      });
+    });
+
+    it('is measured relative to send()', (done) => {
+      const xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+
+      const delay = 100;
+      setTimeout(() => {
+        const setTimeoutAt = Date.now();
+        xhr.timeout = delay;
+        xhr.addEventListener('timeout', () => {
+          const actualDelay = Date.now() - setTimeoutAt;
+          assert.isBelow(actualDelay, delay, 'timeout delay relative to start of request');
+          done();
+        });
+      }, delay);
+    });
+
+    it('has no effect when the response is sent fast enough', (done) => {
+      const xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+
+      xhr.addEventListener('timeout', () => {
+        assert.isOk(false, 'there should be no timeout event');
+      });
+      xhr.timeout = 40;
+
+      xhr.respond();
+
+      // Wait to make sure the timeout has no effect
+      setTimeout(() => { done(); }, 100);
+    });
+
+    it('can be cancelled', (done) => {
+      const xhr = new MockXhr();
+      xhr.open('GET', '/url');
+      xhr.send();
+
+      xhr.addEventListener('timeout', () => {
+        assert.isOk(false, 'there should be no timeout event');
+      });
+      xhr.timeout = 40;
+      setTimeout(() => { xhr.timeout = 0; }, 0);
+
+      // Wait to make sure the timeout has no effect
+      setTimeout(() => { done(); }, 100);
+    });
+
+
+    it('can be disabled per instance', (done) => {
+      const xhr = new MockXhr();
+      xhr.timeoutEnabled = false;
+      xhr.open('GET', '/url');
+      xhr.send();
+
+      xhr.addEventListener('timeout', () => {
+        assert.isOk(false, 'there should be no timeout event');
+      });
+      xhr.timeout = 1;
+
+      // Wait to make sure the timeout has no effect
+      setTimeout(() => { done(); }, 40);
+    });
+
+    it('can be disabled globally', (done) => {
+      try {
+        MockXhr.timeoutEnabled = false;
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+
+        xhr.addEventListener('timeout', () => {
+          assert.isOk(false, 'there should be no timeout event');
+        });
+        xhr.timeout = 1;
+
+        // Wait to make sure the timeout has no effect
+        setTimeout(() => { done(); }, 40);
+      } finally {
+        MockXhr.timeoutEnabled = true;
+      }
+    });
+  });
+
   describe('Hooks', () => {
     it('should call MockXMLHttpRequest.onCreate()', () => {
       try {

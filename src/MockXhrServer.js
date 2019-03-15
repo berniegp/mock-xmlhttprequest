@@ -55,6 +55,20 @@ class MockXhrServer {
   }
 
   /**
+   * Disable the effects of the timeout attribute on the XMLHttpRequest mock used by the server.
+   */
+  disableTimeout() {
+    this.xhrMock.timeoutEnabled = false;
+  }
+
+  /**
+   * Enable the effects of the timeout attribute on the XMLHttpRequest mock used by the server.
+   */
+  enableTimeout() {
+    this.xhrMock.timeoutEnabled = true;
+  }
+
+  /**
    * Add a GET request handler.
    *
    * @param {string|RegExp|Function} matcher url matcher

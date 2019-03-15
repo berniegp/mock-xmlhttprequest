@@ -11,7 +11,7 @@ const MockXhrServer = require('./MockXhrServer');
  * @returns {MockXhr} new MockXhr subclass
  */
 function newMockXhr() {
-  return class LocalMockXhr extends MockXhr {
+  class LocalMockXhr extends MockXhr {
     constructor() {
       super();
 
@@ -33,7 +33,11 @@ function newMockXhr() {
         setTimeout(() => onSend.call(this, this), 0);
       }
     }
-  };
+  }
+
+  // Override the parent class' flag to enable the effects of the timeout attribute
+  LocalMockXhr.timeoutEnabled = true;
+  return LocalMockXhr;
 }
 
 /**

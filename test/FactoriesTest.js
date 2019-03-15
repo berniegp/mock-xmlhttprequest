@@ -61,6 +61,22 @@ describe('Factories', () => {
         xhr.open('GET', '/url');
         xhr.send();
       });
+
+      it('should isolate MockXMLHttpRequest.timeoutEnabled', (done) => {
+        try {
+          MockXhr.timeoutEnabled = false;
+          const LocalMockXhr = newMockXhr();
+          const xhr = new LocalMockXhr();
+          xhr.open('GET', '/url');
+          xhr.send();
+          xhr.timeout = 1;
+          xhr.addEventListener('timeout', () => {
+            done();
+          });
+        } finally {
+          MockXhr.timeoutEnabled = true;
+        }
+      });
     });
 
     describe('Hooks', () => {
@@ -168,6 +184,22 @@ describe('Factories', () => {
   });
 
   describe('newServer()', () => {
+    it('should isolate MockXMLHttpRequest.timeoutEnabled', (done) => {
+      const server = newServer();
+      server.disableTimeout();
+      const LocalMockXhr = server.xhrMock;
+      const xhr = new LocalMockXhr();
+      xhr.open('GET', '/url');
+
+      xhr.addEventListener('timeout', () => {
+        assert.isOk(false, 'there should be no timeout event');
+      });
+      xhr.timeout = 1;
+
+      // Wait to make sure the timeout has no effect
+      setTimeout(() => { done(); }, 40);
+    });
+
     it('should work with the quick start code', (done) => {
       const server = newServer({
         get: ['/my/url', {

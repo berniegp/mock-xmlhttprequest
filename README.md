@@ -21,6 +21,7 @@ This library implements the `XMLHttpRequest` interface and handles requests and 
       - [Request Handler](#request-handler)
   - [Mock response methods](#mock-response-methods)
   - [Hooks](#hooks)
+  - [The `timeout` Attribute and Request Timeouts](#the-timeout-attribute-and-request-timeouts)
   - [Run Unit Tests](#run-unit-tests)
 - [Contributing](#contributing)
 - [License](#license)
@@ -91,15 +92,15 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 - `open()`, `setRequestHeader()`, `send()` and `abort()`
 - upload and download progress events
 - response status, `statusText`, headers and body
+- the timeout attribute (can be disabled) (since v4.0.0)
 - simulating a network error
-- simulating a request time out
+- simulating a request timeout (see [`MockXhr.setRequestTimeout()`](#setrequesttimeout))
 
 ### Not supported
 - `removeEventListener()` not implemented (https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener)
 - `dispatchEvent()` does not return a result. (https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent)
 - synchronous requests (`async` == false)
 - parsing the URL and setting the `username` and `password`
-- the timeout attribute (call `MockXhr.setRequestTimeout()` to trigger a timeout)
 - `withCredentials`
 - `responseUrl` (i.e. the final request URL with redirects) is not automatically set. This can be emulated in a request handler.
 - Setting `responseType` (only the empty string responseType is used)
@@ -213,6 +214,9 @@ Return 404 responses for requests that don't match any route.
 #### getRequestLog()
 Returns the list of all requests received by the server. Each entry has `{ method, url, body, headers }`. Can be useful for debugging or asserting the order and contents of the sent mock requests.
 
+#### disableTimeout() and enableTimeout()
+Controls whether setting the `timeout` attribute of a mocked `XMLHttpRequest` actually triggers `timeout` events that cancel requests. This is enabled by default. See ["The `timeout` Attribute and Request Timeouts"](#the-timeout-attribute-and-request-timeouts).
+
 ### Mock response methods
 
 These methods can be called on `MockXhr` (i.e. the `XMLHttpRequest` mock) instances.
@@ -295,6 +299,17 @@ MockXMLHttpRequest.MockXhr.onSend = (xhr) => { /*...*/ };
 const xhr = new MockXhr();
 xhr.onSend = (xhr) => { /*...*/ };
 ```
+
+### The `timeout` Attribute and Request Timeouts
+(since v4.0.0)
+
+By default, setting the `timeout` attribute of a `MockXhr` instance triggers `timeout` events that cancel requests as described in the specification. This can be problematic in some tests and when debugging interactively since request timeouts are then not explicitly triggered by the test code. There are multiple ways to disable this behavior:
+
+ - Set `xhr.timeoutEnabled = false` on an `MockXhr` instance to disable for that instance only.
+ - Set `MockXhr.timeoutEnabled = false` directly on the `MockXhr` class to disable for all its instances.
+ - Call [`server.disableTimeout()`](#disabletimeout-and-enabletimeout) on a mock server to disable for all its `MockXhr` instances.
+
+When the `timeout` attribute is disabled (and also when it's enabled), timeouts can be triggered programmatically using [`setRequestTimeout()`](#setrequesttimeout).
 
 ### Run Unit Tests
 

@@ -20,13 +20,13 @@ function throwError(type, text = '') {
  *  - open(), setRequestHeader(), send() and abort()
  *  - upload and download progress events
  *  - response status, statusText, headers and body
+ *  - the timeout attribute (can be disabled) (since v4.0.0)
  *  - simulating a network error
- *  - simulating a request time out
+ *  - simulating a request timeout (see MockXhr.setRequestTimeout())
  *
  * Does not support:
  * - synchronous requests (async == false)
  * - parsing the url and setting the username and password
- * - the timeout attribute (call MockXhr.setRequestTimeout() to trigger a timeout)
  * - withCredentials
  * - responseUrl (the final request url with redirects)
  * - Setting responseType (only the empty string responseType is used)
@@ -43,6 +43,10 @@ class MockXhr extends EventTarget {
     this.requestHeaders = new HeadersContainer();
     this._upload = new EventTarget(this);
     this._response = this._networkErrorResponse();
+    this._timeout = 0;
+
+    // Per-instance flag to enable the effects of the timeout attribute
+    this.timeoutEnabled = true;
 
     // Hook for XMLHttpRequest creation
     if (typeof MockXhr.onCreate === 'function') {
@@ -165,6 +169,9 @@ class MockXhr extends EventTarget {
       return;
     }
 
+    this._timeoutReference = Date.now();
+    this._scheduleRequestTimeout();
+
     // Hook for XMLHttpRequest.send(). Execute in an empty callstack
     if (typeof this.onSend === 'function') {
       // Save the callback in case it changes before it has a chance to run
@@ -276,6 +283,43 @@ class MockXhr extends EventTarget {
       this.onreadystatechange(event);
     }
     this.dispatchEvent(event);
+  }
+
+  /////////////
+  // timeout //
+  /////////////
+
+  /**
+   * Handle a changed timeout attribute value.
+   *
+   * @param {number} value timeout attribute value (ms)
+   */
+  _setTimeout(value) {
+    this._timeout = value;
+    // eslint-disable-next-line no-underscore-dangle
+    if (this._sendFlag && this.timeoutEnabled && this.constructor.timeoutEnabled) {
+      // A fetch is active so schedule a request timeout
+      this._scheduleRequestTimeout();
+    }
+  }
+
+  _scheduleRequestTimeout() {
+    // Cancel any previous timeout task
+    if (this._timeoutTask) {
+      clearTimeout(this._timeoutTask);
+    }
+
+    if (this._timeout > 0) {
+      // The timeout delay must be measured relative to the start of fetching
+      // https://xhr.spec.whatwg.org/#the-timeout-attribute
+      const delay = Math.max(0, this._timeout - (Date.now() - this._timeoutReference));
+      this._timeoutTask = setTimeout(() => {
+        if (this._sendFlag) {
+          this.setRequestTimeout();
+        }
+        delete this._timeoutTask;
+      }, delay);
+    }
   }
 
   ///////////////////////////////////
@@ -536,7 +580,14 @@ Object.defineProperties(MockXhr.prototype, {
   responseText: {
     get() { return this._getResponseText(); },
   },
+  timeout: {
+    get() { return this._timeout; },
+    set(value) { this._setTimeout(value); },
+  },
 });
+
+// Global flag to enable the effects of the timeout attribute
+MockXhr.timeoutEnabled = true;
 
 /**
  * The client states
