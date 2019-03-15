@@ -121,7 +121,7 @@ try {
   server.install( /* optional context; defaults to global */ );
   // Test code that creates XMLHttpRequests
 } finally {
-  // Make sure not to do this before the test code is done creating XMLHttpRequests!
+  // Don't do this before the test code is done creating XMLHttpRequests!
   server.remove();
 }
 ```
@@ -129,16 +129,20 @@ try {
 - `install(context = global)` installs the server's XMLHttpRequest mock in the given context (e.g. `global` in node or `window` in the browser).
 - `remove()` reverts what `install()` did.
 
-The server also exposes the property `xhrMock` to give access to its XMLHttpRequest mock. This allows  injecting the mock with custom code instead of using `install()`. Example:
+For more control, you can also access the server's XMLHttpRequest mock class. This allows injecting it somewhere with custom code instead of using `install()`:
+- `server.xhrFactory` is a factory method to create XMLHttpRequest mock instances.
+- `server.MockXhr` is the server's XMLHttpRequest mock class.
+
+Usage example:
 
 ```javascript
 const server = require('mock-xmlhttprequest').newServer( /* routes */ );
 const savedFactory = MyClass.xhrFactory;
 try {
-  MyClass.xhrFactory = () => new server.xhrMock();
+  MyClass.xhrFactory = server.xhrFactory;
   // Test code that creates XMLHttpRequests through MyClass.xhrFactory()
 } finally {
-  // Make sure not to do this before the test code is done using the factory!
+  // Don't do this before the test code is done using the factory!
   MyClass.xhrFactory = savedFactory;
 }
 ```

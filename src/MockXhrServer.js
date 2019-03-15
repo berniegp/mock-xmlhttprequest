@@ -10,11 +10,11 @@ class MockXhrServer {
   /**
    * Constructor
    *
-   * @param {MockXhr} xhrMock XMLHttpRequest mock
+   * @param {MockXhr} xhrMock XMLHttpRequest mock class
    * @param {?object} routes routes
    */
   constructor(xhrMock, routes = {}) {
-    this.xhrMock = xhrMock;
+    this.MockXhr = xhrMock;
     this._requests = [];
     this._routes = {};
     Object.keys(routes).forEach((method) => {
@@ -22,6 +22,10 @@ class MockXhrServer {
       this.addHandler(method, matcher, handler);
     });
     xhrMock.onSend = (xhr) => { this._handleRequest(xhr); };
+
+    // Setup a mock request factory for users
+    this.xhrMock = xhrMock; // For backwards compatibility with < 4.1.0
+    this.xhrFactory = () => new this.MockXhr();
   }
 
   /**
@@ -33,7 +37,7 @@ class MockXhrServer {
   install(context = global) {
     this._savedXMLHttpRequest = context.XMLHttpRequest;
     this._savedContext = context;
-    context.XMLHttpRequest = this.xhrMock;
+    context.XMLHttpRequest = this.MockXhr;
     return this;
   }
 
@@ -58,14 +62,14 @@ class MockXhrServer {
    * Disable the effects of the timeout attribute on the XMLHttpRequest mock used by the server.
    */
   disableTimeout() {
-    this.xhrMock.timeoutEnabled = false;
+    this.MockXhr.timeoutEnabled = false;
   }
 
   /**
    * Enable the effects of the timeout attribute on the XMLHttpRequest mock used by the server.
    */
   enableTimeout() {
-    this.xhrMock.timeoutEnabled = true;
+    this.MockXhr.timeoutEnabled = true;
   }
 
   /**

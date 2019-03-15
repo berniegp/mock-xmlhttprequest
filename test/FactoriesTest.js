@@ -187,8 +187,7 @@ describe('Factories', () => {
     it('should isolate MockXMLHttpRequest.timeoutEnabled', (done) => {
       const server = newServer();
       server.disableTimeout();
-      const LocalMockXhr = server.xhrMock;
-      const xhr = new LocalMockXhr();
+      const xhr = server.xhrFactory();
       xhr.open('GET', '/url');
 
       xhr.addEventListener('timeout', () => {

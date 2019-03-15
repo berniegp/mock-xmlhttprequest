@@ -51,6 +51,22 @@ describe('MockXhrServer', () => {
     });
   });
 
+  describe('MockXhr access', () => {
+    class MockXhr {}
+
+    it('should expose the MockXhr class', () => {
+      const server = new MockXhrServer(MockXhr);
+      assert.strictEqual(server.MockXhr, MockXhr, 'MockXhr exposed');
+    });
+
+    it('should provide a factory method for MockXhr', () => {
+      const server = new MockXhrServer(MockXhr);
+      assert.strictEqual(server.xhrFactory().constructor, MockXhr, 'Factory exposed');
+      const factory = server.xhrFactory;
+      assert.strictEqual(factory().constructor, MockXhr, 'Factory function bound');
+    });
+  });
+
   describe('install() and remove()', () => {
     it('should set and restore XMLHttpRequest on default global context', () => {
       const xhrMock = {};
