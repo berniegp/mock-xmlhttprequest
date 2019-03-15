@@ -1,6 +1,6 @@
 {
   "name": "mock-xmlhttprequest",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "XMLHttpRequest mock for testing",
   "main": "index.js",
   "directories": {
