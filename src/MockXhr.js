@@ -56,8 +56,12 @@ class MockXhr extends EventTarget {
    *
    * @param {string} method request HTTP method (GET, POST, etc.)
    * @param {string} url request url
+   * @param {boolean} async async request flag (only true is supported)
    */
-  open(method, url) {
+  open(method, url, async = true) {
+    if (!async) {
+      throw new Error('async = false is not supported.');
+    }
     if (Utils.isRequestMethodForbidden(method)) {
       throwError('SecurityError', `Method "${method}" forbidden.`);
     }
