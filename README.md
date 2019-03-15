@@ -225,22 +225,22 @@ May only be called when the request body is not null and the upload is not compl
 #### respond(status = 200, headers = {}, body = null, statusText = 'OK')
 Complete response method which sets the response headers and body. Will fire the appropriate `readystatechange`, `progress`, `load`, etc. (upload) events. The state of the request will be set to `DONE`.
 
-This is a shorthand for calling `setResponseHeaders()` and `setResponseBody()` in sequence.
+This is a shorthand for calling [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok) and [`setResponseBody()`](#setresponsebodybody--null) in sequence.
 
 No other mock response methods may be called after this one until `open()` is called.
 
 #### setResponseHeaders(status = 200, headers = {}, statusText = 'OK')
 Sets the response headers only. Will fire the appropriate `readystatechange`, `progress`, `load`, etc. (upload) events. Will set the request state to `HEADERS_RECEIVED`.
 
-Should be followed by either `downloadProgress()`, `setResponseBody()`, `setNetworkError()` or `setRequestTimeout()`.
+Should be followed by either [`downloadProgress()`](#downloadprogresstransmitted-length), [`setResponseBody()`](#setresponsebodybody--null), [`setNetworkError()`](#setnetworkerror) or [`setRequestTimeout()`](#setrequesttimeout).
 
 #### downloadProgress(transmitted, length)
 Fires a response progress event. Will set the request state to `LOADING`.
 
-Must be preceded by `setResponseHeaders()`.
+Must be preceded by [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok).
 
 #### setResponseBody(body = null)
-Sets the response body. Calls `setResponseHeaders()` if not already called. Will fire the appropriate `readystatechange`, `progress`, `load`, etc. (upload) events. The state of the request will be set to `DONE`.
+Sets the response body. Calls [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok if not already called. Will fire the appropriate `readystatechange`, `progress`, `load`, etc. (upload) events. The state of the request will be set to `DONE`.
 
 No other mock response methods may be called after this one until `open()` is called.
 
@@ -250,7 +250,7 @@ Simulates a network error. Will set the request state to `DONE` and fire an `err
 No other mock response methods may be called after this one until `open()` is called.
 
 #### setRequestTimeout()
-Simulates a request time out. Will set the request state to `DONE` and fire a `timeout` event  (amongst other events).
+Simulates a request timeout. Will set the request state to `DONE` and fire a `timeout` event  (amongst other events).
 
 No other mock response methods may be called after this one until `open()` is called.
 
