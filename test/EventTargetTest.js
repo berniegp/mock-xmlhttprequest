@@ -59,6 +59,36 @@ describe('EventTarget', () => {
     });
   });
 
+  describe('removeEventListener()', () => {
+    it('should remove a listener', () => {
+      const eventTarget = new EventTarget();
+      const eventName = xhrEvents[0];
+      const event = { type: eventName };
+
+      let callCount = 0;
+      function callback() { callCount += 1; }
+      eventTarget.addEventListener(eventName, callback);
+      eventTarget.removeEventListener(eventName, callback);
+
+      eventTarget.dispatchEvent(event);
+      assert.equal(callCount, 0, 'listener not called');
+    });
+
+    it('should consider the capture/useCapture flag', () => {
+      const eventTarget = new EventTarget();
+      const eventName = xhrEvents[0];
+      const event = { type: eventName };
+
+      let callCount = 0;
+      function callback() { callCount += 1; }
+      eventTarget.addEventListener(eventName, callback, true);
+      eventTarget.removeEventListener(eventName, callback);
+
+      eventTarget.dispatchEvent(event);
+      assert.equal(callCount, 1, 'listener called twice');
+    });
+  });
+
   describe('dispatchEvent()', () => {
     xhrEvents.forEach((eventName) => {
       it(`should support the XMLHttpRequest event ${eventName}`, () => {

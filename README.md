@@ -97,7 +97,6 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 - simulating a request timeout (see [`MockXhr.setRequestTimeout()`](#setrequesttimeout))
 
 ### Not supported
-- `removeEventListener()` not implemented (https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener)
 - synchronous requests (`async` == false)
 - parsing the URL and setting the `username` and `password`
 - `withCredentials`

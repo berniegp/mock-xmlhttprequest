@@ -12,10 +12,6 @@ function flattenUseCaptureFlag(options) {
  * occurred.
  *
  * Based on https://dom.spec.whatwg.org/#interface-eventtarget
- *
- * Limitations:
- * - No removeEventListener() support
- *   https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener
  */
 class EventTarget {
   /**
@@ -59,6 +55,26 @@ class EventTarget {
         return other.callback === listener.callback && other.useCapture === listener.useCapture;
       })) {
         this._eventListeners[type].push(listener);
+      }
+    }
+  }
+
+  /**
+   * Remove an event listener.
+   * See https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener
+   *
+   * @param {string} type event type ('load', 'abort', etc)
+   * @param {EventListener|Function} callback listener callback
+   * @param {boolean|object} options options object or the useCapture flag
+   */
+  removeEventListener(type, callback, options = false) {
+    if (this._eventListeners[type]) {
+      const useCapture = flattenUseCaptureFlag(options);
+      const index = this._eventListeners[type].findIndex((listener) => {
+        return callback === listener.callback && useCapture === listener.useCapture;
+      });
+      if (index >= 0) {
+        this._eventListeners[type].splice(index, 1);
       }
     }
   }
