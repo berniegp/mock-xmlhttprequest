@@ -9,8 +9,6 @@
  * Limitations:
  * - No removeEventListener() support
  *   https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener
- * - dispatchEvent() does not return a result
- *   https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent
  */
 class EventTarget {
   /**
@@ -49,6 +47,7 @@ class EventTarget {
    * Calls all the listeners for the event.
    *
    * @param {object} event event
+   * @returns {boolean} always true since none of the xhr event are cancelable
    */
   dispatchEvent(event) {
     // Only the event listeners registered at this point should be called. Storing them here avoids
@@ -74,6 +73,7 @@ class EventTarget {
         listener.handleEvent();
       }
     });
+    return true;
   }
 }
 

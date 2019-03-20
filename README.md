@@ -98,7 +98,6 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 
 ### Not supported
 - `removeEventListener()` not implemented (https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener)
-- `dispatchEvent()` does not return a result. (https://dom.spec.whatwg.org/#dom-eventtarget-dispatchevent)
 - synchronous requests (`async` == false)
 - parsing the URL and setting the `username` and `password`
 - `withCredentials`
