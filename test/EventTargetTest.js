@@ -15,6 +15,50 @@ describe('EventTarget', () => {
     'loadend',
   ];
 
+  describe('addEventListener()', () => {
+    it('should ignore duplicate listeners', () => {
+      const eventTarget = new EventTarget();
+      const eventName = xhrEvents[0];
+      const event = { type: eventName };
+
+      let callCount = 0;
+      function callback() { callCount += 1; }
+      eventTarget.addEventListener(eventName, callback);
+      eventTarget.addEventListener(eventName, callback);
+
+      eventTarget.dispatchEvent(event);
+      assert.equal(callCount, 1, 'listener called once');
+    });
+
+    it('should ignore duplicate listeners with same capture/useCapture flag', () => {
+      const eventTarget = new EventTarget();
+      const eventName = xhrEvents[0];
+      const event = { type: eventName };
+
+      let callCount = 0;
+      function callback() { callCount += 1; }
+      eventTarget.addEventListener(eventName, callback, true);
+      eventTarget.addEventListener(eventName, callback, { capture: true });
+
+      eventTarget.dispatchEvent(event);
+      assert.equal(callCount, 1, 'listener called once');
+    });
+
+    it('should not consider listeners with different capture/useCapture flag as duplicates', () => {
+      const eventTarget = new EventTarget();
+      const eventName = xhrEvents[0];
+      const event = { type: eventName };
+
+      let callCount = 0;
+      function callback() { callCount += 1; }
+      eventTarget.addEventListener(eventName, callback, true);
+      eventTarget.addEventListener(eventName, callback /* , false */);
+
+      eventTarget.dispatchEvent(event);
+      assert.equal(callCount, 2, 'listener called twice');
+    });
+  });
+
   describe('dispatchEvent()', () => {
     xhrEvents.forEach((eventName) => {
       it(`should support the XMLHttpRequest event ${eventName}`, () => {

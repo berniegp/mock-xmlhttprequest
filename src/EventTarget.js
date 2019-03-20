@@ -1,5 +1,12 @@
 'use strict';
 
+function flattenUseCaptureFlag(options) {
+  if (typeof options === 'boolean') {
+    return options;
+  }
+  return !!options.capture;
+}
+
 /**
  * An EventTarget object represents a target to which an event can be dispatched when something has
  * occurred.
@@ -32,14 +39,27 @@ class EventTarget {
 
   /**
    * Add an event listener.
+   * See https://dom.spec.whatwg.org/#dom-eventtarget-addeventlistener
    *
    * @param {string} type event type ('load', 'abort', etc)
-   * @param {Function} callback listener callback function
+   * @param {EventListener|Function} callback listener callback
+   * @param {boolean|object} options options object or the useCapture flag
    */
-  addEventListener(type, callback) {
+  addEventListener(type, callback, options = false) {
     if (callback) {
+      const useCapture = flattenUseCaptureFlag(options);
+      const listener = { callback, useCapture };
       this._eventListeners[type] = this._eventListeners[type] || [];
-      this._eventListeners[type].push(callback);
+
+      // If eventTarget’s event listener list does not contain an event listener whose type is
+      // listener’s type, callback is listener’s callback, and capture is listener’s capture, then
+      // append listener to eventTarget’s event listener list.
+      // See https://dom.spec.whatwg.org/#add-an-event-listener
+      if (!this._eventListeners[type].some((other) => {
+        return other.callback === listener.callback && other.useCapture === listener.useCapture;
+      })) {
+        this._eventListeners[type].push(listener);
+      }
     }
   }
 
@@ -54,7 +74,7 @@ class EventTarget {
     // problems with listeners that modify the registered listeners.
     const listeners = [];
     if (this._eventListeners[event.type]) {
-      listeners.push(...this._eventListeners[event.type]);
+      this._eventListeners[event.type].forEach(listener => listeners.push(listener.callback));
     }
 
     // Handle event listeners added as object properties (e.g. obj.onload = ...)
