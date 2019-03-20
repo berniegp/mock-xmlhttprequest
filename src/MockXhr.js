@@ -25,13 +25,14 @@ function throwError(type, text = '') {
  *  - simulating a request timeout (see MockXhr.setRequestTimeout())
  *
  * Does not support:
- * - synchronous requests (async == false)
+ * - synchronous requests (i.e. async == false)
  * - parsing the url and setting the username and password
- * - withCredentials
- * - responseUrl (the final request url with redirects)
+ * - withCredentials (has no effect)
+ * - responseUrl (i.e. the final request url with redirects) is not automatically set. This can be
+ *   emulated in a request handler.
  * - Setting responseType (only the empty string responseType is used)
- * - overrideMimeType
- * - responseXml
+ * - overrideMimeType (has no effect)
+ * - responseXml (has no effect)
  */
 class MockXhr extends EventTarget {
   /**

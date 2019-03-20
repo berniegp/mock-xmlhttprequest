@@ -97,13 +97,13 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 - simulating a request timeout (see [`MockXhr.setRequestTimeout()`](#setrequesttimeout))
 
 ### Not supported
-- synchronous requests (`async` == false)
+- synchronous requests (i.e. `async` == false)
 - parsing the URL and setting the `username` and `password`
-- `withCredentials`
+- `withCredentials` (has no effect)
 - `responseUrl` (i.e. the final request URL with redirects) is not automatically set. This can be emulated in a request handler.
 - Setting `responseType` (only the empty string responseType is used)
-- `overrideMimeType`
-- `responseXml`
+- `overrideMimeType` (has no effect)
+- `responseXml` (has no effect)
 
 ## Usage
 
