@@ -414,7 +414,9 @@ describe('MockXhr', () => {
     });
   });
 
-  describe('timeout attribute', () => {
+  describe('timeout attribute', function () {
+    this.slow(250);
+
     it('can get and set its value', () => {
       const xhr = new MockXhr();
       const timeout = 10;
