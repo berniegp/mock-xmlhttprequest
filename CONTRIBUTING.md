@@ -16,7 +16,7 @@ If you are familiar enough with Git to do this, make sure your branch is *rebase
 
 ### Runing the unit tests
 
-	$ npm test
+    $ npm test
 
 All tests must pass and the included lint step must be successful.
 

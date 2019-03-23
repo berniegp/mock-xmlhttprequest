@@ -29,7 +29,7 @@ This library implements the `XMLHttpRequest` interface and handles requests and 
 ## Installation
 via [npm (node package manager)](https://github.com/npm/npm)
 
-	$ npm install mock-xmlhttprequest
+    $ npm install mock-xmlhttprequest
 
 ## Quick Start
 ```javascript
@@ -315,7 +315,7 @@ When the `timeout` attribute is disabled (and also when it's enabled), timeouts 
 
 ### Run Unit Tests
 
-	$ npm test
+    $ npm test
 
 ## Contributing
 Contributors are welcome! See [here](CONTRIBUTING.md) for more info.
