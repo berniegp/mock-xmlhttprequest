@@ -57,6 +57,42 @@ describe('EventTarget', () => {
       eventTarget.dispatchEvent(event);
       assert.equal(callCount, 2, 'listener called twice');
     });
+
+    it('should respect the once flag', () => {
+      const eventTarget = new EventTarget();
+      const eventName = xhrEvents[0];
+      const event = { type: eventName };
+
+      let callCount = 0;
+      function callback() { callCount += 1; }
+      eventTarget.addEventListener(eventName, callback, { once: true });
+
+      eventTarget.dispatchEvent(event);
+      eventTarget.dispatchEvent(event);
+
+      assert.equal(callCount, 1, 'listener called once');
+    });
+
+    it('should respect the once flag when readded as listener in callback', () => {
+      const eventTarget = new EventTarget();
+      const eventName = xhrEvents[0];
+      const event = { type: eventName };
+
+      let callCount = 0;
+      function callback() {
+        if (callCount === 0) {
+          eventTarget.addEventListener(eventName, callback, { once: true });
+        }
+        callCount += 1;
+      }
+      eventTarget.addEventListener(eventName, callback, { once: true });
+
+      eventTarget.dispatchEvent(event);
+      eventTarget.dispatchEvent(event);
+      eventTarget.dispatchEvent(event);
+
+      assert.equal(callCount, 2, 'listener called twice');
+    });
   });
 
   describe('removeEventListener()', () => {

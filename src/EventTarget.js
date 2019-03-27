@@ -44,7 +44,12 @@ class EventTarget {
   addEventListener(type, callback, options = false) {
     if (callback) {
       const useCapture = flattenUseCaptureFlag(options);
-      const listener = { callback, useCapture };
+      const listener = {
+        callback,
+        useCapture,
+        once: !!options.once,
+      };
+
       this._eventListeners[type] = this._eventListeners[type] || [];
 
       // If eventTarget’s event listener list does not contain an event listener whose type is
@@ -87,10 +92,14 @@ class EventTarget {
    */
   dispatchEvent(event) {
     // Only the event listeners registered at this point should be called. Storing them here avoids
-    // problems with listeners that modify the registered listeners.
+    // problems with callbacks that add or remove listeners.
     const listeners = [];
     if (this._eventListeners[event.type]) {
-      this._eventListeners[event.type].forEach(listener => listeners.push(listener.callback));
+      listeners.push(...this._eventListeners[event.type].map(listener => listener.callback));
+
+      // Remove 'once' listeners
+      this._eventListeners[event.type] = this._eventListeners[event.type]
+        .filter(listener => !listener.once);
     }
 
     // Handle event listeners added as object properties (e.g. obj.onload = ...)
