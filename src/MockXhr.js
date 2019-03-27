@@ -572,8 +572,8 @@ Object.defineProperties(MockXhr.prototype, {
     get() { return this._response.statusMessage; },
   },
   responseType: {
-    get() { return ''; },
-    set() { throw new Error('Operation not supported.'); },
+    get() { return this._responseType || ''; },
+    set(value) { this._responseType = value; },
   },
   response: {
     get() { return this._getResponseText(); },
