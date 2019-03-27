@@ -30,7 +30,8 @@ function throwError(type, text = '') {
  * - withCredentials (has no effect)
  * - responseUrl (i.e. the final request url with redirects) is not automatically set. This can be
  *   emulated in a request handler.
- * - Setting responseType (only the empty string responseType is used)
+ * - Changing the response based on responseType (just give the right response type to
+ *   setResponseBody())
  * - overrideMimeType (has no effect)
  * - responseXml (has no effect)
  */

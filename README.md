@@ -101,7 +101,7 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 - parsing the URL and setting the `username` and `password`
 - `withCredentials` (has no effect)
 - `responseUrl` (i.e. the final request URL with redirects) is not automatically set. This can be emulated in a request handler.
-- Setting `responseType` (only the empty string responseType is used)
+- Changing the `response` based on `responseType` (just give the right response type to [`setResponseBody()`](#setresponsebodybody--null))
 - `overrideMimeType` (has no effect)
 - `responseXml` (has no effect)
 
