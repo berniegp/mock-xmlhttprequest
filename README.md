@@ -96,12 +96,14 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 - simulating a network error
 - simulating a request timeout (see [`MockXhr.setRequestTimeout()`](#setrequesttimeout))
 
+### Partial support
+- `responseType`: `''`, `'text'` and `'json'` are fully supported. Other `responseType` values can also be used, but they will return the response body passed to [`setResponseBody()`](#setresponsebodybody--null) as-is in `xhr.response`.
+
 ### Not supported
 - synchronous requests (i.e. `async` == false)
-- parsing the URL and setting the `username` and `password`
+- parsing the URL and setting the `username` and `password` since there are no actual HTTP requests
 - `withCredentials` (has no effect)
 - `responseUrl` (i.e. the final request URL with redirects) is not automatically set. This can be emulated in a request handler.
-- Changing the `response` based on `responseType` (just give the right response type to [`setResponseBody()`](#setresponsebodybody--null))
 - `overrideMimeType` (has no effect)
 - `responseXml` (has no effect)
 

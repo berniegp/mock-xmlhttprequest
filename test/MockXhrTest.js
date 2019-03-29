@@ -534,6 +534,8 @@ describe('MockXhr', () => {
   });
 
   describe('response', () => {
+    const validResponseTypes = ['', 'arraybuffer', 'blob', 'document', 'json', 'text'];
+
     it('should have a readonly status attribute', () => {
       const xhr = new MockXhr();
       xhr.status = 200;
@@ -546,16 +548,158 @@ describe('MockXhr', () => {
       assert.strictEqual(xhr.statusText, '', 'initial value');
     });
 
-    it('should have a readonly response attribute', () => {
-      const xhr = new MockXhr();
-      xhr.response = 'body';
-      assert.strictEqual(xhr.response, '', 'initial value');
+    describe('responseType attribute', () => {
+      it('should initially return the empty string', () => {
+        const xhr = new MockXhr();
+        assert.strictEqual(xhr.responseType, '', 'initial value');
+      });
+
+      it('should throw if set when state is loading or done', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        xhr.setResponseHeaders();
+        xhr.downloadProgress(0, 4);
+        assert.throws(() => { xhr.responseType = 'text'; });
+        xhr.setResponseBody('body');
+        assert.throws(() => { xhr.responseType = 'text'; });
+      });
+
+      validResponseTypes.forEach((value) => {
+        it(`should accept value '${value}'`, () => {
+          const xhr = new MockXhr();
+          xhr.responseType = value;
+          assert.strictEqual(xhr.responseType, value, 'responseType was set');
+        });
+      });
+
+      it('should ignore invalid values', () => {
+        const xhr = new MockXhr();
+        xhr.responseType = 'value';
+        assert.strictEqual(xhr.responseType, '', 'responseType was not set');
+      });
     });
 
-    it('should have a readonly responseText attribute', () => {
-      const xhr = new MockXhr();
-      xhr.responseText = 'body';
-      assert.strictEqual(xhr.responseText, '', 'initial value');
+    describe('response attribute', () => {
+      it('should be readonly', () => {
+        const xhr = new MockXhr();
+        xhr.response = 'body';
+        assert.strictEqual(xhr.response, '', 'initial value');
+      });
+
+      it('should return the empty string before loading with text responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        assert.strictEqual(xhr.response, '', 'empty string before loading');
+      });
+
+      it('should return the text response with text responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        xhr.setResponseBody('body');
+        assert.strictEqual(xhr.response, 'body', 'text response');
+      });
+
+      it('should return null if state is not done with non-text responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.responseType = 'json';
+        xhr.send();
+        assert.strictEqual(xhr.response, null, 'state is not done');
+      });
+
+      validResponseTypes.forEach((value) => {
+        const data = value === '' || value === 'text' ? ['empty string', ''] : ['null', null];
+        it(`should return ${data[0]} with null body and "${value}" responseType`, () => {
+          const xhr = new MockXhr();
+          xhr.open('GET', '/url');
+          xhr.responseType = value;
+          xhr.send();
+          xhr.respond();
+          assert.strictEqual(xhr.response, data[1], 'responseType was set');
+        });
+      });
+
+      it('should return the response body as-is with arraybuffer responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.responseType = 'arraybuffer';
+        xhr.send();
+        const body = { body: 'test' };
+        xhr.setResponseBody(body);
+        assert.equal(xhr.response, body, 'passthrough response');
+      });
+
+      it('should return the response body as-is with blob responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.responseType = 'blob';
+        xhr.send();
+        const body = { body: 'test' };
+        xhr.setResponseBody(body);
+        assert.equal(xhr.response, body, 'passthrough response');
+      });
+
+      it('should return the response body as-is with document responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.responseType = 'document';
+        xhr.send();
+        const body = { body: 'test' };
+        xhr.setResponseBody(body);
+        assert.equal(xhr.response, body, 'passthrough response');
+      });
+
+      it('should return the json response with json responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.responseType = 'json';
+        xhr.send();
+        xhr.setResponseBody('{"a": 1}');
+        assert.deepEqual(xhr.response, { a: 1 }, 'json response');
+      });
+
+      it('should return null for invalid json response with json responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.responseType = 'json';
+        xhr.send();
+        xhr.setResponseBody('{');
+        assert.strictEqual(xhr.response, null, 'null response');
+      });
+    });
+
+    describe('responseText attribute', () => {
+      it('should be readonly', () => {
+        const xhr = new MockXhr();
+        xhr.responseText = 'body';
+        assert.strictEqual(xhr.responseText, '', 'initial value');
+      });
+
+      it('should throw if accessed with non-text responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.responseType = 'json';
+        xhr.send();
+        xhr.respond();
+        // eslint-disable-next-line no-unused-expressions
+        assert.throws(() => { xhr.responseText; });
+      });
+
+      it('should return the empty string before loading', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        assert.strictEqual(xhr.responseText, '', 'empty string before loading');
+      });
+
+      it('should return the text response', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        xhr.setResponseBody('body');
+        assert.strictEqual(xhr.responseText, 'body', 'text response');
+      });
     });
   });
 

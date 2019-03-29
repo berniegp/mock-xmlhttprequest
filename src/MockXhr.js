@@ -24,14 +24,16 @@ function throwError(type, text = '') {
  *  - simulating a network error
  *  - simulating a request timeout (see MockXhr.setRequestTimeout())
  *
- * Does not support:
+ * Partial support:
+ *  - responseType: '', 'text' and 'json' are fully supported. Other responseType values can also be
+ *    used, but they will return the response body given to setResponseBody() as-is in xhr.response.
+ *
+ * Not supported:
  * - synchronous requests (i.e. async == false)
- * - parsing the url and setting the username and password
+ * - parsing the url and setting the username and password since there are no actual HTTP requests
  * - withCredentials (has no effect)
  * - responseUrl (i.e. the final request url with redirects) is not automatically set. This can be
  *   emulated in a request handler.
- * - Changing the response based on responseType (just give the right response type to
- *   setResponseBody())
  * - overrideMimeType (has no effect)
  * - responseXml (has no effect)
  */
@@ -346,7 +348,17 @@ class MockXhr extends EventTarget {
    * @param {string} value responseType value
    */
   set responseType(value) {
-    this._responseType = value;
+    // Since this library is meant to run on node, skip the steps involving the Window object.
+    if (this._readyState === MockXhr.LOADING || this._readyState === MockXhr.DONE) {
+      throwError('InvalidStateError');
+    }
+
+    // The spec doesn't mandate throwing anything on invalid values since values must be of type
+    // XMLHttpRequestResponseType. Observed browser behavior is to ignore invalid values.
+    const responseTypes = ['', 'arraybuffer', 'blob', 'document', 'json', 'text'];
+    if (responseTypes.includes(value)) {
+      this._responseType = value;
+    }
   }
 
   /**
@@ -355,13 +367,32 @@ class MockXhr extends EventTarget {
    * @returns {*} response
    */
   get response() {
-    // Only supports responseType === '' or responseType === 'text'
-    if (this._readyState !== MockXhr.LOADING && this._readyState !== MockXhr.DONE) {
-      return '';
+    if (this.responseType === '' || this.responseType === 'text') {
+      if (this._readyState !== MockXhr.LOADING && this._readyState !== MockXhr.DONE) {
+        return '';
+      }
+
+      // No support for charset decoding as outlined in https://xhr.spec.whatwg.org/#text-response
+      return this._response.body === null ? '' : this._response.body;
     }
 
-    // Return the text response
-    return this._response.body ? this._response.body : '';
+    if (this._readyState !== MockXhr.DONE) {
+      return null;
+    }
+
+    if (this.responseType === 'json') {
+      if (this._response.body === null) {
+        return null;
+      }
+      try {
+        return JSON.parse(this._response.body);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Other responseTypes are sent as-is. They can be given directly by setResponseBody() anyway.
+    return this._response.body;
   }
 
   /**
@@ -378,7 +409,15 @@ class MockXhr extends EventTarget {
    * @returns {string} responseText attribute
    */
   get responseText() {
-    return this.response;
+    if (this.responseType !== '' && this.responseType !== 'text') {
+      throwError('InvalidStateError');
+    }
+    if (this._readyState !== MockXhr.LOADING && this._readyState !== MockXhr.DONE) {
+      return '';
+    }
+
+    // No support for charset decoding as outlined in https://xhr.spec.whatwg.org/#text-response
+    return this._response.body === null ? '' : this._response.body;
   }
 
   /**
