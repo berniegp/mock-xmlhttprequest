@@ -3,6 +3,7 @@
 const { assert } = require('chai');
 
 const MockXhr = require('../src/MockXhr');
+const EventTarget = require('../src/EventTarget');
 
 describe('MockXhr', () => {
   const xhrEvents = [
@@ -42,484 +43,207 @@ describe('MockXhr', () => {
     assert.equal(xhr.responseText, '', 'empty xhr.responseText');
   }
 
-  it('should have state constants', () => {
-    assert.equal(MockXhr.UNSENT, 0);
-    assert.equal(MockXhr.OPENED, 1);
-    assert.equal(MockXhr.HEADERS_RECEIVED, 2);
-    assert.equal(MockXhr.LOADING, 3);
-    assert.equal(MockXhr.DONE, 4);
-  });
+  describe('states', () => {
+    it('should have state constants', () => {
+      assert.equal(MockXhr.UNSENT, 0);
+      assert.equal(MockXhr.OPENED, 1);
+      assert.equal(MockXhr.HEADERS_RECEIVED, 2);
+      assert.equal(MockXhr.LOADING, 3);
+      assert.equal(MockXhr.DONE, 4);
+    });
 
-  it('should have supported attributes', () => {
-    const xhr = new MockXhr();
-
-    assert.isOk(xhr.upload);
-    assert.equal(xhr.readyState, MockXhr.UNSENT);
-    assertNetworkErrorResponse(xhr);
-  });
-
-  const readOnlyAttributes = [
-    'upload', 'readyState', 'status', 'statusText', 'response', 'responseText',
-  ];
-  readOnlyAttributes.forEach((attribute) => {
-    it(`${attribute} should be readonly`, () => {
+    it('should have a readonly readyState attribute', () => {
       const xhr = new MockXhr();
-      const initial = xhr[attribute];
-      assert.throw(() => { xhr[attribute] = 'testing'; });
-      assert.equal(xhr[attribute], initial);
+      assert.throws(() => { xhr.readyState = MockXhr.DONE; });
+      assert.strictEqual(xhr.readyState, MockXhr.UNSENT, 'initial value');
     });
   });
 
-  describe('open()', () => {
-    it('should record url and method', () => {
-      const xhr = new MockXhr();
+  describe('request', () => {
+    describe('open()', () => {
+      it('should record url and method', () => {
+        const xhr = new MockXhr();
 
-      xhr.open('get', '/url');
+        xhr.open('get', '/url');
 
-      assert.equal(xhr.method, 'GET', 'upper-case method');
-      assert.equal(xhr.url, '/url');
-    });
+        assert.equal(xhr.method, 'GET', 'upper-case method');
+        assert.equal(xhr.url, '/url');
+      });
 
-    it('should change state', () => {
-      const xhr = new MockXhr();
-      const events = recordEvents(xhr);
+      it('should change state', () => {
+        const xhr = new MockXhr();
+        const events = recordEvents(xhr);
 
-      xhr.open('get', '/url');
+        xhr.open('get', '/url');
 
-      assert.deepEqual(events, ['readystatechange(1)'], 'readystatechange fired');
-    });
+        assert.deepEqual(events, ['readystatechange(1)'], 'readystatechange fired');
+      });
 
-    it('should be re-entrant', () => {
-      const xhr = new MockXhr();
-      const events = recordEvents(xhr);
+      it('should be re-entrant', () => {
+        const xhr = new MockXhr();
+        const events = recordEvents(xhr);
 
-      xhr.open('get', '/url');
-      xhr.open('post', '/url2');
+        xhr.open('get', '/url');
+        xhr.open('post', '/url2');
 
-      assert.equal(xhr.method, 'POST', 'second method');
-      assert.equal(xhr.url, '/url2', 'second url');
-      assert.equal(xhr.readyState, MockXhr.OPENED);
-      assert.deepEqual(events, ['readystatechange(1)'], 'readystatechange fired');
-    });
+        assert.equal(xhr.method, 'POST', 'second method');
+        assert.equal(xhr.url, '/url2', 'second url');
+        assert.equal(xhr.readyState, MockXhr.OPENED);
+        assert.deepEqual(events, ['readystatechange(1)'], 'readystatechange fired');
+      });
 
-    it('should reject forbidden methods', () => {
-      const xhr = new MockXhr();
-      const events = recordEvents(xhr);
+      it('should reject forbidden methods', () => {
+        const xhr = new MockXhr();
+        const events = recordEvents(xhr);
 
-      const tryMethod = (method) => {
-        return () => { xhr.open(method, '/url'); };
-      };
-      assert.throws(tryMethod('CONNECT'), null, null, 'forbidden method throws');
-      assert.throws(tryMethod('TRACE'), null, null, 'forbidden method throws');
-      assert.throws(tryMethod('TRACK'), null, null, 'forbidden method throws');
-      assert.lengthOf(events, 0, 'no events fired');
-    });
-  });
-
-  describe('setRequestHeader()', () => {
-    it('should record header value', () => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-
-      xhr.setRequestHeader('Head', '1');
-      assert.equal(xhr.requestHeaders.getHeader('HEAD'), '1', 'header is case-insensitive');
-    });
-
-    it('should throw InvalidStateError if not opened', () => {
-      assert.throws(() => {
-        new MockXhr().setRequestHeader('Head', '1');
+        const tryMethod = (method) => {
+          return () => { xhr.open(method, '/url'); };
+        };
+        assert.throws(tryMethod('CONNECT'), null, null, 'forbidden method throws');
+        assert.throws(tryMethod('TRACE'), null, null, 'forbidden method throws');
+        assert.throws(tryMethod('TRACK'), null, null, 'forbidden method throws');
+        assert.lengthOf(events, 0, 'no events fired');
       });
     });
 
-    const forbiddenHeaders = [
-      'Accept-Charset',
-      'Accept-Encoding',
-      'Access-Control-Request-Headers',
-      'Access-Control-Request-Method',
-      'Connection',
-      'Content-Length',
-      'Cookie',
-      'Cookie2',
-      'Date',
-      'DNT',
-      'Expect',
-      'Host',
-      'Keep-Alive',
-      'Origin',
-      'Referer',
-      'TE',
-      'Trailer',
-      'Transfer-Encoding',
-      'Upgrade',
-      'Via',
-    ];
-    forbiddenHeaders.forEach((header) => {
-      it(`should reject forbidden header ${header}`, () => {
+    describe('setRequestHeader()', () => {
+      it('should record header value', () => {
         const xhr = new MockXhr();
         xhr.open('GET', '/url');
-        xhr.setRequestHeader(header, '1');
-        assert.equal(xhr.requestHeaders.getHeader(header), null,
-          'Forbidden header not set');
+
+        xhr.setRequestHeader('Head', '1');
+        assert.equal(xhr.requestHeaders.getHeader('HEAD'), '1', 'header is case-insensitive');
       });
-    });
-  });
 
-  describe('send()', () => {
-    it('should record the request body', () => {
-      const xhr = new MockXhr();
-      xhr.open('POST', '/url');
-      const body = {
-        body: 'body',
-      };
-
-      xhr.send(body);
-
-      assert.equal(xhr.body, body, 'Recorded request body');
-    });
-
-    it('should set Content-Type for string body', () => {
-      const xhr = new MockXhr();
-      xhr.open('POST', '/url');
-
-      xhr.send('body');
-
-      assert.equal(xhr.requestHeaders.getHeader('Content-Type'),
-        'text/plain;charset=UTF-8', 'Content-Type set');
-    });
-
-    it('should use body mime type in request header', () => {
-      const xhr = new MockXhr();
-      xhr.open('POST', '/url');
-      const body = {
-        type: 'image/jpeg',
-      };
-
-      xhr.send(body);
-
-      assert.equal(xhr.requestHeaders.getHeader('Content-Type'), body.type,
-        'Content-Type set');
-    });
-
-    it('should not set Content-Type for null body', () => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-
-      xhr.send();
-
-      assert.equal(xhr.body, null, 'Recorded null body');
-      assert.equal(xhr.requestHeaders.getHeader('Content-Type'), null,
-        'Content-Type not set');
-    });
-
-    it('should fire loadstart events', () => {
-      const xhr = new MockXhr();
-      xhr.open('POST', '/url');
-      const events = recordEvents(xhr);
-
-      xhr.send('body');
-
-      assert.deepEqual(events, ['loadstart(0,0,false)', 'upload.loadstart(0,4,true)'], 'fired events');
-    });
-
-    it('should handle re-open() during loadstart event handler', () => {
-      try {
-        const xhr = new MockXhr();
-
-        // Add onSend callbacks
-        xhr.onSend = () => {
-          assert.isOk(false, 'onSend() should not be called for aborted send()');
-        };
-        MockXhr.onSend = () => {
-          assert.isOk(false, 'onSend() should not be called for aborted send()');
-        };
-
-        // Aborted send() during the loadstart event handler
-        xhr.open('GET', '/url');
-        xhr.addEventListener('loadstart', () => {
-          // Open a new request
-          xhr.open('GET', '/url');
+      it('should throw InvalidStateError if not opened', () => {
+        assert.throws(() => {
+          new MockXhr().setRequestHeader('Head', '1');
         });
-        xhr.send();
+      });
 
-        assert.equal(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
-      } finally {
-        delete MockXhr.onSend;
-      }
-    });
-  });
-
-  describe('abort()', () => {
-    it('should follow the steps for open()-abort() sequence', () => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      const events = recordEvents(xhr);
-
-      xhr.abort();
-
-      assert.lengthOf(events, 0, 'no abort event');
-      assert.equal(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
-    });
-
-    it('should follow the steps for open()-send()-abort() sequence', () => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      xhr.send();
-      const events = recordEvents(xhr);
-
-      xhr.abort();
-
-      assert.deepEqual(events, [
-        'readystatechange(4)',
-        'abort(0,0,false)',
-        'loadend(0,0,false)',
-      ], 'fired events');
-      assertNetworkErrorResponse(xhr);
-      assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
-    });
-
-    it('should follow the steps for open()-send()-HEADERS_RECEIVED-abort() sequence', () => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      xhr.send();
-      xhr.setResponseHeaders();
-      const events = recordEvents(xhr);
-
-      xhr.abort();
-
-      assert.deepEqual(events, [
-        'readystatechange(4)',
-        'abort(0,0,false)',
-        'loadend(0,0,false)',
-      ], 'fired events');
-      assertNetworkErrorResponse(xhr);
-      assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
-    });
-
-    it('should follow the steps for open()-send()-LOADING-abort() sequence', () => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      xhr.send();
-      xhr.setResponseHeaders();
-      xhr.downloadProgress(2, 8);
-      const events = recordEvents(xhr);
-
-      xhr.abort();
-
-      assert.deepEqual(events, [
-        'readystatechange(4)',
-        'abort(0,0,false)',
-        'loadend(0,0,false)',
-      ], 'fired events');
-      assertNetworkErrorResponse(xhr);
-      assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
-    });
-
-    it('should follow the steps for open()-send()-DONE-abort() sequence', () => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      xhr.send();
-      xhr.respond();
-
-      const events = recordEvents(xhr);
-      xhr.abort();
-
-      assert.deepEqual(events, [], 'no fired events');
-      assertNetworkErrorResponse(xhr);
-      assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
-    });
-
-    it('should fire upload abort for send(body)-abort() sequence', () => {
-      const xhr = new MockXhr();
-      xhr.open('POST', '/url');
-      const events = recordEvents(xhr);
-      xhr.send('body');
-
-      xhr.abort();
-
-      assert.deepEqual(events, [
-        'loadstart(0,0,false)',
-        'upload.loadstart(0,4,true)',
-        'readystatechange(4)',
-        'upload.abort(0,0,false)',
-        'upload.loadend(0,0,false)',
-        'abort(0,0,false)',
-        'loadend(0,0,false)',
-      ], 'fired events');
-    });
-
-    it('should handle abort() during loadstart event handler', () => {
-      try {
-        const xhr = new MockXhr();
-
-        // Add onSend callbacks
-        xhr.onSend = () => {
-          assert.isOk(false, 'onSend() should not be called for aborted send()');
-        };
-        MockXhr.onSend = () => {
-          assert.isOk(false, 'onSend() should not be called for aborted send()');
-        };
-
-        // Aborted send() during the loadstart event handler
-        xhr.open('GET', '/url');
-        xhr.addEventListener('loadstart', () => {
-          // Open a new request
-          xhr.abort();
+      const forbiddenHeaders = [
+        'Accept-Charset',
+        'Accept-Encoding',
+        'Access-Control-Request-Headers',
+        'Access-Control-Request-Method',
+        'Connection',
+        'Content-Length',
+        'Cookie',
+        'Cookie2',
+        'Date',
+        'DNT',
+        'Expect',
+        'Host',
+        'Keep-Alive',
+        'Origin',
+        'Referer',
+        'TE',
+        'Trailer',
+        'Transfer-Encoding',
+        'Upgrade',
+        'Via',
+      ];
+      forbiddenHeaders.forEach((header) => {
+        it(`should reject forbidden header ${header}`, () => {
+          const xhr = new MockXhr();
+          xhr.open('GET', '/url');
+          xhr.setRequestHeader(header, '1');
+          assert.equal(xhr.requestHeaders.getHeader(header), null,
+            'Forbidden header not set');
         });
-        xhr.send();
-
-        assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
-      } finally {
-        delete MockXhr.onSend;
-      }
-    });
-
-    it('should handle nested open() during abort()', () => {
-      const xhr = new MockXhr();
-      const states = [];
-      let abortFlag = false;
-      xhr.onreadystatechange = () => {
-        states.push(xhr.readyState);
-        if (abortFlag) {
-          xhr.open('GET', '/url');
-        }
-      };
-
-      xhr.open('GET', '/url');
-      xhr.send();
-      abortFlag = true;
-      xhr.abort();
-
-      assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
-    });
-
-    it('should handle nested open()-send() during abort()', () => {
-      const xhr = new MockXhr();
-      const states = [];
-      let abortFlag = false;
-      xhr.onreadystatechange = () => {
-        states.push(xhr.readyState);
-        if (abortFlag) {
-          abortFlag = false;
-          xhr.open('GET', '/url');
-          xhr.send();
-        }
-      };
-
-      xhr.open('GET', '/url');
-      xhr.send();
-      abortFlag = true;
-      xhr.abort();
-
-      assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
-    });
-  });
-
-  describe('timeout attribute', function () {
-    this.slow(250);
-
-    it('can get and set its value', () => {
-      const xhr = new MockXhr();
-      const timeout = 10;
-      assert.equal(xhr.timeout, 0, 'initial value is 0');
-      xhr.timeout = timeout;
-      assert.equal(xhr.timeout, timeout);
-    });
-
-    it('will trigger a timeout if set before send()', (done) => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      const events = recordEvents(xhr);
-      xhr.timeout = 1;
-      xhr.addEventListener('timeout', () => {
-        assert.deepEqual(events, [
-          'loadstart(0,0,false)',
-          'readystatechange(4)',
-          'timeout(0,0,false)',
-        ], 'fired events');
-        done();
-      });
-
-      xhr.send();
-    });
-
-    it('will trigger a timeout if set after send()', (done) => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      xhr.send();
-      xhr.timeout = 1;
-      xhr.addEventListener('timeout', () => {
-        done();
       });
     });
 
-    it('is measured relative to send()', (done) => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      xhr.send();
+    describe('timeout attribute', function () {
+      this.slow(250);
 
-      const delay = 100;
-      setTimeout(() => {
-        const setTimeoutAt = Date.now();
-        xhr.timeout = delay;
+      it('can get and set its value', () => {
+        const xhr = new MockXhr();
+        const timeout = 10;
+        assert.equal(xhr.timeout, 0, 'initial value is 0');
+        xhr.timeout = timeout;
+        assert.equal(xhr.timeout, timeout);
+      });
+
+      it('will trigger a timeout if set before send()', (done) => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        const events = recordEvents(xhr);
+        xhr.timeout = 1;
         xhr.addEventListener('timeout', () => {
-          const actualDelay = Date.now() - setTimeoutAt;
-          assert.isBelow(actualDelay, delay, 'timeout delay relative to start of request');
+          assert.deepEqual(events, [
+            'loadstart(0,0,false)',
+            'readystatechange(4)',
+            'timeout(0,0,false)',
+          ], 'fired events');
           done();
         });
-      }, delay);
-    });
 
-    it('has no effect when the response is sent fast enough', (done) => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      xhr.send();
-
-      xhr.addEventListener('timeout', () => {
-        assert.isOk(false, 'there should be no timeout event');
+        xhr.send();
       });
-      xhr.timeout = 40;
 
-      xhr.respond();
-
-      // Wait to make sure the timeout has no effect
-      setTimeout(() => { done(); }, 100);
-    });
-
-    it('can be cancelled', (done) => {
-      const xhr = new MockXhr();
-      xhr.open('GET', '/url');
-      xhr.send();
-
-      xhr.addEventListener('timeout', () => {
-        assert.isOk(false, 'there should be no timeout event');
-      });
-      xhr.timeout = 40;
-      setTimeout(() => { xhr.timeout = 0; }, 0);
-
-      // Wait to make sure the timeout has no effect
-      setTimeout(() => { done(); }, 100);
-    });
-
-
-    it('can be disabled per instance', (done) => {
-      const xhr = new MockXhr();
-      xhr.timeoutEnabled = false;
-      xhr.open('GET', '/url');
-      xhr.send();
-
-      xhr.addEventListener('timeout', () => {
-        assert.isOk(false, 'there should be no timeout event');
-      });
-      xhr.timeout = 1;
-
-      // Wait to make sure the timeout has no effect
-      setTimeout(() => { done(); }, 40);
-    });
-
-    it('can be disabled globally', (done) => {
-      try {
-        MockXhr.timeoutEnabled = false;
+      it('will trigger a timeout if set after send()', (done) => {
         const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        xhr.timeout = 1;
+        xhr.addEventListener('timeout', () => {
+          done();
+        });
+      });
+
+      it('is measured relative to send()', (done) => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+
+        const delay = 100;
+        setTimeout(() => {
+          const setTimeoutAt = Date.now();
+          xhr.timeout = delay;
+          xhr.addEventListener('timeout', () => {
+            const actualDelay = Date.now() - setTimeoutAt;
+            assert.isBelow(actualDelay, delay, 'timeout delay relative to start of request');
+            done();
+          });
+        }, delay);
+      });
+
+      it('has no effect when the response is sent fast enough', (done) => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+
+        xhr.addEventListener('timeout', () => {
+          assert.isOk(false, 'there should be no timeout event');
+        });
+        xhr.timeout = 40;
+
+        xhr.respond();
+
+        // Wait to make sure the timeout has no effect
+        setTimeout(() => { done(); }, 100);
+      });
+
+      it('can be cancelled', (done) => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+
+        xhr.addEventListener('timeout', () => {
+          assert.isOk(false, 'there should be no timeout event');
+        });
+        xhr.timeout = 40;
+        setTimeout(() => { xhr.timeout = 0; }, 0);
+
+        // Wait to make sure the timeout has no effect
+        setTimeout(() => { done(); }, 100);
+      });
+
+
+      it('can be disabled per instance', (done) => {
+        const xhr = new MockXhr();
+        xhr.timeoutEnabled = false;
         xhr.open('GET', '/url');
         xhr.send();
 
@@ -530,9 +254,308 @@ describe('MockXhr', () => {
 
         // Wait to make sure the timeout has no effect
         setTimeout(() => { done(); }, 40);
-      } finally {
-        MockXhr.timeoutEnabled = true;
-      }
+      });
+
+      it('can be disabled globally', (done) => {
+        try {
+          MockXhr.timeoutEnabled = false;
+          const xhr = new MockXhr();
+          xhr.open('GET', '/url');
+          xhr.send();
+
+          xhr.addEventListener('timeout', () => {
+            assert.isOk(false, 'there should be no timeout event');
+          });
+          xhr.timeout = 1;
+
+          // Wait to make sure the timeout has no effect
+          setTimeout(() => { done(); }, 40);
+        } finally {
+          MockXhr.timeoutEnabled = true;
+        }
+      });
+    });
+
+    it('should have a readonly upload attribute', () => {
+      const xhr = new MockXhr();
+      assert.throws(() => { xhr.upload = {}; });
+      assert.instanceOf(xhr.upload, EventTarget, 'initial value');
+    });
+
+    describe('send()', () => {
+      it('should record the request body', () => {
+        const xhr = new MockXhr();
+        xhr.open('POST', '/url');
+        const body = {
+          body: 'body',
+        };
+
+        xhr.send(body);
+
+        assert.equal(xhr.body, body, 'Recorded request body');
+      });
+
+      it('should set Content-Type for string body', () => {
+        const xhr = new MockXhr();
+        xhr.open('POST', '/url');
+
+        xhr.send('body');
+
+        assert.equal(xhr.requestHeaders.getHeader('Content-Type'),
+          'text/plain;charset=UTF-8', 'Content-Type set');
+      });
+
+      it('should use body mime type in request header', () => {
+        const xhr = new MockXhr();
+        xhr.open('POST', '/url');
+        const body = {
+          type: 'image/jpeg',
+        };
+
+        xhr.send(body);
+
+        assert.equal(xhr.requestHeaders.getHeader('Content-Type'), body.type,
+          'Content-Type set');
+      });
+
+      it('should not set Content-Type for null body', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+
+        xhr.send();
+
+        assert.equal(xhr.body, null, 'Recorded null body');
+        assert.equal(xhr.requestHeaders.getHeader('Content-Type'), null,
+          'Content-Type not set');
+      });
+
+      it('should fire loadstart events', () => {
+        const xhr = new MockXhr();
+        xhr.open('POST', '/url');
+        const events = recordEvents(xhr);
+
+        xhr.send('body');
+
+        assert.deepEqual(events, ['loadstart(0,0,false)', 'upload.loadstart(0,4,true)'], 'fired events');
+      });
+
+      it('should handle re-open() during loadstart event handler', () => {
+        try {
+          const xhr = new MockXhr();
+
+          // Add onSend callbacks
+          xhr.onSend = () => {
+            assert.isOk(false, 'onSend() should not be called for aborted send()');
+          };
+          MockXhr.onSend = () => {
+            assert.isOk(false, 'onSend() should not be called for aborted send()');
+          };
+
+          // Aborted send() during the loadstart event handler
+          xhr.open('GET', '/url');
+          xhr.addEventListener('loadstart', () => {
+            // Open a new request
+            xhr.open('GET', '/url');
+          });
+          xhr.send();
+
+          assert.equal(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
+        } finally {
+          delete MockXhr.onSend;
+        }
+      });
+    });
+
+    describe('abort()', () => {
+      it('should follow the steps for open()-abort() sequence', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        const events = recordEvents(xhr);
+
+        xhr.abort();
+
+        assert.lengthOf(events, 0, 'no abort event');
+        assert.equal(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
+      });
+
+      it('should follow the steps for open()-send()-abort() sequence', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        const events = recordEvents(xhr);
+
+        xhr.abort();
+
+        assert.deepEqual(events, [
+          'readystatechange(4)',
+          'abort(0,0,false)',
+          'loadend(0,0,false)',
+        ], 'fired events');
+        assertNetworkErrorResponse(xhr);
+        assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+      });
+
+      it('should follow the steps for open()-send()-HEADERS_RECEIVED-abort() sequence', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        xhr.setResponseHeaders();
+        const events = recordEvents(xhr);
+
+        xhr.abort();
+
+        assert.deepEqual(events, [
+          'readystatechange(4)',
+          'abort(0,0,false)',
+          'loadend(0,0,false)',
+        ], 'fired events');
+        assertNetworkErrorResponse(xhr);
+        assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+      });
+
+      it('should follow the steps for open()-send()-LOADING-abort() sequence', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        xhr.setResponseHeaders();
+        xhr.downloadProgress(2, 8);
+        const events = recordEvents(xhr);
+
+        xhr.abort();
+
+        assert.deepEqual(events, [
+          'readystatechange(4)',
+          'abort(0,0,false)',
+          'loadend(0,0,false)',
+        ], 'fired events');
+        assertNetworkErrorResponse(xhr);
+        assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+      });
+
+      it('should follow the steps for open()-send()-DONE-abort() sequence', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        xhr.respond();
+
+        const events = recordEvents(xhr);
+        xhr.abort();
+
+        assert.deepEqual(events, [], 'no fired events');
+        assertNetworkErrorResponse(xhr);
+        assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+      });
+
+      it('should fire upload abort for send(body)-abort() sequence', () => {
+        const xhr = new MockXhr();
+        xhr.open('POST', '/url');
+        const events = recordEvents(xhr);
+        xhr.send('body');
+
+        xhr.abort();
+
+        assert.deepEqual(events, [
+          'loadstart(0,0,false)',
+          'upload.loadstart(0,4,true)',
+          'readystatechange(4)',
+          'upload.abort(0,0,false)',
+          'upload.loadend(0,0,false)',
+          'abort(0,0,false)',
+          'loadend(0,0,false)',
+        ], 'fired events');
+      });
+
+      it('should handle abort() during loadstart event handler', () => {
+        try {
+          const xhr = new MockXhr();
+
+          // Add onSend callbacks
+          xhr.onSend = () => {
+            assert.isOk(false, 'onSend() should not be called for aborted send()');
+          };
+          MockXhr.onSend = () => {
+            assert.isOk(false, 'onSend() should not be called for aborted send()');
+          };
+
+          // Aborted send() during the loadstart event handler
+          xhr.open('GET', '/url');
+          xhr.addEventListener('loadstart', () => {
+            // Open a new request
+            xhr.abort();
+          });
+          xhr.send();
+
+          assert.equal(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
+        } finally {
+          delete MockXhr.onSend;
+        }
+      });
+
+      it('should handle nested open() during abort()', () => {
+        const xhr = new MockXhr();
+        const states = [];
+        let abortFlag = false;
+        xhr.onreadystatechange = () => {
+          states.push(xhr.readyState);
+          if (abortFlag) {
+            xhr.open('GET', '/url');
+          }
+        };
+
+        xhr.open('GET', '/url');
+        xhr.send();
+        abortFlag = true;
+        xhr.abort();
+
+        assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
+      });
+
+      it('should handle nested open()-send() during abort()', () => {
+        const xhr = new MockXhr();
+        const states = [];
+        let abortFlag = false;
+        xhr.onreadystatechange = () => {
+          states.push(xhr.readyState);
+          if (abortFlag) {
+            abortFlag = false;
+            xhr.open('GET', '/url');
+            xhr.send();
+          }
+        };
+
+        xhr.open('GET', '/url');
+        xhr.send();
+        abortFlag = true;
+        xhr.abort();
+
+        assert.deepEqual(states, [MockXhr.OPENED, MockXhr.DONE, MockXhr.OPENED]);
+      });
+    });
+  });
+
+  describe('response', () => {
+    it('should have a readonly status attribute', () => {
+      const xhr = new MockXhr();
+      assert.throws(() => { xhr.status = 200; });
+      assert.strictEqual(xhr.status, 0, 'initial value');
+    });
+
+    it('should have a readonly statusText attribute', () => {
+      const xhr = new MockXhr();
+      assert.throws(() => { xhr.statusText = 'OK'; });
+      assert.strictEqual(xhr.statusText, '', 'initial value');
+    });
+
+    it('should have a readonly response attribute', () => {
+      const xhr = new MockXhr();
+      assert.throws(() => { xhr.response = 'body'; });
+      assert.strictEqual(xhr.response, '', 'initial value');
+    });
+
+    it('should have a readonly responseText attribute', () => {
+      const xhr = new MockXhr();
+      assert.throws(() => { xhr.responseText = 'body'; });
+      assert.strictEqual(xhr.responseText, '', 'initial value');
     });
   });
 
