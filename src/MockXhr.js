@@ -237,6 +237,76 @@ class MockXhr extends EventTarget {
   }
 
   /**
+   * @returns {number} readystate attribute
+   */
+  get readyState() {
+    return this._readyState;
+  }
+
+  /**
+   * @returns {EventTarget} upload attribute
+   */
+  get upload() {
+    return this._upload;
+  }
+
+  /**
+   * @returns {number} timeout attribute
+   */
+  get timeout() {
+    return this._timeout;
+  }
+
+  /**
+   * @param {number} value timeout value
+   */
+  set timeout(value) {
+    this._setTimeout(value);
+  }
+
+  /**
+   * @returns {number} status attribute
+   */
+  get status() {
+    return this._response.status;
+  }
+
+  /**
+   * @returns {string} statusText attribute
+   */
+  get statusText() {
+    return this._response.statusMessage;
+  }
+
+  /**
+   * @returns {string} responseType attribute
+   */
+  get responseType() {
+    return this._responseType || '';
+  }
+
+  /**
+   * @param {string} value responseType value
+   */
+  set responseType(value) {
+    this._responseType = value;
+  }
+
+  /**
+   * @returns {*} response
+   */
+  get response() {
+    return this._getResponseText();
+  }
+
+  /**
+   * @returns {string} responseText attribute
+   */
+  get responseText() {
+    return this._getResponseText();
+  }
+
+  /**
    * Get a response header value.
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getresponseheader
    *
@@ -288,7 +358,7 @@ class MockXhr extends EventTarget {
   }
 
   /////////////
-  // timeout //
+  // Timeout //
   /////////////
 
   /**
@@ -557,36 +627,6 @@ class MockXhr extends EventTarget {
     this._processResponse(this._networkErrorResponse());
   }
 }
-
-// Properties of the XMLHttpRequest class
-Object.defineProperties(MockXhr.prototype, {
-  readyState: {
-    get() { return this._readyState; },
-  },
-  upload: {
-    get() { return this._upload; },
-  },
-  status: {
-    get() { return this._response.status; },
-  },
-  statusText: {
-    get() { return this._response.statusMessage; },
-  },
-  responseType: {
-    get() { return this._responseType || ''; },
-    set(value) { this._responseType = value; },
-  },
-  response: {
-    get() { return this._getResponseText(); },
-  },
-  responseText: {
-    get() { return this._getResponseText(); },
-  },
-  timeout: {
-    get() { return this._timeout; },
-    set(value) { this._setTimeout(value); },
-  },
-});
 
 // Global flag to enable the effects of the timeout attribute
 MockXhr.timeoutEnabled = true;
