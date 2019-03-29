@@ -56,6 +56,23 @@ class MockXhr extends EventTarget {
     }
   }
 
+  ////////////
+  // States //
+  ////////////
+
+  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-readystate
+   *
+   * @returns {number} readystate attribute
+   */
+  get readyState() {
+    return this._readyState;
+  }
+
+  /////////////
+  // Request //
+  /////////////
+
   /**
    * Set the request method and url.
    * https://xhr.spec.whatwg.org/#the-open()-method
@@ -109,6 +126,38 @@ class MockXhr extends EventTarget {
       value = value.trim();
       this.requestHeaders.addHeader(name, value);
     }
+  }
+
+  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-timeout
+   *
+   * @returns {number} timeout attribute
+   */
+  get timeout() {
+    return this._timeout;
+  }
+
+  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-timeout
+   *
+   * @param {number} value timeout value
+   */
+  set timeout(value) {
+    this._timeout = value;
+    // eslint-disable-next-line no-underscore-dangle
+    if (this._sendFlag && this.timeoutEnabled && this.constructor.timeoutEnabled) {
+      // A fetch is active so schedule a request timeout
+      this._scheduleRequestTimeout();
+    }
+  }
+
+  /**
+   * https://xhr.spec.whatwg.org/#the-upload-attribute
+   *
+   * @returns {EventTarget} upload attribute
+   */
+  get upload() {
+    return this._upload;
   }
 
   /**
@@ -207,64 +256,13 @@ class MockXhr extends EventTarget {
     }
   }
 
-  /**
-   * @returns {object} new network error response object
-   */
-  _networkErrorResponse() {
-    return {
-      type: 'error',
-      status: 0,
-      statusMessage: '',
-      headers: new HeadersContainer(),
-      body: null,
-    };
-  }
-
-  _isNetworkErrorResponse() {
-    return this._response.type === 'error';
-  }
-
-  _terminateRequest() {
-    delete this.method;
-    delete this.url;
-  }
-
-  _getRequestBodySize() {
-    if (!this.body) {
-      return 0;
-    }
-    return this.body.size ? this.body.size : this.body.length;
-  }
+  //////////////
+  // Response //
+  //////////////
 
   /**
-   * @returns {number} readystate attribute
-   */
-  get readyState() {
-    return this._readyState;
-  }
-
-  /**
-   * @returns {EventTarget} upload attribute
-   */
-  get upload() {
-    return this._upload;
-  }
-
-  /**
-   * @returns {number} timeout attribute
-   */
-  get timeout() {
-    return this._timeout;
-  }
-
-  /**
-   * @param {number} value timeout value
-   */
-  set timeout(value) {
-    this._setTimeout(value);
-  }
-
-  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-status
+   *
    * @returns {number} status attribute
    */
   get status() {
@@ -272,38 +270,12 @@ class MockXhr extends EventTarget {
   }
 
   /**
+   * https://xhr.spec.whatwg.org/#the-statustext-attribute
+   *
    * @returns {string} statusText attribute
    */
   get statusText() {
     return this._response.statusMessage;
-  }
-
-  /**
-   * @returns {string} responseType attribute
-   */
-  get responseType() {
-    return this._responseType || '';
-  }
-
-  /**
-   * @param {string} value responseType value
-   */
-  set responseType(value) {
-    this._responseType = value;
-  }
-
-  /**
-   * @returns {*} response
-   */
-  get response() {
-    return this._getResponseText();
-  }
-
-  /**
-   * @returns {string} responseText attribute
-   */
-  get responseText() {
-    return this._getResponseText();
   }
 
   /**
@@ -327,7 +299,30 @@ class MockXhr extends EventTarget {
     return this._response.headers.getAll();
   }
 
-  _getResponseText() {
+  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsetype
+   *
+   * @returns {string} responseType attribute
+   */
+  get responseType() {
+    return this._responseType || '';
+  }
+
+  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsetype
+   *
+   * @param {string} value responseType value
+   */
+  set responseType(value) {
+    this._responseType = value;
+  }
+
+  /**
+   * https://xhr.spec.whatwg.org/#the-response-attribute
+   *
+   * @returns {*} response
+   */
+  get response() {
     // Only supports responseType === '' or responseType === 'text'
     if (this._readyState !== MockXhr.LOADING && this._readyState !== MockXhr.DONE) {
       return '';
@@ -337,165 +332,13 @@ class MockXhr extends EventTarget {
     return this._response.body ? this._response.body : '';
   }
 
-  _newEvent(name, transmitted, length) {
-    return new Event(name, transmitted, length);
-  }
-
-  _fireEvent(name, transmitted, length) {
-    this.dispatchEvent(this._newEvent(name, transmitted, length));
-  }
-
-  _fireUploadEvent(name, transmitted, length) {
-    this._upload.dispatchEvent(this._newEvent(name, transmitted, length));
-  }
-
-  _fireReadyStateChange() {
-    const event = new Event('readystatechange');
-    if (this.onreadystatechange) {
-      this.onreadystatechange(event);
-    }
-    this.dispatchEvent(event);
-  }
-
-  /////////////
-  // Timeout //
-  /////////////
-
   /**
-   * Handle a changed timeout attribute value.
+   * https://xhr.spec.whatwg.org/#the-responsetext-attribute
    *
-   * @param {number} value timeout attribute value (ms)
+   * @returns {string} responseText attribute
    */
-  _setTimeout(value) {
-    this._timeout = value;
-    // eslint-disable-next-line no-underscore-dangle
-    if (this._sendFlag && this.timeoutEnabled && this.constructor.timeoutEnabled) {
-      // A fetch is active so schedule a request timeout
-      this._scheduleRequestTimeout();
-    }
-  }
-
-  _scheduleRequestTimeout() {
-    // Cancel any previous timeout task
-    if (this._timeoutTask) {
-      clearTimeout(this._timeoutTask);
-    }
-
-    if (this._timeout > 0) {
-      // The timeout delay must be measured relative to the start of fetching
-      // https://xhr.spec.whatwg.org/#the-timeout-attribute
-      const delay = Math.max(0, this._timeout - (Date.now() - this._timeoutReference));
-      this._timeoutTask = setTimeout(() => {
-        if (this._sendFlag) {
-          this.setRequestTimeout();
-        }
-        delete this._timeoutTask;
-      }, delay);
-    }
-  }
-
-  ///////////////////////////////////
-  // Request and response handling //
-  ///////////////////////////////////
-
-  /**
-   * Note: the "process request body" task is in the MockXhr response methods
-   * Process request end-of-body task. When the whole request is sent.
-   * https://xhr.spec.whatwg.org/#the-send()-method
-   */
-  _requestEndOfBody() {
-    this._uploadCompleteFlag = true;
-
-    if (this._uploadListenerFlag) {
-      // If no listeners were registered before send(), these steps do not run.
-      const length = this._getRequestBodySize();
-      const transmitted = length;
-      this._fireUploadEvent('progress', transmitted, length);
-      this._fireUploadEvent('load', transmitted, length);
-      this._fireUploadEvent('loadend', transmitted, length);
-    }
-  }
-
-  /**
-   * Process response task. When the response headers are received.
-   * https://xhr.spec.whatwg.org/#the-send()-method
-   *
-   * @param {*} response response
-   */
-  _processResponse(response) {
-    this._response = response;
-    this._handleResponseErrors();
-    if (this._isNetworkErrorResponse()) {
-      return;
-    }
-    this._readyState = MockXhr.HEADERS_RECEIVED;
-    this._fireReadyStateChange();
-    if (this._readyState !== MockXhr.HEADERS_RECEIVED) {
-      return;
-    }
-    if (this._response.body === null) {
-      this._handleResponseEndOfBody();
-    }
-    // Further steps are triggered by the MockXhr response methods
-  }
-
-  /**
-   * Handle response end-of-body for response.
-   * https://xhr.spec.whatwg.org/#handle-response-end-of-body
-   */
-  _handleResponseEndOfBody() {
-    this._handleResponseErrors();
-    if (this._isNetworkErrorResponse()) {
-      return;
-    }
-    const length = this._response.body ? this._response.body.length : 0;
-    this._fireEvent('progress', length, length);
-    this._readyState = MockXhr.DONE;
-    this._sendFlag = false;
-    this._fireReadyStateChange();
-    this._fireEvent('load', length, length);
-    this._fireEvent('loadend', length, length);
-  }
-
-  /**
-   * Handle errors for response.
-   * https://xhr.spec.whatwg.org/#handle-errors
-   */
-  _handleResponseErrors() {
-    if (!this._sendFlag) {
-      return;
-    }
-    if (this._timedOutFlag) {
-      // Timeout
-      this._requestErrorSteps('timeout');
-    } else if (this._isNetworkErrorResponse()) {
-      // Network error
-      this._requestErrorSteps('error');
-    }
-  }
-
-  /**
-   * The request error steps for event 'event'.
-   * https://xhr.spec.whatwg.org/#request-error-steps
-   *
-   * @param {string} event event name
-   */
-  _requestErrorSteps(event) {
-    this._readyState = MockXhr.DONE;
-    this._sendFlag = false;
-    this._response = this._networkErrorResponse();
-    this._fireReadyStateChange();
-    if (!this._uploadCompleteFlag) {
-      this._uploadCompleteFlag = true;
-
-      if (this._uploadListenerFlag) {
-        // If no listeners were registered before send(), no upload events should be fired.
-        this._fireUploadEvent(event, 0, 0);
-        this._fireUploadEvent('loadend', 0, 0);
-      }
-    }
-    this._fireEvent(event, 0, 0);
-    this._fireEvent('loadend', 0, 0);
+  get responseText() {
+    return this.response;
   }
 
   ///////////////////////////
@@ -625,6 +468,182 @@ class MockXhr extends EventTarget {
     this._terminateRequest();
     this._timedOutFlag = true;
     this._processResponse(this._networkErrorResponse());
+  }
+
+  ///////////////////////////////////
+  // Request and response handling //
+  ///////////////////////////////////
+
+  /**
+   * Note: the "process request body" task is in the MockXhr response methods
+   * Process request end-of-body task. When the whole request is sent.
+   * https://xhr.spec.whatwg.org/#the-send()-method
+   */
+  _requestEndOfBody() {
+    this._uploadCompleteFlag = true;
+
+    if (this._uploadListenerFlag) {
+      // If no listeners were registered before send(), these steps do not run.
+      const length = this._getRequestBodySize();
+      const transmitted = length;
+      this._fireUploadEvent('progress', transmitted, length);
+      this._fireUploadEvent('load', transmitted, length);
+      this._fireUploadEvent('loadend', transmitted, length);
+    }
+  }
+
+  /**
+   * Process response task. When the response headers are received.
+   * https://xhr.spec.whatwg.org/#the-send()-method
+   *
+   * @param {*} response response
+   */
+  _processResponse(response) {
+    this._response = response;
+    this._handleResponseErrors();
+    if (this._isNetworkErrorResponse()) {
+      return;
+    }
+    this._readyState = MockXhr.HEADERS_RECEIVED;
+    this._fireReadyStateChange();
+    if (this._readyState !== MockXhr.HEADERS_RECEIVED) {
+      return;
+    }
+    if (this._response.body === null) {
+      this._handleResponseEndOfBody();
+    }
+    // Further steps are triggered by the MockXhr response methods
+  }
+
+  /**
+   * Handle response end-of-body for response.
+   * https://xhr.spec.whatwg.org/#handle-response-end-of-body
+   */
+  _handleResponseEndOfBody() {
+    this._handleResponseErrors();
+    if (this._isNetworkErrorResponse()) {
+      return;
+    }
+    const length = this._response.body ? this._response.body.length : 0;
+    this._fireEvent('progress', length, length);
+    this._readyState = MockXhr.DONE;
+    this._sendFlag = false;
+    this._fireReadyStateChange();
+    this._fireEvent('load', length, length);
+    this._fireEvent('loadend', length, length);
+  }
+
+  /**
+   * Handle errors for response.
+   * https://xhr.spec.whatwg.org/#handle-errors
+   */
+  _handleResponseErrors() {
+    if (!this._sendFlag) {
+      return;
+    }
+    if (this._timedOutFlag) {
+      // Timeout
+      this._requestErrorSteps('timeout');
+    } else if (this._isNetworkErrorResponse()) {
+      // Network error
+      this._requestErrorSteps('error');
+    }
+  }
+
+  /**
+   * The request error steps for event 'event'.
+   * https://xhr.spec.whatwg.org/#request-error-steps
+   *
+   * @param {string} event event name
+   */
+  _requestErrorSteps(event) {
+    this._readyState = MockXhr.DONE;
+    this._sendFlag = false;
+    this._response = this._networkErrorResponse();
+    this._fireReadyStateChange();
+    if (!this._uploadCompleteFlag) {
+      this._uploadCompleteFlag = true;
+
+      if (this._uploadListenerFlag) {
+        // If no listeners were registered before send(), no upload events should be fired.
+        this._fireUploadEvent(event, 0, 0);
+        this._fireUploadEvent('loadend', 0, 0);
+      }
+    }
+    this._fireEvent(event, 0, 0);
+    this._fireEvent('loadend', 0, 0);
+  }
+
+  ///////////////
+  // Internals //
+  ///////////////
+
+  /**
+   * @returns {object} new network error response object
+   */
+  _networkErrorResponse() {
+    return {
+      type: 'error',
+      status: 0,
+      statusMessage: '',
+      headers: new HeadersContainer(),
+      body: null,
+    };
+  }
+
+  _isNetworkErrorResponse() {
+    return this._response.type === 'error';
+  }
+
+  _terminateRequest() {
+    delete this.method;
+    delete this.url;
+  }
+
+  _getRequestBodySize() {
+    if (!this.body) {
+      return 0;
+    }
+    return this.body.size ? this.body.size : this.body.length;
+  }
+
+  _newEvent(name, transmitted, length) {
+    return new Event(name, transmitted, length);
+  }
+
+  _fireEvent(name, transmitted, length) {
+    this.dispatchEvent(this._newEvent(name, transmitted, length));
+  }
+
+  _fireUploadEvent(name, transmitted, length) {
+    this._upload.dispatchEvent(this._newEvent(name, transmitted, length));
+  }
+
+  _fireReadyStateChange() {
+    const event = new Event('readystatechange');
+    if (this.onreadystatechange) {
+      this.onreadystatechange(event);
+    }
+    this.dispatchEvent(event);
+  }
+
+  _scheduleRequestTimeout() {
+    // Cancel any previous timeout task
+    if (this._timeoutTask) {
+      clearTimeout(this._timeoutTask);
+    }
+
+    if (this._timeout > 0) {
+      // The timeout delay must be measured relative to the start of fetching
+      // https://xhr.spec.whatwg.org/#the-timeout-attribute
+      const delay = Math.max(0, this._timeout - (Date.now() - this._timeoutReference));
+      this._timeoutTask = setTimeout(() => {
+        if (this._sendFlag) {
+          this.setRequestTimeout();
+        }
+        delete this._timeoutTask;
+      }, delay);
+    }
   }
 }
 
