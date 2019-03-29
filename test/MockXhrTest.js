@@ -54,7 +54,7 @@ describe('MockXhr', () => {
 
     it('should have a readonly readyState attribute', () => {
       const xhr = new MockXhr();
-      assert.throws(() => { xhr.readyState = MockXhr.DONE; });
+      xhr.readyState = MockXhr.DONE;
       assert.strictEqual(xhr.readyState, MockXhr.UNSENT, 'initial value');
     });
   });
@@ -278,7 +278,7 @@ describe('MockXhr', () => {
 
     it('should have a readonly upload attribute', () => {
       const xhr = new MockXhr();
-      assert.throws(() => { xhr.upload = {}; });
+      xhr.upload = {};
       assert.instanceOf(xhr.upload, EventTarget, 'initial value');
     });
 
@@ -536,25 +536,25 @@ describe('MockXhr', () => {
   describe('response', () => {
     it('should have a readonly status attribute', () => {
       const xhr = new MockXhr();
-      assert.throws(() => { xhr.status = 200; });
+      xhr.status = 200;
       assert.strictEqual(xhr.status, 0, 'initial value');
     });
 
     it('should have a readonly statusText attribute', () => {
       const xhr = new MockXhr();
-      assert.throws(() => { xhr.statusText = 'OK'; });
+      xhr.statusText = 'OK';
       assert.strictEqual(xhr.statusText, '', 'initial value');
     });
 
     it('should have a readonly response attribute', () => {
       const xhr = new MockXhr();
-      assert.throws(() => { xhr.response = 'body'; });
+      xhr.response = 'body';
       assert.strictEqual(xhr.response, '', 'initial value');
     });
 
     it('should have a readonly responseText attribute', () => {
       const xhr = new MockXhr();
-      assert.throws(() => { xhr.responseText = 'body'; });
+      xhr.responseText = 'body';
       assert.strictEqual(xhr.responseText, '', 'initial value');
     });
   });

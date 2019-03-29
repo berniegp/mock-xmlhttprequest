@@ -69,6 +69,14 @@ class MockXhr extends EventTarget {
     return this._readyState;
   }
 
+  /**
+   * noop setter
+   *
+   * @param {*} value ignored value
+   * @returns {*} value
+   */
+  set readyState(value) { return value; }
+
   /////////////
   // Request //
   /////////////
@@ -143,8 +151,8 @@ class MockXhr extends EventTarget {
    * @param {number} value timeout value
    */
   set timeout(value) {
+    // Since this library is meant to run on node, skip the step involving the Window object.
     this._timeout = value;
-    // eslint-disable-next-line no-underscore-dangle
     if (this._sendFlag && this.timeoutEnabled && this.constructor.timeoutEnabled) {
       // A fetch is active so schedule a request timeout
       this._scheduleRequestTimeout();
@@ -159,6 +167,14 @@ class MockXhr extends EventTarget {
   get upload() {
     return this._upload;
   }
+
+  /**
+   * noop setter
+   *
+   * @param {*} value ignored value
+   * @returns {*} value
+   */
+  set upload(value) { return value; }
 
   /**
    * Initiate the request.
@@ -270,6 +286,14 @@ class MockXhr extends EventTarget {
   }
 
   /**
+   * noop setter
+   *
+   * @param {*} value ignored value
+   * @returns {*} value
+   */
+  set status(value) { return value; }
+
+  /**
    * https://xhr.spec.whatwg.org/#the-statustext-attribute
    *
    * @returns {string} statusText attribute
@@ -277,6 +301,14 @@ class MockXhr extends EventTarget {
   get statusText() {
     return this._response.statusMessage;
   }
+
+  /**
+   * noop setter
+   *
+   * @param {*} value ignored value
+   * @returns {*} value
+   */
+  set statusText(value) { return value; }
 
   /**
    * Get a response header value.
@@ -333,6 +365,14 @@ class MockXhr extends EventTarget {
   }
 
   /**
+   * noop setter
+   *
+   * @param {*} value ignored value
+   * @returns {*} value
+   */
+  set response(value) { return value; }
+
+  /**
    * https://xhr.spec.whatwg.org/#the-responsetext-attribute
    *
    * @returns {string} responseText attribute
@@ -340,6 +380,14 @@ class MockXhr extends EventTarget {
   get responseText() {
     return this.response;
   }
+
+  /**
+   * noop setter
+   *
+   * @param {*} value ignored value
+   * @returns {*} value
+   */
+  set responseText(value) { return value; }
 
   ///////////////////////////
   // Mock response methods //
