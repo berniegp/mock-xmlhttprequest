@@ -701,6 +701,39 @@ describe('MockXhr', () => {
         assert.strictEqual(xhr.responseText, 'body', 'text response');
       });
     });
+
+    describe('responseXML attribute', () => {
+      it('should be readonly', () => {
+        const xhr = new MockXhr();
+        xhr.responseType = 'document';
+        xhr.responseXML = 'body';
+        assert.strictEqual(xhr.responseXML, null, 'initial value');
+      });
+
+      it('should throw if accessed with non-document responseType', () => {
+        const xhr = new MockXhr();
+        xhr.responseType = 'json';
+        // eslint-disable-next-line no-unused-expressions
+        assert.throws(() => { xhr.responseXML; });
+      });
+
+      it('should return null if state is not done', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        assert.strictEqual(xhr.responseXML, null, 'state is not done');
+      });
+
+      it('should return the response body as-is with document responseType', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.responseType = 'document';
+        xhr.send();
+        const body = { body: 'test' };
+        xhr.setResponseBody(body);
+        assert.equal(xhr.responseXML, body, 'passthrough response');
+      });
+    });
   });
 
   describe('Hooks', () => {

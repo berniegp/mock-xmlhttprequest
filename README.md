@@ -98,6 +98,7 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 
 ### Partial support
 - `responseType`: `''`, `'text'` and `'json'` are fully supported. Other `responseType` values can also be used, but they will return the response body passed to [`setResponseBody()`](#setresponsebodybody--null) as-is in `xhr.response`.
+- `responseXml`: the response body is not converted to a document response. To get a document response, pass it directly as the response body in [`setResponseBody()`](#setresponsebodybody--null).
 
 ### Not supported
 - synchronous requests (i.e. `async` == false)
@@ -105,7 +106,6 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 - `withCredentials` (has no effect)
 - `responseUrl` (i.e. the final request URL with redirects) is not automatically set. This can be emulated in a request handler.
 - `overrideMimeType` (has no effect)
-- `responseXml` (has no effect)
 
 ## Usage
 

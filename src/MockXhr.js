@@ -27,6 +27,8 @@ function throwError(type, text = '') {
  * Partial support:
  *  - responseType: '', 'text' and 'json' are fully supported. Other responseType values can also be
  *    used, but they will return the response body given to setResponseBody() as-is in xhr.response.
+ *  - responseXml: the response body is not converted to a document response. To get a document
+ *    response, use it directly as the response body in setResponseBody().
  *
  * Not supported:
  * - synchronous requests (i.e. async == false)
@@ -35,7 +37,6 @@ function throwError(type, text = '') {
  * - responseUrl (i.e. the final request url with redirects) is not automatically set. This can be
  *   emulated in a request handler.
  * - overrideMimeType (has no effect)
- * - responseXml (has no effect)
  */
 class MockXhr extends EventTarget {
   /**
@@ -427,6 +428,33 @@ class MockXhr extends EventTarget {
    * @returns {*} value
    */
   set responseText(value) { return value; }
+
+  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsexml
+   *
+   * @returns {*} responseXML attribute
+   */
+  get responseXML() {
+    if (this.responseType !== '' && this.responseType !== 'document') {
+      throwError('InvalidStateError');
+    }
+    if (this._readyState !== MockXhr.DONE) {
+      return null;
+    }
+
+    // Since this library is meant to run on node, there is no support for charset decoding as
+    // outlined in https://xhr.spec.whatwg.org/#text-response
+    // If needed, a document response can be given to setResponseBody() to be returned here.
+    return this._response.body === null ? '' : this._response.body;
+  }
+
+  /**
+   * noop setter
+   *
+   * @param {*} value ignored value
+   * @returns {*} value
+   */
+  set responseXML(value) { return value; }
 
   ///////////////////////////
   // Mock response methods //
