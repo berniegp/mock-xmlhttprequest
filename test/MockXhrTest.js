@@ -548,6 +548,19 @@ describe('MockXhr', () => {
       assert.strictEqual(xhr.statusText, '', 'initial value');
     });
 
+    describe('overrideMimeType()', () => {
+      it('should throw if set when state is loading or done', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        xhr.setResponseHeaders();
+        xhr.downloadProgress(0, 4);
+        assert.throws(() => { xhr.overrideMimeType('text/plain'); });
+        xhr.setResponseBody('body');
+        assert.throws(() => { xhr.overrideMimeType('text/plain'); });
+      });
+    });
+
     describe('responseType attribute', () => {
       it('should initially return the empty string', () => {
         const xhr = new MockXhr();

@@ -25,6 +25,7 @@ function throwError(type, text = '') {
  *  - simulating a request timeout (see MockXhr.setRequestTimeout())
  *
  * Partial support:
+ *  - overrideMimeType(): throws when required, but has no other effect.
  *  - responseType: '', 'text' and 'json' are fully supported. Other responseType values can also be
  *    used, but they will return the response body given to setResponseBody() as-is in xhr.response.
  *  - responseXml: the response body is not converted to a document response. To get a document
@@ -36,7 +37,6 @@ function throwError(type, text = '') {
  * - withCredentials (has no effect)
  * - responseUrl (i.e. the final request url with redirects) is not automatically set. This can be
  *   emulated in a request handler.
- * - overrideMimeType (has no effect)
  */
 class MockXhr extends EventTarget {
   /**
@@ -332,6 +332,18 @@ class MockXhr extends EventTarget {
    */
   getAllResponseHeaders() {
     return this._response.headers.getAll();
+  }
+
+  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-overridemimetype
+   *
+   * @param {string} mime MIME type
+   */
+  overrideMimeType(/* mime */) {
+    if (this._readyState === MockXhr.LOADING || this._readyState === MockXhr.DONE) {
+      throwError('InvalidStateError');
+    }
+    // noop
   }
 
   /**
