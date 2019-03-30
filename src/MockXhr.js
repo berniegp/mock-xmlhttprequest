@@ -34,7 +34,6 @@ function throwError(type, text = '') {
  * Not supported:
  * - synchronous requests (i.e. async == false)
  * - parsing the url and setting the username and password since there are no actual HTTP requests
- * - withCredentials (has no effect)
  * - responseUrl (i.e. the final request url with redirects) is not automatically set. This can be
  *   emulated in a request handler.
  */
@@ -46,9 +45,10 @@ class MockXhr extends EventTarget {
     super();
     this._readyState = MockXhr.UNSENT;
     this.requestHeaders = new HeadersContainer();
+    this._withCredentials = false;
+    this._timeout = 0;
     this._upload = new EventTarget(this);
     this._response = this._networkErrorResponse();
-    this._timeout = 0;
 
     // Per-instance flag to enable the effects of the timeout attribute
     this.timeoutEnabled = true;
@@ -160,6 +160,28 @@ class MockXhr extends EventTarget {
       // A fetch is active so schedule a request timeout
       this._scheduleRequestTimeout();
     }
+  }
+
+  /**
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials
+   *
+   * @returns {EventTarget} withCredentials attribute
+   */
+  get withCredentials() {
+    return this._withCredentials;
+  }
+
+  /**
+   * noop setter
+   *
+   * @param {boolean} value withCredentials value
+   */
+  set withCredentials(value) {
+    if ((this._readyState !== MockXhr.UNSENT && this._readyState !== MockXhr.OPENED)
+      || this._sendFlag) {
+      throwError('InvalidStateError');
+    }
+    this._withCredentials = !!value;
   }
 
   /**

@@ -104,7 +104,6 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), versio
 ### Not supported
 - synchronous requests (i.e. `async` == false)
 - parsing the URL and setting the `username` and `password` since there are no actual HTTP requests
-- `withCredentials` (has no effect)
 - `responseUrl` (i.e. the final request URL with redirects) is not automatically set. This can be emulated in a request handler.
 
 ## Usage

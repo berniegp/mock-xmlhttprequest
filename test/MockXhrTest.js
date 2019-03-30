@@ -276,6 +276,28 @@ describe('MockXhr', () => {
       });
     });
 
+    describe('withCredentials attribute', () => {
+      it('should initially return false', () => {
+        const xhr = new MockXhr();
+        assert.strictEqual(xhr.withCredentials, false, 'initial value');
+      });
+
+      it('should throw if set when state is not unsent or opened or if the send() flag is set', () => {
+        const xhr = new MockXhr();
+        xhr.open('GET', '/url');
+        xhr.send();
+        assert.throws(() => { xhr.withCredentials = true; });
+        xhr.respond();
+        assert.throws(() => { xhr.withCredentials = true; });
+      });
+
+      it('can get and set its value', () => {
+        const xhr = new MockXhr();
+        xhr.withCredentials = true;
+        assert.strictEqual(xhr.withCredentials, true, 'value set');
+      });
+    });
+
     it('should have a readonly upload attribute', () => {
       const xhr = new MockXhr();
       xhr.upload = {};
