@@ -1,1 +1,1 @@
-// TODO
+import * MockXMLHttpRequest from 'mock-xmlhttprequest';
