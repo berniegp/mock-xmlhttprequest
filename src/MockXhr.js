@@ -516,7 +516,7 @@ export default class MockXhr extends EventTarget {
    * Complete response method. Sets the response headers and body. Will set the
    * state to DONE.
    *
-   * @param {number} status response http status (default 200)
+   * @param {?number} status response http status (default 200)
    * @param {?object} headers name-value headers (optional)
    * @param {?*} body response body (default null)
    * @param {?string} statusText response http status text (optional)
@@ -529,7 +529,7 @@ export default class MockXhr extends EventTarget {
   /**
    * Set only the response headers. Will change the state to HEADERS_RECEIVED.
    *
-   * @param {number} status response http status (default 200)
+   * @param {?number} status response http status (default 200)
    * @param {?object} headers name-value headers (optional)
    * @param {?string} statusText response http status text (optional)
    */
