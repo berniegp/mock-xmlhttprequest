@@ -1,9 +1,12 @@
-'use strict';
-
-const Event = require('./Event');
-const EventTarget = require('./EventTarget');
-const HeadersContainer = require('./HeadersContainer');
-const Utils = require('./Utils');
+import Event from './Event';
+import EventTarget from './EventTarget';
+import HeadersContainer from './HeadersContainer';
+import {
+  getStatusText,
+  isRequestHeaderForbidden,
+  isRequestMethodForbidden,
+  normalizeHTTPMethodName,
+} from './Utils';
 
 function throwError(type, text = '') {
   const exception = new Error(text);
@@ -37,7 +40,7 @@ function throwError(type, text = '') {
  * - responseUrl (i.e. the final request url with redirects) is not automatically set. This can be
  *   emulated in a request handler.
  */
-class MockXhr extends EventTarget {
+export default class MockXhr extends EventTarget {
   /**
    * Constructor
    */
@@ -96,10 +99,10 @@ class MockXhr extends EventTarget {
     if (!async) {
       throw new Error('async = false is not supported.');
     }
-    if (Utils.isRequestMethodForbidden(method)) {
+    if (isRequestMethodForbidden(method)) {
       throwError('SecurityError', `Method "${method}" forbidden.`);
     }
-    method = Utils.normalizeHTTPMethodName(method);
+    method = normalizeHTTPMethodName(method);
     // Skip parsing the url and setting the username and password
 
     this._terminateRequest();
@@ -132,7 +135,7 @@ class MockXhr extends EventTarget {
       throw new SyntaxError();
     }
 
-    if (!Utils.isRequestHeaderForbidden(name)) {
+    if (!isRequestHeaderForbidden(name)) {
       // Normalize value
       value = value.trim();
       this.requestHeaders.addHeader(name, value);
@@ -538,7 +541,7 @@ class MockXhr extends EventTarget {
       this._requestEndOfBody();
     }
     status = typeof status === 'number' ? status : 200;
-    const statusMessage = statusText !== undefined ? statusText : Utils.getStatusText(status);
+    const statusMessage = statusText !== undefined ? statusText : getStatusText(status);
     this._processResponse({
       status,
       statusMessage,
@@ -808,5 +811,3 @@ MockXhr.OPENED = 1;
 MockXhr.HEADERS_RECEIVED = 2;
 MockXhr.LOADING = 3;
 MockXhr.DONE = 4;
-
-module.exports = MockXhr;

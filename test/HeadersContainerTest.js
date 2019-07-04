@@ -1,8 +1,6 @@
-'use strict';
+import { assert } from 'chai';
 
-const { assert } = require('chai');
-
-const HeadersContainer = require('../src/HeadersContainer');
+import HeadersContainer from '../src/HeadersContainer';
 
 describe('HeadersContainer', () => {
   describe('constructor', () => {

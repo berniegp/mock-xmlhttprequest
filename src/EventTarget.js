@@ -1,5 +1,3 @@
-'use strict';
-
 function flattenUseCaptureFlag(options) {
   if (typeof options === 'boolean') {
     return options;
@@ -13,7 +11,7 @@ function flattenUseCaptureFlag(options) {
  *
  * Based on https://dom.spec.whatwg.org/#interface-eventtarget
  */
-class EventTarget {
+export default class EventTarget {
   /**
    * Contructor
    *
@@ -134,5 +132,3 @@ EventTarget.events = [
   'timeout',
   'loadend',
 ];
-
-module.exports = EventTarget;

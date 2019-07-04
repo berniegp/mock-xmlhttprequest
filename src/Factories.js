@@ -1,7 +1,5 @@
-'use strict';
-
-const MockXhr = require('./MockXhr');
-const MockXhrServer = require('./MockXhrServer');
+import MockXhr from './MockXhr';
+import MockXhrServer from './MockXhrServer';
 
 /**
  * Create a new "local" MockXhr subclass. This makes it easier to have self-contained unit tests
@@ -10,7 +8,7 @@ const MockXhrServer = require('./MockXhrServer');
  *
  * @returns {MockXhr} new MockXhr subclass
  */
-function newMockXhr() {
+export function newMockXhr() {
   class LocalMockXhr extends MockXhr {
     constructor() {
       super();
@@ -45,11 +43,6 @@ function newMockXhr() {
  *
  * @returns {MockXhrServer} new mock server
  */
-function newServer(routes) {
+export function newServer(routes) {
   return new MockXhrServer(newMockXhr(), routes);
 }
-
-module.exports = {
-  newMockXhr,
-  newServer,
-};

@@ -1,12 +1,10 @@
-'use strict';
-
-const Utils = require('./Utils');
+import { normalizeHTTPMethodName } from './Utils';
 
 /**
  * Mock server for responding to XMLHttpRequest mocks from the class MockXhr. Provides simple route
  * matching and request handlers to make test harness creation easier.
  */
-class MockXhrServer {
+export default class MockXhrServer {
   /**
    * Constructor
    *
@@ -126,7 +124,7 @@ class MockXhrServer {
    */
   addHandler(method, matcher, handler) {
     // Match the processing done in MockXHR for the method name
-    method = Utils.normalizeHTTPMethodName(method);
+    method = normalizeHTTPMethodName(method);
 
     if (!this._routes[method]) {
       this._routes[method] = [];
@@ -197,7 +195,7 @@ class MockXhrServer {
   }
 
   _findFirstMatchingRoute(xhr) {
-    const method = Utils.normalizeHTTPMethodName(xhr.method);
+    const method = normalizeHTTPMethodName(xhr.method);
     if (!this._routes[method]) {
       return undefined;
     }
@@ -214,5 +212,3 @@ class MockXhrServer {
     });
   }
 }
-
-module.exports = MockXhrServer;

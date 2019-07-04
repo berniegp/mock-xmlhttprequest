@@ -1,9 +1,7 @@
-'use strict';
+import { assert } from 'chai';
 
-const { assert } = require('chai');
-
-const HeadersContainer = require('../src/HeadersContainer');
-const MockXhrServer = require('../src/MockXhrServer');
+import HeadersContainer from '../src/HeadersContainer';
+import MockXhrServer from '../src/MockXhrServer';
 
 describe('MockXhrServer', () => {
   // Bare minimum xhrMock to give to MockXhrServer

@@ -1,9 +1,7 @@
-'use strict';
-
 /**
  * HTTP header container
  */
-class HeadersContainer {
+export default class HeadersContainer {
   /**
    * @param {object} headers initial headers
    */
@@ -81,5 +79,3 @@ class HeadersContainer {
     this._headers.set(name, value);
   }
 }
-
-module.exports = HeadersContainer;

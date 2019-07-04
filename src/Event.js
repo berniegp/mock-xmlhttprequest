@@ -1,9 +1,7 @@
-'use strict';
-
 /**
  * XMLHttpRequest events
  */
-class Event {
+export default class Event {
   /**
    * @param {string} type event type
    * @param {number} loaded loaded bytes
@@ -21,5 +19,3 @@ class Event {
     }
   }
 }
-
-module.exports = Event;

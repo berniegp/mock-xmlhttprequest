@@ -1,5 +1,3 @@
-'use strict';
-
 // Disallowed request headers for setRequestHeader()
 const forbiddenHeaders = [
   'Accept-Charset',
@@ -31,7 +29,7 @@ const forbiddenHeaderRegEx = new RegExp(`^(${forbiddenHeaders.join('|')}|Proxy-.
  * @param {string} name header name
  * @returns {boolean} whether the request header name is forbidden for XMLHttpRequest
  */
-function isRequestHeaderForbidden(name) {
+export function isRequestHeaderForbidden(name) {
   return forbiddenHeaderRegEx.test(name);
 }
 
@@ -41,7 +39,7 @@ function isRequestHeaderForbidden(name) {
  * @param {string} name method name
  * @returns {boolean} whether the request method is forbidden for XMLHttpRequest
  */
-function isRequestMethodForbidden(method) {
+export function isRequestMethodForbidden(method) {
   return /^(CONNECT|TRACE|TRACK)$/i.test(method);
 }
 
@@ -63,7 +61,7 @@ const upperCaseMethodsRegEx = new RegExp(`^(${upperCaseMethods.join('|')})$`, 'i
  * @param {string} method HTTP method name
  * @returns {string} normalized method name
  */
-function normalizeHTTPMethodName(method) {
+export function normalizeHTTPMethodName(method) {
   if (upperCaseMethodsRegEx.test(method)) {
     method = method.toUpperCase();
   }
@@ -130,13 +128,6 @@ const statusTexts = {
  * @param {number} status HTTP status code
  * @returns {string} status text
  */
-function getStatusText(status) {
+export function getStatusText(status) {
   return statusTexts[status] || 'Unknown Status';
 }
-
-module.exports = {
-  getStatusText,
-  isRequestHeaderForbidden,
-  isRequestMethodForbidden,
-  normalizeHTTPMethodName,
-};

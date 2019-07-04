@@ -2,14 +2,21 @@
   "name": "mock-xmlhttprequest",
   "version": "4.4.1",
   "description": "XMLHttpRequest mock for testing",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
+  "main": "dist/mock-xmlhttprequest.common.js",
+  "module": "dist/mock-xmlhttprequest.esm.js",
+  "unpkg": "dist/mock-xmlhttprequest.js",
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
-    "lint": "eslint .",
-    "test": "mocha",
-    "posttest": "npm run lint"
+    "dev:dist": "rollup -wm -c build/rollup.dev.config.js",
+    "build": "node build/build.js",
+    "lint": "eslint src test",
+    "test": "npm run test:unit",
+    "test:unit": "mocha test --recursive --require esm",
+    "posttest": "npm run lint",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run test"
   },
   "repository": {
     "type": "git",
@@ -35,7 +42,12 @@
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.17.3",
-    "mocha": "^6.1.4"
+    "esm": "^3.2.25",
+    "mocha": "^6.1.4",
+    "rollup": "^1.16.4",
+    "rollup-plugin-buble": "^0.19.8",
+    "rollup-plugin-replace": "^2.2.0",
+    "terser": "^4.0.2"
   },
   "engines": {
     "node": ">=6.0.0"

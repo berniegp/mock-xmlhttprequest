@@ -1,9 +1,7 @@
-'use strict';
+import { assert } from 'chai';
 
-const { assert } = require('chai');
-
-const MockXhr = require('../src/MockXhr');
-const EventTarget = require('../src/EventTarget');
+import MockXhr from '../src/MockXhr';
+import EventTarget from '../src/EventTarget';
 
 describe('MockXhr', () => {
   const xhrEvents = [

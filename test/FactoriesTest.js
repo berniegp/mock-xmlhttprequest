@@ -1,9 +1,7 @@
-'use strict';
+import { assert } from 'chai';
 
-const { assert } = require('chai');
-
-const MockXhr = require('../src/MockXhr');
-const { newMockXhr, newServer } = require('../src/Factories');
+import MockXhr from '../src/MockXhr';
+import { newMockXhr, newServer } from '../src/Factories';
 
 describe('Factories', () => {
   describe('newMockXhr()', () => {

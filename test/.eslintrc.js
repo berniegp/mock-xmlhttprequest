@@ -3,7 +3,7 @@ module.exports = {
     mocha: true,
   },
   rules: {
-    // Not necessary for many unit test functions
+    // Arrow functions can't access the Mocha context so we allow unnamed functions
     'func-names': 0,
   },
 };
