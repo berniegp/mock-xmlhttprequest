@@ -5,15 +5,18 @@
   "main": "dist/mock-xmlhttprequest.common.js",
   "module": "dist/mock-xmlhttprequest.esm.js",
   "unpkg": "dist/mock-xmlhttprequest.js",
+  "typings": "types/index.d.ts",
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "types/*.d.ts"
   ],
   "scripts": {
     "dev:dist": "rollup -wm -c build/rollup.dev.config.js",
     "build": "node build/build.js",
     "lint": "eslint src test",
-    "test": "npm run test:unit",
+    "test": "npm run test:unit && npm run test:types",
     "test:unit": "mocha test --recursive --require esm",
+    "test:types": "tsc -p types/test",
     "posttest": "npm run lint",
     "prepare": "npm run build",
     "prepublishOnly": "npm run test"
@@ -47,7 +50,8 @@
     "rollup": "^1.16.4",
     "rollup-plugin-buble": "^0.19.8",
     "rollup-plugin-replace": "^2.2.0",
-    "terser": "^4.0.2"
+    "terser": "^4.0.2",
+    "typescript": "^3.4.5"
   },
   "engines": {
     "node": ">=6.0.0"
