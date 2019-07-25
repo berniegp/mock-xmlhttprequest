@@ -1,3 +1,5 @@
+import MockXhr from "./MockXhr"
+
 export class MockXhrServer {
   /**
    * Constructor
@@ -13,7 +15,7 @@ export class MockXhrServer {
    * @param context context object (e.g. global, window)
    * @returns this
    */
-  install(context: object): MockXhrServer;
+  install(context: object): this;
 
   /**
    * Remove the server as the global XMLHttpRequest mock. Reverts the actions of install(global).
@@ -38,9 +40,9 @@ export class MockXhrServer {
    * @returns this
    */
   get(
-    matcher: string | RegExp | Function,
-    handler: object | Function | object[] | Function[],
-  ): MockXhrServer;
+    matcher: MockXhrServer.UrlMatcher,
+    handler: MockXhrServer.Handler
+  ): this;
 
   /**
    * Add a POST request handler.
@@ -50,9 +52,9 @@ export class MockXhrServer {
    * @returns this
    */
   post(
-    matcher: string | RegExp | Function,
-    handler: object | Function | object[] | Function[],
-  ): MockXhrServer;
+    matcher: MockXhrServer.UrlMatcher,
+    handler: MockXhrServer.Handler
+  ): this;
 
   /**
    * Add a PUT request handler.
@@ -62,9 +64,9 @@ export class MockXhrServer {
    * @returns this
    */
   put(
-    matcher: string | RegExp | Function,
-    handler: object | Function | object[] | Function[],
-  ): MockXhrServer;
+    matcher: MockXhrServer.UrlMatcher,
+    handler: MockXhrServer.Handler
+  ): this;
 
   /**
    * Add a DELETE request handler.
@@ -74,9 +76,9 @@ export class MockXhrServer {
    * @returns this
    */
   delete(
-    matcher: string | RegExp | Function,
-    handler: object | Function | object[] | Function[],
-  ): MockXhrServer;
+    matcher: MockXhrServer.UrlMatcher,
+    handler: MockXhrServer.Handler
+  ): this;
 
   /**
    * Add a request handler.
@@ -88,9 +90,9 @@ export class MockXhrServer {
    */
   addHandler(
     method: string,
-    matcher: string | RegExp | Function,
-    handler: object | Function | object[] | Function[],
-  ): MockXhrServer;
+    matcher: MockXhrServer.UrlMatcher,
+    handler: MockXhrServer.Handler
+  ): this;
 
   /**
    * Set the default request handler for requests that don't match any route.
@@ -98,17 +100,50 @@ export class MockXhrServer {
    * @param {object|Function|object[]|Function[]} handler request handler
    * @returns this
    */
-  setDefaultHandler(handler: object | Function | object[] | Function[]): MockXhrServer;
+  setDefaultHandler(handler: MockXhrServer.Handler): this;
 
   /**
    * Return 404 responses for requests that don't match any route.
    *
    * @returns this
    */
-  setDefault404(): MockXhrServer;
+  setDefault404(): this;
 
   /**
    * @returns list of requests received by the server. Entries: { method, url }
    */
-  getRequestLog(): object[];
+  getRequestLog(): MockXhrServer.RequestLog;
 }
+
+export namespace MockXhrServer {
+  type UrlMatcher =
+    ((url: string) => boolean)
+    | string
+    | RegExp
+
+  interface MockResponseHandler {
+    status: number;
+    statusText: string;
+    headers: Record<string, string>;
+    body: string;
+  }
+
+  interface MockCallbackHandler {
+    (xhr: MockXhr): void
+  }
+
+  type Handler =
+    (Partial<MockResponseHandler> | MockCallbackHandler)
+    | (Partial<MockResponseHandler> | MockCallbackHandler)[]
+
+  interface RequestLogEntry {
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body?: any
+  }
+
+  type RequestLog = ReadonlyArray<RequestLogEntry>
+}
+
+export default MockXhrServer

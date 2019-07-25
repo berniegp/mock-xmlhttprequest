@@ -1,6 +1,4 @@
-export class MockXhr {
-  constructor();
-
+export default class MockXhr {
   /**
    * Set the request method and url.
    * https://xhr.spec.whatwg.org/#the-open()-method
@@ -113,9 +111,9 @@ export class MockXhr {
   // Global flag to enable the effects of the timeout attribute
   static timeoutEnabled: boolean;
 
-  static DONE: number;
-  static HEADERS_RECEIVED: number;
-  static LOADING: number;
-  static OPENED: number;
-  static UNSENT: number;
+  static UNSENT: 0
+  static OPENED: 1
+  static HEADERS_RECEIVED: 2
+  static LOADING: 3
+  static DONE: 4
 }

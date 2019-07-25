@@ -1,5 +1,5 @@
-import './MockXhr';
-import './MockXhrServer';
+import MockXhr from "./MockXhr"
+import MockXhrServer from "./MockXhrServer"
 
 /**
  * Create a new "local" MockXhr subclass. This makes it easier to have self-contained unit tests
@@ -8,11 +8,18 @@ import './MockXhrServer';
  *
  * @returns new MockXhr subclass
  */
-export function newMockXhr(): MockXhr;
+declare function newMockXhr(): MockXhr;
 
 /**
  * Create a new mock server using MockXhr.
  *
  * @returns new mock server
  */
-export function newServer(routes: any): MockXhrServer;
+declare function newServer(routes: any): MockXhrServer;
+
+export {
+  MockXhr,
+  MockXhrServer,
+  newServer,
+  newMockXhr
+}
