@@ -15,7 +15,9 @@ declare function newMockXhr(): MockXhr;
  *
  * @returns new mock server
  */
-declare function newServer(routes: any): MockXhrServer;
+declare function newServer(
+  routes?: Record<string, [MockXhrServer.UrlMatcher, MockXhrServer.RequestHandler]>
+): MockXhrServer;
 
 export {
   MockXhr,

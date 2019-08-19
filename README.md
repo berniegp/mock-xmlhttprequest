@@ -189,7 +189,7 @@ const handlerFn = (xhr) => { xhr.respond(); };
 newServer({
   get: ['/get', { status: 200 }],
   'my-method': ['/my-method', { status: 201 }],
-  post: ['/post', [handlerFn, { status: 404 }],
+  post: ['/post', [handlerFn, { status: 404 }]],
 });
 ```
 

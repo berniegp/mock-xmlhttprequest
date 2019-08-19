@@ -9,8 +9,7 @@
   "files": [
     "dist/**/*",
     "types/index.d.ts",
-    "types/MockXhr.d.ts",
-    "types/MockXhrServer.d.ts"
+    "types/*.d.ts"
   ],
   "scripts": {
     "dev:dist": "rollup -wm -c build/rollup.dev.config.js",
@@ -63,10 +62,7 @@
     "directory": "types/test",
     "compilerOptions": {
       "module": "es2015",
-      "target": "es5",
-      "lib": [
-        "dom"
-      ]
+      "target": "es5"
     }
   }
 }

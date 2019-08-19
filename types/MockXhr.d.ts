@@ -1,4 +1,17 @@
-export default class MockXhr {
+import EventTarget from "./EventTarget"
+import XMLHttpRequestEventTarget from "./XMLHttpRequestEventTarget"
+
+export default class MockXhr extends XMLHttpRequestEventTarget {
+  onreadystatechange?: XMLHttpRequestEventTarget.EventHandler;
+
+  static UNSENT: 0
+  static OPENED: 1
+  static HEADERS_RECEIVED: 2
+  static LOADING: 3
+  static DONE: 4
+
+  readonly readyState: number;
+
   /**
    * Set the request method and url.
    * https://xhr.spec.whatwg.org/#the-open()-method
@@ -18,6 +31,10 @@ export default class MockXhr {
    */
   setRequestHeader(name: string, value: string): void;
 
+  timeout: number;
+  withCredentials: boolean;
+  readonly upload: EventTarget;
+
   /**
    * Initiate the request.
    * https://xhr.spec.whatwg.org/#the-send()-method
@@ -31,6 +48,9 @@ export default class MockXhr {
    * https://xhr.spec.whatwg.org/#the-abort()-method
    */
   abort(): void;
+
+  readonly status: number;
+  readonly statusText: string;
 
   /**
    * Get a response header value.
@@ -55,6 +75,11 @@ export default class MockXhr {
    * @param mime MIME type
    */
   overrideMimeType(mime: string): void;
+
+  responseType: string;
+  readonly response: any;
+  readonly responseText: string;
+  readonly responseXML?: any;
 
   /**
    * Fire a request upload progress event.
@@ -110,10 +135,4 @@ export default class MockXhr {
 
   // Global flag to enable the effects of the timeout attribute
   static timeoutEnabled: boolean;
-
-  static UNSENT: 0
-  static OPENED: 1
-  static HEADERS_RECEIVED: 2
-  static LOADING: 3
-  static DONE: 4
 }

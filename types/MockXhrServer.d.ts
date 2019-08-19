@@ -41,7 +41,7 @@ export class MockXhrServer {
    */
   get(
     matcher: MockXhrServer.UrlMatcher,
-    handler: MockXhrServer.Handler
+    handler: MockXhrServer.RequestHandler
   ): this;
 
   /**
@@ -53,7 +53,7 @@ export class MockXhrServer {
    */
   post(
     matcher: MockXhrServer.UrlMatcher,
-    handler: MockXhrServer.Handler
+    handler: MockXhrServer.RequestHandler
   ): this;
 
   /**
@@ -65,7 +65,7 @@ export class MockXhrServer {
    */
   put(
     matcher: MockXhrServer.UrlMatcher,
-    handler: MockXhrServer.Handler
+    handler: MockXhrServer.RequestHandler
   ): this;
 
   /**
@@ -77,7 +77,7 @@ export class MockXhrServer {
    */
   delete(
     matcher: MockXhrServer.UrlMatcher,
-    handler: MockXhrServer.Handler
+    handler: MockXhrServer.RequestHandler
   ): this;
 
   /**
@@ -91,16 +91,16 @@ export class MockXhrServer {
   addHandler(
     method: string,
     matcher: MockXhrServer.UrlMatcher,
-    handler: MockXhrServer.Handler
+    handler: MockXhrServer.RequestHandler
   ): this;
 
   /**
    * Set the default request handler for requests that don't match any route.
    *
-   * @param {object|Function|object[]|Function[]} handler request handler
+   * @param handler request handler
    * @returns this
    */
-  setDefaultHandler(handler: MockXhrServer.Handler): this;
+  setDefaultHandler(handler: MockXhrServer.RequestHandler): this;
 
   /**
    * Return 404 responses for requests that don't match any route.
@@ -121,20 +121,19 @@ export namespace MockXhrServer {
     | string
     | RegExp
 
-  interface MockResponseHandler {
+  interface RequestHandlerResponse {
     status: number;
     statusText: string;
     headers: Record<string, string>;
     body: string;
   }
 
-  interface MockCallbackHandler {
-    (xhr: MockXhr): void
-  }
+  type RequestHandlerCallback = (xhr: MockXhr) => void;
 
-  type Handler =
-    (Partial<MockResponseHandler> | MockCallbackHandler)
-    | (Partial<MockResponseHandler> | MockCallbackHandler)[]
+  type RequestHandler =
+    Partial<RequestHandlerResponse>
+    | RequestHandlerCallback
+    | (Partial<RequestHandlerResponse> | RequestHandlerCallback)[]
 
   interface RequestLogEntry {
     method: string;

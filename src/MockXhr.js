@@ -79,7 +79,7 @@ export default class MockXhr extends EventTarget {
    * noop setter
    *
    * @param {*} value ignored value
-   * @returns {*} value
+   * @returns {number} value
    */
   set readyState(value) { return value; }
 
@@ -168,14 +168,14 @@ export default class MockXhr extends EventTarget {
   /**
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials
    *
-   * @returns {EventTarget} withCredentials attribute
+   * @returns {boolean} withCredentials attribute
    */
   get withCredentials() {
     return this._withCredentials;
   }
 
   /**
-   * noop setter
+   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials
    *
    * @param {boolean} value withCredentials value
    */
@@ -200,7 +200,7 @@ export default class MockXhr extends EventTarget {
    * noop setter
    *
    * @param {*} value ignored value
-   * @returns {*} value
+   * @returns {EventTarget} value
    */
   set upload(value) { return value; }
 
@@ -317,7 +317,7 @@ export default class MockXhr extends EventTarget {
    * noop setter
    *
    * @param {*} value ignored value
-   * @returns {*} value
+   * @returns {number} value
    */
   set status(value) { return value; }
 
@@ -334,7 +334,7 @@ export default class MockXhr extends EventTarget {
    * noop setter
    *
    * @param {*} value ignored value
-   * @returns {*} value
+   * @returns {string} value
    */
   set statusText(value) { return value; }
 
@@ -462,7 +462,7 @@ export default class MockXhr extends EventTarget {
    * noop setter
    *
    * @param {*} value ignored value
-   * @returns {*} value
+   * @returns {string} value
    */
   set responseText(value) { return value; }
 
