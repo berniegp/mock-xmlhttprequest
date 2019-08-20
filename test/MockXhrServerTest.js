@@ -144,7 +144,7 @@ describe('MockXhrServer', () => {
       const tester = new ServerTester();
       const server = new MockXhrServer(tester);
 
-      const matcher = url => url.includes('object');
+      const matcher = (url) => url.includes('object');
       server.addHandler('method', matcher, () => {
         done();
       });

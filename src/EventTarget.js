@@ -93,11 +93,11 @@ export default class EventTarget {
     // problems with callbacks that add or remove listeners.
     const listeners = [];
     if (this._eventListeners[event.type]) {
-      listeners.push(...this._eventListeners[event.type].map(listener => listener.callback));
+      listeners.push(...this._eventListeners[event.type].map((listener) => listener.callback));
 
       // Remove 'once' listeners
       this._eventListeners[event.type] = this._eventListeners[event.type]
-        .filter(listener => !listener.once);
+        .filter((listener) => !listener.once);
     }
 
     // Handle event listeners added as object properties (e.g. obj.onload = ...)
