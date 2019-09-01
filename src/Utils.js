@@ -54,7 +54,7 @@ const upperCaseMethods = [
   'POST',
   'PUT',
   'PATCH',
-  'TRACE'
+  'TRACE',
 ];
 const upperCaseMethodsRegEx = new RegExp(`^(${upperCaseMethods.join('|')})$`, 'i');
 
