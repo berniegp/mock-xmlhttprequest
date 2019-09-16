@@ -15,7 +15,7 @@ export class MockXhrServer {
    * @param context context object (e.g. global, window)
    * @returns this
    */
-  install(context: object): this;
+  install(context?: object): this;
 
   /**
    * Remove the server as the global XMLHttpRequest mock. Reverts the actions of install(global).

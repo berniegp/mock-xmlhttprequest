@@ -29,7 +29,7 @@ export default class MockXhrServer {
   /**
    * Install the server's XMLHttpRequest mock in the context. Revert with remove().
    *
-   * @param {object} context context object (e.g. global, window)
+   * @param {object?} context context object (e.g. global, window)
    * @returns {MockXhrServer} this
    */
   install(context = global) {

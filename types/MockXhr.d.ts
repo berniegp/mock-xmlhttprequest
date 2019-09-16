@@ -1,4 +1,3 @@
-import EventTarget from "./EventTarget"
 import XMLHttpRequestEventTarget from "./XMLHttpRequestEventTarget"
 
 export default class MockXhr extends XMLHttpRequestEventTarget {
@@ -33,7 +32,7 @@ export default class MockXhr extends XMLHttpRequestEventTarget {
 
   timeout: number;
   withCredentials: boolean;
-  readonly upload: EventTarget;
+  readonly upload: XMLHttpRequestEventTarget;
 
   /**
    * Initiate the request.
@@ -135,4 +134,16 @@ export default class MockXhr extends XMLHttpRequestEventTarget {
 
   // Global flag to enable the effects of the timeout attribute
   static timeoutEnabled: boolean;
+
+  // Instance-local flag to enable the effects of the timeout attribute
+  timeoutEnabled: boolean;
+
+  // Called when an instance of this class is created
+  static onCreate: (xhr: MockXhr) => void;
+
+  // Called when send() has done its processing on any instance of this class
+  static onSend: (xhr: MockXhr) => void;
+
+  // Called when send() has done its processing on this instance
+  onSend: (xhr: MockXhr) => void;
 }

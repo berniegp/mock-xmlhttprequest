@@ -1,7 +1,7 @@
 import { expectType } from 'tsd'
 import { MockXhr, MockXhrServer, newMockXhr, newServer } from '../'
 
-expectType<MockXhr>(newMockXhr());
+expectType<typeof MockXhr>(newMockXhr());
 
 expectType<MockXhrServer>(newServer());
 const handlerFn = (xhr: MockXhr) => { xhr.respond(); };

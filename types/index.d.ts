@@ -8,7 +8,7 @@ import MockXhrServer from "./MockXhrServer"
  *
  * @returns new MockXhr subclass
  */
-declare function newMockXhr(): MockXhr;
+declare function newMockXhr(): typeof MockXhr;
 
 /**
  * Create a new mock server using MockXhr.
