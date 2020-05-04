@@ -8,6 +8,7 @@
   "types": "types/index.d.ts",
   "files": [
     "dist/**/*",
+    "types/index.d.ts",
     "types/*.d.ts"
   ],
   "scripts": {
