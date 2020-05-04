@@ -194,7 +194,7 @@ describe('Factories', () => {
       xhr.timeout = 1;
 
       // Wait to make sure the timeout has no effect
-      setTimeout(() => { done(); }, 40);
+      setTimeout(done, 40);
     });
 
     it('should work with the quick start code', (done) => {

@@ -220,7 +220,7 @@ describe('MockXhr', () => {
         xhr.respond();
 
         // Wait to make sure the timeout has no effect
-        setTimeout(() => { done(); }, 100);
+        setTimeout(done, 100);
       });
 
       it('can be cancelled', (done) => {
@@ -235,7 +235,7 @@ describe('MockXhr', () => {
         setTimeout(() => { xhr.timeout = 0; }, 0);
 
         // Wait to make sure the timeout has no effect
-        setTimeout(() => { done(); }, 100);
+        setTimeout(done, 100);
       });
 
 
@@ -251,7 +251,7 @@ describe('MockXhr', () => {
         xhr.timeout = 1;
 
         // Wait to make sure the timeout has no effect
-        setTimeout(() => { done(); }, 40);
+        setTimeout(done, 40);
       });
 
       it('can be disabled globally', (done) => {
@@ -267,7 +267,7 @@ describe('MockXhr', () => {
           xhr.timeout = 1;
 
           // Wait to make sure the timeout has no effect
-          setTimeout(() => { done(); }, 40);
+          setTimeout(done, 40);
         } finally {
           MockXhr.timeoutEnabled = true;
         }
