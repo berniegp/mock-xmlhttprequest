@@ -1,7 +1,6 @@
 'use strict';
 
 const path = require('path');
-const buble = require('@rollup/plugin-buble');
 const replace = require('@rollup/plugin-replace');
 const packageVersion = require('../package.json').version;
 
@@ -20,16 +19,6 @@ function resolve(_path) {
 }
 
 const configs = {
-  umdDev: {
-    file: resolve('dist/mock-xmlhttprequest.js'),
-    format: 'umd',
-    env: 'development',
-  },
-  umdProd: {
-    file: resolve('dist/mock-xmlhttprequest.min.js'),
-    format: 'umd',
-    env: 'production',
-  },
   commonjs: {
     file: resolve('dist/mock-xmlhttprequest.common.js'),
     format: 'cjs',
@@ -48,7 +37,6 @@ function genConfig(opts) {
         replace({
           __VERSION__: version,
         }),
-        buble(),
       ],
     },
     output: {

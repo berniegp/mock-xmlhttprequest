@@ -4,7 +4,6 @@
   "description": "XMLHttpRequest mock for testing",
   "main": "dist/mock-xmlhttprequest.common.js",
   "module": "dist/mock-xmlhttprequest.esm.js",
-  "unpkg": "dist/mock-xmlhttprequest.js",
   "types": "types/index.d.ts",
   "files": [
     "dist/**/*",
@@ -42,7 +41,6 @@
   },
   "homepage": "https://github.com/berniegp/mock-xmlhttprequest#readme",
   "devDependencies": {
-    "@rollup/plugin-buble": "^0.21.3",
     "@rollup/plugin-replace": "^2.3.2",
     "chai": "^4.2.0",
     "eslint": "^6.8.0",
