@@ -189,7 +189,7 @@ describe('Factories', () => {
       xhr.open('GET', '/url');
 
       xhr.addEventListener('timeout', () => {
-        assert.isOk(false, 'there should be no timeout event');
+        assert.fail('there should be no timeout event');
       });
       xhr.timeout = 1;
 

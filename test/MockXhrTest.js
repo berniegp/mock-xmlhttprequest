@@ -213,7 +213,7 @@ describe('MockXhr', () => {
         xhr.send();
 
         xhr.addEventListener('timeout', () => {
-          assert.isOk(false, 'there should be no timeout event');
+          assert.fail('there should be no timeout event');
         });
         xhr.timeout = 40;
 
@@ -229,7 +229,7 @@ describe('MockXhr', () => {
         xhr.send();
 
         xhr.addEventListener('timeout', () => {
-          assert.isOk(false, 'there should be no timeout event');
+          assert.fail('there should be no timeout event');
         });
         xhr.timeout = 40;
         setTimeout(() => { xhr.timeout = 0; }, 0);
@@ -246,7 +246,7 @@ describe('MockXhr', () => {
         xhr.send();
 
         xhr.addEventListener('timeout', () => {
-          assert.isOk(false, 'there should be no timeout event');
+          assert.fail('there should be no timeout event');
         });
         xhr.timeout = 1;
 
@@ -262,7 +262,7 @@ describe('MockXhr', () => {
           xhr.send();
 
           xhr.addEventListener('timeout', () => {
-            assert.isOk(false, 'there should be no timeout event');
+            assert.fail('there should be no timeout event');
           });
           xhr.timeout = 1;
 
@@ -365,10 +365,10 @@ describe('MockXhr', () => {
 
           // Add onSend callbacks
           xhr.onSend = () => {
-            assert.isOk(false, 'onSend() should not be called for aborted send()');
+            assert.fail('onSend() should not be called for aborted send()');
           };
           MockXhr.onSend = () => {
-            assert.isOk(false, 'onSend() should not be called for aborted send()');
+            assert.fail('onSend() should not be called for aborted send()');
           };
 
           // Aborted send() during the loadstart event handler
@@ -491,10 +491,10 @@ describe('MockXhr', () => {
 
           // Add onSend callbacks
           xhr.onSend = () => {
-            assert.isOk(false, 'onSend() should not be called for aborted send()');
+            assert.fail('onSend() should not be called for aborted send()');
           };
           MockXhr.onSend = () => {
-            assert.isOk(false, 'onSend() should not be called for aborted send()');
+            assert.fail('onSend() should not be called for aborted send()');
           };
 
           // Aborted send() during the loadstart event handler
