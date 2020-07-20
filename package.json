@@ -41,17 +41,17 @@
   },
   "homepage": "https://github.com/berniegp/mock-xmlhttprequest#readme",
   "devDependencies": {
-    "@rollup/plugin-replace": "^2.3.2",
+    "@rollup/plugin-replace": "^2.3.3",
     "chai": "^4.2.0",
-    "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-plugin-import": "^2.20.2",
+    "eslint": "^7.5.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0",
     "esm": "^3.2.25",
-    "mocha": "^7.1.2",
-    "rollup": "^1.32.1",
-    "terser": "^4.6.13",
-    "tsd": "^0.11.0",
-    "typescript": "^3.9.2"
+    "mocha": "^8.0.1",
+    "rollup": "^2.23.0",
+    "terser": "^4.8.0",
+    "tsd": "^0.13.1",
+    "typescript": "^3.9.7"
   },
   "engines": {
     "node": ">=10.0.0"

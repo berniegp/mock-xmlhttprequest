@@ -238,7 +238,6 @@ describe('MockXhr', () => {
         setTimeout(done, 100);
       });
 
-
       it('can be disabled per instance', (done) => {
         const xhr = new MockXhr();
         xhr.timeoutEnabled = false;
