@@ -2,6 +2,7 @@ import Event from './Event';
 import EventTarget from './EventTarget';
 import HeadersContainer from './HeadersContainer';
 import {
+  getBodyByteSize,
   getStatusText,
   isRequestHeaderForbidden,
   isRequestMethodForbidden,
@@ -256,7 +257,7 @@ export default class MockXhr extends EventTarget {
 
     this._fireEvent('loadstart', 0, 0);
     if (!this._uploadCompleteFlag && this._uploadListenerFlag) {
-      this._fireUploadEvent('loadstart', 0, this._getRequestBodySize());
+      this._fireUploadEvent('loadstart', 0, this.getRequestBodySize());
     }
 
     // Other interactions are done through the mock's response methods
@@ -498,6 +499,21 @@ export default class MockXhr extends EventTarget {
   ///////////////////////////
 
   /**
+   * Note: the non-mocked body size will be larger than this for a multipart/form-data encoded
+   * FormData body since it will include headers, encoding, etc. The value returned by this method
+   * can therefore be seen as a floor value for the real thing that is nonetheless useful to
+   * simulate upload progress events.
+   *
+   * @returns {number} request body's total byte size
+   */
+  getRequestBodySize() {
+    if (!this._sendFlag) {
+      throw new Error('Mock usage error detected.');
+    }
+    return getBodyByteSize(this.body);
+  }
+
+  /**
    * Fire a request upload progress event.
    *
    * @param {number} transmitted bytes transmitted
@@ -508,7 +524,7 @@ export default class MockXhr extends EventTarget {
     }
     if (this._uploadListenerFlag) {
       // If no listeners were registered before send(), no upload events should be fired.
-      this._fireUploadEvent('progress', transmitted, this._getRequestBodySize());
+      this._fireUploadEvent('progress', transmitted, this.getRequestBodySize());
     }
   }
 
@@ -636,7 +652,7 @@ export default class MockXhr extends EventTarget {
 
     if (this._uploadListenerFlag) {
       // If no listeners were registered before send(), these steps do not run.
-      const length = this._getRequestBodySize();
+      const length = this.getRequestBodySize();
       const transmitted = length;
       this._fireUploadEvent('progress', transmitted, length);
       this._fireUploadEvent('load', transmitted, length);
@@ -750,13 +766,6 @@ export default class MockXhr extends EventTarget {
   _terminateRequest() {
     delete this.method;
     delete this.url;
-  }
-
-  _getRequestBodySize() {
-    if (!this.body) {
-      return 0;
-    }
-    return this.body.size ? this.body.size : this.body.length;
   }
 
   _newEvent(name, transmitted, length) {

@@ -81,6 +81,16 @@ export default class MockXhr extends XMLHttpRequestEventTarget {
   readonly responseXML?: any;
 
   /**
+   * Note: the non-mocked body size will be larger than this for a multipart/form-data encoded
+   * FormData body since it will include headers, encoding, etc. The value returned by this method
+   * can therefore be seen as a floor value for the real thing that is nonetheless useful to
+   * simulate upload progress events.
+   *
+   * @returns request body's total byte size
+   */
+  getRequestBodySize(): number;
+
+  /**
    * Fire a request upload progress event.
    *
    * @param transmitted bytes transmitted

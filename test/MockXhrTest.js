@@ -848,6 +848,14 @@ describe('MockXhr', () => {
   });
 
   describe('Mock responses', () => {
+    it('getRequestBodySize() should return the body size', () => {
+      const xhr = new MockXhr();
+      xhr.open('POST', '/url');
+      xhr.send('body');
+
+      assert.equal(xhr.getRequestBodySize(), 4);
+    });
+
     it('uploadProgress() should fire upload progress events', () => {
       const xhr = new MockXhr();
       xhr.open('POST', '/url');
