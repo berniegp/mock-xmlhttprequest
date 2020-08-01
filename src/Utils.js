@@ -1,3 +1,30 @@
+export function getBodyByteSize(body) {
+  if (!body) {
+    return 0;
+  }
+
+  if (typeof body === 'string') {
+    return getStringByteLength(body);
+  } else if ((global.FormData && body instanceof global.FormData)
+    || (body.constructor && body.constructor.name === 'FormData')) {
+    // A FormData has field-value pairs. This testing code only sums the individual sizes of the
+    // values. The full multipart/form-data encoding also adds headers, encoding, etc. which we
+    // don't reproduce here.
+    return Array.from(body.values()).reduce((sum, value) => {
+      const valueSize = value.size || getStringByteLength(String(value));
+      return sum + valueSize;
+    }, 0);
+  }
+
+  // Handles Blob and BufferSource
+  return body.size || body.byteLength || 0;
+}
+
+function getStringByteLength(string) {
+  // Compute the byte length of the string (which is not the same as string.length)
+  return global.Blob ? new global.Blob(string).size : Buffer.byteLength(string);
+}
+
 // Disallowed request headers for setRequestHeader()
 const forbiddenHeaders = [
   'Accept-Charset',

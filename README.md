@@ -224,6 +224,11 @@ Controls whether setting the `timeout` attribute of a mocked `XMLHttpRequest` ac
 
 These methods can be called on `MockXhr` (i.e. the `XMLHttpRequest` mock) instances.
 
+#### getRequestBodySize()
+Get the request body's total byte size.
+
+Note: the non-mocked body size will be larger than this for a `multipart/form-data` encoded `FormData` body since it will include headers, encoding, etc. The value returned by this method can therefore be seen as a floor value for the real thing that is nonetheless useful to simulate upload progress events.
+
 #### uploadProgress(transmitted)
 Fires a request upload progress event where `transmitted` is the number of bytes transmitted.
 
