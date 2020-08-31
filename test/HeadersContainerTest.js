@@ -64,10 +64,15 @@ describe('HeadersContainer', () => {
 
     it('should sort headers', () => {
       const headers = new HeadersContainer();
-      headers.addHeader('header-2', 'b');
-      headers.addHeader('header-3', 'c');
-      headers.addHeader('header-1', 'a');
-      assert.equal(headers.getAll(), 'header-1: a\r\nheader-2: b\r\nheader-3: c\r\n');
+
+      // Values taken from https://phabricator.services.mozilla.com/D31786 referenced in commit
+      // https://github.com/whatwg/xhr/commit/985f2f7a6de02dce42e157e02e9bb540d2750edc
+      headers.addHeader('foo-TEST', '1');
+      headers.addHeader('FOO-test', '2');
+      headers.addHeader('__Custom', 'token');
+      headers.addHeader('ALSO-here', 'Mr. PB');
+      headers.addHeader('ewok', 'lego');
+      assert.equal(headers.getAll(), 'also-here: Mr. PB\r\newok: lego\r\nfoo-test: 1, 2\r\n__custom: token\r\n');
     });
   });
 

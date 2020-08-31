@@ -41,7 +41,15 @@ export default class HeadersContainer {
     // Sort the header names. It's not mandated by RFC 7230 but it makes assertion testing easier
     // and, most importantly, it is required by getAllResponseHeaders() of XMLHttpRequest.
     // See https://xhr.spec.whatwg.org/#the-getallresponseheaders()-method
-    const headerNames = [...this._headers.keys()].sort();
+    const headerNames = [...this._headers.keys()].sort((a, b) => {
+      if (a.toUpperCase() < b.toUpperCase()) {
+        return -1;
+      }
+      if (a.toUpperCase() > b.toUpperCase()) {
+        return 1;
+      }
+      return 0;
+    });
 
     // Combine the header values
     const headers = headerNames.reduce((result, name) => {

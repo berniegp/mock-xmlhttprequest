@@ -17,7 +17,7 @@ function throwError(type, text = '') {
 
 /**
  * XMLHttpRequest mock for testing.
- * Based on https://xhr.spec.whatwg.org version '28 November 2018'.
+ * Based on https://xhr.spec.whatwg.org version '17 February 2020'.
  *
  * Supports:
  *  - events and states
