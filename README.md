@@ -85,7 +85,7 @@ delete global.XMLHttpRequest;
 ```
 
 ## Features
-Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), version '17 February 2020'.
+Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org), version '18 August 2020'.
 
 ### Supported
 - events and states
