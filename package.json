@@ -1,6 +1,6 @@
 {
   "name": "mock-xmlhttprequest",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "description": "XMLHttpRequest mock for testing",
   "main": "dist/mock-xmlhttprequest.common.js",
   "module": "dist/mock-xmlhttprequest.esm.js",
