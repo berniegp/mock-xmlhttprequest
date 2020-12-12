@@ -149,11 +149,11 @@ export default class MockXhr extends XMLHttpRequestEventTarget {
   timeoutEnabled: boolean;
 
   // Called when an instance of this class is created
-  static onCreate: (xhr: MockXhr) => void;
+  static onCreate?: (xhr: MockXhr) => void;
 
   // Called when send() has done its processing on any instance of this class
-  static onSend: (xhr: MockXhr) => void;
+  static onSend?: (xhr: MockXhr) => void;
 
   // Called when send() has done its processing on this instance
-  onSend: (xhr: MockXhr) => void;
+  onSend?: (xhr: MockXhr) => void;
 }
