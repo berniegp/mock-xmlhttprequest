@@ -1,6 +1,9 @@
 import MockXhr from "./MockXhr"
 
 export class MockXhrServer {
+  MockXhr: MockXhr;
+  xhrFactory: () => MockXhr;
+
   /**
    * Constructor
    *
