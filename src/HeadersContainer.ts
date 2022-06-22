@@ -2,15 +2,15 @@
  * HTTP header container
  */
 export default class HeadersContainer {
+  private _headers: Map<string, string>;
+
   /**
-   * @param {object} headers initial headers
+   * @param headers initial headers
    */
-  constructor(headers) {
+  constructor(headers?: Record<string, string> | null) {
     this._headers = new Map();
-    if (headers && headers instanceof Object) {
-      Object.keys(headers).forEach((key) => {
-        this.addHeader(key, headers[key]);
-      });
+    if (headers) {
+      Object.entries(headers).forEach(([key, value]) => this.addHeader(key, value));
     }
   }
 
@@ -22,52 +22,39 @@ export default class HeadersContainer {
   }
 
   /**
-   * Get header value. Header names are case-insensitive.
-   *
-   * @param  {string} name header name
-   * @returns {string|null} header value or null
+   * @param name header name (case-insensitive)
+   * @returns header value or null
    */
-  getHeader(name) {
-    const value = this._headers.get(name.toLowerCase());
-    return value !== undefined ? value : null;
+  getHeader(name: string) {
+    return this._headers.get(name.toUpperCase()) ?? null;
   }
 
   /**
    * Get all headers as a string. Each header is on its own line.
    *
-   * @returns {string} concatenated headers
+   * @returns concatenated headers
    */
   getAll() {
     // Sort the header names. It's not mandated by RFC 7230 but it makes assertion testing easier
     // and, most importantly, it is required by getAllResponseHeaders() of XMLHttpRequest.
     // See https://xhr.spec.whatwg.org/#the-getallresponseheaders()-method
-    const headerNames = [...this._headers.keys()].sort((a, b) => {
-      if (a.toUpperCase() < b.toUpperCase()) {
-        return -1;
-      }
-      if (a.toUpperCase() > b.toUpperCase()) {
-        return 1;
-      }
-      return 0;
-    });
+    const headerNames = [...this._headers.keys()].sort();
 
     // Combine the header values
     const headers = headerNames.reduce((result, name) => {
       const headerValue = this._headers.get(name);
-      return `${result}${name}: ${headerValue}\r\n`;
+      return `${result}${name.toLowerCase()}: ${headerValue}\r\n`;
     }, '');
     return headers;
   }
 
   /**
-   * Get all headers as an object.
-   *
-   * @returns {object} headers
+   * @returns all headers as an object.
    */
   getHash() {
-    const headers = {};
+    const headers: Record<string, string> = {};
     this._headers.forEach((value, name) => {
-      headers[name] = value;
+      headers[name.toLowerCase()] = value;
     });
     return headers;
   }
@@ -75,11 +62,11 @@ export default class HeadersContainer {
   /**
    * Add a header value, combining it with any previous value for the same header name.
    *
-   * @param {string} name header name
-   * @param {string} value header value
+   * @param name header name
+   * @param value header value
    */
-  addHeader(name, value) {
-    name = name.toLowerCase();
+  addHeader(name: string, value: string) {
+    name = name.toUpperCase();
     const currentValue = this._headers.get(name);
     if (currentValue) {
       value = `${currentValue}, ${value}`;

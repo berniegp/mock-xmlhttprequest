@@ -1,41 +1,93 @@
+import MockXhr from './MockXhr';
 import { normalizeHTTPMethodName } from './Utils';
+
+export type UrlMatcher = ((url: string) => boolean) | string | RegExp;
+
+interface RequestHandlerResponse {
+  status: number;
+  statusText: string;
+  headers: Record<string, string>;
+  body: string;
+}
+
+type RequestHandlerCallback = (xhr: MockXhr) => void;
+
+export type RequestHandler =
+  Partial<RequestHandlerResponse>
+  | RequestHandlerCallback
+  | (Partial<RequestHandlerResponse> | RequestHandlerCallback)[];
+
+interface Route {
+  matcher: UrlMatcher,
+  handler: RequestHandler,
+  count: number,
+}
+
+interface RequestLogEntry {
+  method: string;
+  url: string;
+  headers: Record<string, string>;
+  body?: any
+}
 
 /**
  * Mock server for responding to XMLHttpRequest mocks from the class MockXhr. Provides simple route
  * matching and request handlers to make test harness creation easier.
  */
 export default class MockXhrServer {
+  private _MockXhr: typeof MockXhr;
+
+  private _requests: RequestLogEntry[];
+
+  private _routes: Record<string, Route[]>;
+
+  private _xhrFactory: () => MockXhr;
+
+  private _savedXMLHttpRequest?: any;
+
+  private _savedContext?: any;
+
+  private _defaultRoute?: { handler: RequestHandler; count: number; };
+
   /**
    * Constructor
    *
-   * @param {MockXhr} xhrMock XMLHttpRequest mock class
-   * @param {?object} routes routes
+   * @param xhrMock XMLHttpRequest mock class
+   * @param routes routes
    */
-  constructor(xhrMock, routes = {}) {
-    this.MockXhr = xhrMock;
+  constructor(xhrMock: typeof MockXhr, routes?: Record<string, [UrlMatcher, RequestHandler]>) {
+    this._MockXhr = xhrMock;
     this._requests = [];
     this._routes = {};
-    Object.keys(routes).forEach((method) => {
-      const [matcher, handler] = routes[method];
-      this.addHandler(method, matcher, handler);
-    });
+    if (routes) {
+      Object.entries(routes).forEach(([method, [requestMatcher, handler]]) => {
+        this.addHandler(method, requestMatcher, handler);
+      });
+    }
     xhrMock.onSend = (xhr) => { this._handleRequest(xhr); };
 
     // Setup a mock request factory for users
-    this.xhrMock = xhrMock; // For backwards compatibility with < 4.1.0
-    this.xhrFactory = () => new this.MockXhr();
+    this._xhrFactory = () => new this._MockXhr();
+  }
+
+  public get MockXhr() {
+    return this._MockXhr;
+  }
+
+  public get xhrFactory() {
+    return this._xhrFactory;
   }
 
   /**
    * Install the server's XMLHttpRequest mock in the context. Revert with remove().
    *
-   * @param {object?} context context object (e.g. global, window)
-   * @returns {MockXhrServer} this
+   * @param context context object (e.g. global, window)
+   * @returns this
    */
   install(context = global) {
     this._savedXMLHttpRequest = context.XMLHttpRequest;
     this._savedContext = context;
-    context.XMLHttpRequest = this.MockXhr;
+    context.XMLHttpRequest = this._MockXhr;
     return this;
   }
 
@@ -44,7 +96,7 @@ export default class MockXhrServer {
    */
   remove() {
     if (!this._savedContext) {
-      throw new Error('remove() called without matching install(global).');
+      throw new Error('remove() called without a matching install(context).');
     }
 
     if (this._savedXMLHttpRequest !== undefined) {
@@ -60,114 +112,104 @@ export default class MockXhrServer {
    * Disable the effects of the timeout attribute on the XMLHttpRequest mock used by the server.
    */
   disableTimeout() {
-    this.MockXhr.timeoutEnabled = false;
+    this._MockXhr.timeoutEnabled = false;
   }
 
   /**
    * Enable the effects of the timeout attribute on the XMLHttpRequest mock used by the server.
    */
   enableTimeout() {
-    this.MockXhr.timeoutEnabled = true;
+    this._MockXhr.timeoutEnabled = true;
   }
 
   /**
    * Add a GET request handler.
    *
-   * @param {string|RegExp|Function} matcher url matcher
-   * @param {object|Function|object[]|Function[]} handler request handler
-   * @returns {MockXhrServer} this
+   * @param matcher url matcher
+   * @param handler request handler
+   * @returns this
    */
-  get(matcher, handler) {
+  get(matcher: UrlMatcher, handler: RequestHandler) {
     return this.addHandler('GET', matcher, handler);
   }
 
   /**
    * Add a POST request handler.
    *
-   * @param {string|RegExp|Function} matcher url matcher
-   * @param {object|Function|object[]|Function[]} handler request handler
-   * @returns {MockXhrServer} this
+   * @param matcher url matcher
+   * @param handler request handler
+   * @returns this
    */
-  post(matcher, handler) {
+  post(matcher: UrlMatcher, handler: RequestHandler) {
     return this.addHandler('POST', matcher, handler);
   }
 
   /**
    * Add a PUT request handler.
    *
-   * @param {string|RegExp|Function} matcher url matcher
-   * @param {object|Function|object[]|Function[]} handler request handler
-   * @returns {MockXhrServer} this
+   * @param matcher url matcher
+   * @param handler request handler
+   * @returns this
    */
-  put(matcher, handler) {
+  put(matcher: UrlMatcher, handler: RequestHandler) {
     return this.addHandler('PUT', matcher, handler);
   }
 
   /**
    * Add a DELETE request handler.
    *
-   * @param {string|RegExp|Function} matcher url matcher
-   * @param {object|Function|object[]|Function[]} handler request handler
-   * @returns {MockXhrServer} this
+   * @param matcher url matcher
+   * @param handler request handler
+   * @returns this
    */
-  delete(matcher, handler) {
+  delete(matcher: UrlMatcher, handler: RequestHandler) {
     return this.addHandler('DELETE', matcher, handler);
   }
 
   /**
    * Add a request handler.
    *
-   * @param {string} method HTTP method
-   * @param {string|RegExp|Function} matcher url matcher
-   * @param {object|Function|object[]|Function[]} handler request handler
-   * @returns {MockXhrServer} this
+   * @param method HTTP method
+   * @param matcher url matcher
+   * @param handler request handler
+   * @returns this
    */
-  addHandler(method, matcher, handler) {
+  addHandler(method: string, matcher: UrlMatcher, handler: RequestHandler) {
     // Match the processing done in MockXHR for the method name
     method = normalizeHTTPMethodName(method);
-
-    if (!this._routes[method]) {
-      this._routes[method] = [];
-    }
-    this._routes[method].push({
-      matcher,
-      handler,
-      count: 0,
-    });
+    const routes = this._routes[method] ?? (this._routes[method] = []);
+    routes.push({ matcher, handler, count: 0 });
     return this;
   }
 
   /**
    * Set the default request handler for requests that don't match any route.
    *
-   * @param {object|Function|object[]|Function[]} handler request handler
-   * @returns {MockXhrServer} this
+   * @param handler request handler
+   * @returns this
    */
-  setDefaultHandler(handler) {
-    this._defaultRoute = {
-      handler,
-      count: 0,
-    };
+  setDefaultHandler(handler: RequestHandler) {
+    this._defaultRoute = { handler, count: 0 };
     return this;
   }
 
   /**
    * Return 404 responses for requests that don't match any route.
    *
-   * @returns {MockXhrServer} this
+   * @returns this
    */
   setDefault404() {
     return this.setDefaultHandler({ status: 404 });
   }
 
   /**
-   * @returns {object[]} list of requests received by the server. Entries: { method, url }
+   * @returns list of requests received by the server. Entries: { method, url, headers, body? }
    */
-  getRequestLog() {
+  getRequestLog(): readonly RequestLogEntry[] {
     return this._requests;
   }
 
-  _handleRequest(xhr) {
+  _handleRequest(xhr: MockXhr) {
     // Record the request for easier debugging
     this._requests.push({
       method: xhr.method,
@@ -176,7 +218,7 @@ export default class MockXhrServer {
       body: xhr.body,
     });
 
-    const route = this._findFirstMatchingRoute(xhr) || this._defaultRoute;
+    const route = this._findFirstMatchingRoute(xhr) ?? this._defaultRoute;
     if (route) {
       // Routes can have arrays of handlers. Each one is used once and the last one is used if out
       // of elements.
@@ -194,7 +236,7 @@ export default class MockXhrServer {
     }
   }
 
-  _findFirstMatchingRoute(xhr) {
+  _findFirstMatchingRoute(xhr: MockXhr) {
     const method = normalizeHTTPMethodName(xhr.method);
     if (!this._routes[method]) {
       return undefined;

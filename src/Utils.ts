@@ -1,28 +1,29 @@
-export function getBodyByteSize(body) {
+export function getBodyByteSize(body?: string | FormData | Blob | BufferSource | null) {
   if (!body) {
     return 0;
   }
 
   if (typeof body === 'string') {
     return getStringByteLength(body);
-  } else if ((global.FormData && body instanceof global.FormData)
+  } else if ((typeof FormData !== 'undefined' && body instanceof FormData)
     || (body.constructor && body.constructor.name === 'FormData')) {
     // A FormData has field-value pairs. This testing code only sums the individual sizes of the
     // values. The full multipart/form-data encoding also adds headers, encoding, etc. which we
     // don't reproduce here.
-    return Array.from(body.values()).reduce((sum, value) => {
-      const valueSize = value.size || getStringByteLength(String(value));
+    return Array.from((body as FormData).values()).reduce((sum, value) => {
+      const valueSize = (value as File).size || getStringByteLength(String(value));
       return sum + valueSize;
     }, 0);
   }
 
-  // Handles Blob and BufferSource
-  return body.size || body.byteLength || 0;
+  // Handles Blob and BufferSource;
+  return (body as Blob).size || (body as BufferSource).byteLength || 0;
 }
 
-function getStringByteLength(string) {
+function getStringByteLength(string: string) {
   // Compute the byte length of the string (which is not the same as string.length)
-  return global.Blob ? new global.Blob(string).size : Buffer.byteLength(string);
+  // Use Blob if available (i.e. in the browser) and Buffer otherwise.
+  return typeof Blob !== 'undefined' ? new Blob([string]).size : Buffer.byteLength(string);
 }
 
 // Disallowed request headers for setRequestHeader()
@@ -53,20 +54,20 @@ const forbiddenHeaderRegEx = new RegExp(`^(${forbiddenHeaders.join('|')}|Proxy-.
 /**
  * See https://fetch.spec.whatwg.org/#forbidden-header-name
  *
- * @param {string} name header name
- * @returns {boolean} whether the request header name is forbidden for XMLHttpRequest
+ * @param name header name
+ * @returns whether the request header name is forbidden for XMLHttpRequest
  */
-export function isRequestHeaderForbidden(name) {
+export function isRequestHeaderForbidden(name: string) {
   return forbiddenHeaderRegEx.test(name);
 }
 
 /**
  * See https://fetch.spec.whatwg.org/#forbidden-method
  *
- * @param {string} name method name
- * @returns {boolean} whether the request method is forbidden for XMLHttpRequest
+ * @param name method name
+ * @returns whether the request method is forbidden for XMLHttpRequest
  */
-export function isRequestMethodForbidden(method) {
+export function isRequestMethodForbidden(method: string) {
   return /^(CONNECT|TRACE|TRACK)$/i.test(method);
 }
 
@@ -85,10 +86,10 @@ const upperCaseMethodsRegEx = new RegExp(`^(${upperCaseMethods.join('|')})$`, 'i
 /**
  * See https://fetch.spec.whatwg.org/#concept-method-normalize
  *
- * @param {string} method HTTP method name
- * @returns {string} normalized method name
+ * @param method HTTP method name
+ * @returns normalized method name
  */
-export function normalizeHTTPMethodName(method) {
+export function normalizeHTTPMethodName(method: string) {
   if (upperCaseMethodsRegEx.test(method)) {
     method = method.toUpperCase();
   }
@@ -96,7 +97,7 @@ export function normalizeHTTPMethodName(method) {
 }
 
 // Status code reason phrases from RFC 7231 §6.1, RFC 4918, RFC 5842, RFC 6585 and RFC 7538
-const statusTexts = {
+const statusTexts: Record<number, string> = {
   100: 'Continue',
   101: 'Switching Protocols',
   200: 'OK',
@@ -152,9 +153,9 @@ const statusTexts = {
 };
 
 /**
- * @param {number} status HTTP status code
- * @returns {string} status text
+ * @param status HTTP status code
+ * @returns status text
  */
-export function getStatusText(status) {
-  return statusTexts[status] || 'Unknown Status';
+export function getStatusText(status: number) {
+  return statusTexts[status] ?? 'Unknown Status';
 }

@@ -1,22 +1,13 @@
 import { assert } from 'chai';
 
-import EventTarget from '../src/EventTarget';
+import XhrEventTarget from '../src/XhrEventTarget';
+import { XHR_PROGRESS_EVENT_NAMES } from '../src/XhrProgressEventsNames';
 
 describe('EventTarget', () => {
-  const xhrEvents = [
-    'loadstart',
-    'progress',
-    'abort',
-    'error',
-    'load',
-    'timeout',
-    'loadend',
-  ];
-
   describe('addEventListener()', () => {
     it('should ignore duplicate listeners', () => {
-      const eventTarget = new EventTarget();
-      const eventName = xhrEvents[0];
+      const eventTarget = new XhrEventTarget();
+      const eventName = XHR_PROGRESS_EVENT_NAMES[0];
       const event = { type: eventName };
 
       let callCount = 0;
@@ -25,12 +16,12 @@ describe('EventTarget', () => {
       eventTarget.addEventListener(eventName, callback);
 
       eventTarget.dispatchEvent(event);
-      assert.equal(callCount, 1, 'listener called once');
+      assert.strictEqual(callCount, 1, 'listener called once');
     });
 
     it('should ignore duplicate listeners with same capture/useCapture flag', () => {
-      const eventTarget = new EventTarget();
-      const eventName = xhrEvents[0];
+      const eventTarget = new XhrEventTarget();
+      const eventName = XHR_PROGRESS_EVENT_NAMES[0];
       const event = { type: eventName };
 
       let callCount = 0;
@@ -39,12 +30,12 @@ describe('EventTarget', () => {
       eventTarget.addEventListener(eventName, callback, { capture: true });
 
       eventTarget.dispatchEvent(event);
-      assert.equal(callCount, 1, 'listener called once');
+      assert.strictEqual(callCount, 1, 'listener called once');
     });
 
     it('should not consider listeners with different capture/useCapture flag as duplicates', () => {
-      const eventTarget = new EventTarget();
-      const eventName = xhrEvents[0];
+      const eventTarget = new XhrEventTarget();
+      const eventName = XHR_PROGRESS_EVENT_NAMES[0];
       const event = { type: eventName };
 
       let callCount = 0;
@@ -53,12 +44,12 @@ describe('EventTarget', () => {
       eventTarget.addEventListener(eventName, callback /* , false */);
 
       eventTarget.dispatchEvent(event);
-      assert.equal(callCount, 2, 'listener called twice');
+      assert.strictEqual(callCount, 2, 'listener called twice');
     });
 
     it('should respect the once flag', () => {
-      const eventTarget = new EventTarget();
-      const eventName = xhrEvents[0];
+      const eventTarget = new XhrEventTarget();
+      const eventName = XHR_PROGRESS_EVENT_NAMES[0];
       const event = { type: eventName };
 
       let callCount = 0;
@@ -68,12 +59,12 @@ describe('EventTarget', () => {
       eventTarget.dispatchEvent(event);
       eventTarget.dispatchEvent(event);
 
-      assert.equal(callCount, 1, 'listener called once');
+      assert.strictEqual(callCount, 1, 'listener called once');
     });
 
     it('should respect the once flag when readded as listener in callback', () => {
-      const eventTarget = new EventTarget();
-      const eventName = xhrEvents[0];
+      const eventTarget = new XhrEventTarget();
+      const eventName = XHR_PROGRESS_EVENT_NAMES[0];
       const event = { type: eventName };
 
       let callCount = 0;
@@ -89,14 +80,14 @@ describe('EventTarget', () => {
       eventTarget.dispatchEvent(event);
       eventTarget.dispatchEvent(event);
 
-      assert.equal(callCount, 2, 'listener called twice');
+      assert.strictEqual(callCount, 2, 'listener called twice');
     });
   });
 
   describe('removeEventListener()', () => {
     it('should remove a listener', () => {
-      const eventTarget = new EventTarget();
-      const eventName = xhrEvents[0];
+      const eventTarget = new XhrEventTarget();
+      const eventName = XHR_PROGRESS_EVENT_NAMES[0];
       const event = { type: eventName };
 
       let callCount = 0;
@@ -105,12 +96,12 @@ describe('EventTarget', () => {
       eventTarget.removeEventListener(eventName, callback);
 
       eventTarget.dispatchEvent(event);
-      assert.equal(callCount, 0, 'listener not called');
+      assert.strictEqual(callCount, 0, 'listener not called');
     });
 
     it('should consider the capture/useCapture flag', () => {
-      const eventTarget = new EventTarget();
-      const eventName = xhrEvents[0];
+      const eventTarget = new XhrEventTarget();
+      const eventName = XHR_PROGRESS_EVENT_NAMES[0];
       const event = { type: eventName };
 
       let callCount = 0;
@@ -119,37 +110,37 @@ describe('EventTarget', () => {
       eventTarget.removeEventListener(eventName, callback);
 
       eventTarget.dispatchEvent(event);
-      assert.equal(callCount, 1, 'listener called twice');
+      assert.strictEqual(callCount, 1, 'listener called twice');
     });
   });
 
   describe('dispatchEvent()', () => {
-    xhrEvents.forEach((eventName) => {
+    XHR_PROGRESS_EVENT_NAMES.forEach((eventName) => {
       it(`should support the XMLHttpRequest event ${eventName}`, () => {
-        const eventTarget = new EventTarget();
+        const eventTarget = new XhrEventTarget();
         const event = { type: eventName };
 
-        let propertyHandlerCalled = false;
+        let propertyHandlerCount = 0;
         eventTarget[`on${eventName}`] = function onEventListener(e) {
-          propertyHandlerCalled = true;
-          assert.equal(this, eventTarget);
-          assert.equal(e, event, 'event parameter');
+          propertyHandlerCount += 1;
+          assert.strictEqual(this, eventTarget as any);
+          assert.strictEqual(e, event as any, 'event parameter');
         };
-        let listenerCalled = false;
+        let listenerCount = 0;
         eventTarget.addEventListener(eventName, function propertyEventListener(e) {
-          listenerCalled = true;
-          assert.equal(this, eventTarget);
-          assert.equal(e, event, 'event parameter');
+          listenerCount += 1;
+          assert.strictEqual(this, eventTarget);
+          assert.strictEqual(e, event as any, 'event parameter');
         });
 
         eventTarget.dispatchEvent(event);
-        assert.isOk(propertyHandlerCalled, 'propertyHandlerCalled');
-        assert.isOk(listenerCalled, 'listenerCalled');
+        assert.strictEqual(propertyHandlerCount, 1, 'propertyHandlerCalled');
+        assert.strictEqual(listenerCount, 1, 'listenerCalled');
       });
     });
 
     it('should not call listeners added in callback', () => {
-      const eventTarget = new EventTarget();
+      const eventTarget = new XhrEventTarget();
 
       eventTarget.onerror = () => {
         eventTarget.addEventListener('error', () => {
@@ -160,31 +151,31 @@ describe('EventTarget', () => {
     });
 
     it('should call handleEvent() method on listener', () => {
-      const eventTarget = new EventTarget();
-      let called = false;
-      eventTarget.onerror = { handleEvent: () => { called = true; } };
+      const eventTarget = new XhrEventTarget();
+      let callCount = 0;
+      eventTarget.addEventListener('error', { handleEvent: () => { callCount += 1; } });
       eventTarget.dispatchEvent({ type: 'error' });
-      assert.isOk(called, 'handleEvent() called');
+      assert.strictEqual(callCount, 1, 'handleEvent() called');
     });
 
     it('should use custom context as "this" for upload events', () => {
-      const context = {};
-      const eventTarget = new EventTarget(context);
+      const context = new XhrEventTarget();
+      const eventTarget = new XhrEventTarget(context);
       eventTarget.onprogress = function listener() {
-        assert.equal(this, context, 'custom context');
+        assert.strictEqual(this, context as any, 'custom context');
       };
       eventTarget.dispatchEvent({ type: 'progress' });
     });
   });
 
   it('hasListeners()', () => {
-    const eventTarget = new EventTarget();
-    assert.notOk(eventTarget.hasListeners());
+    const eventTarget = new XhrEventTarget();
+    assert.isFalse(eventTarget.hasListeners());
     eventTarget.onerror = () => {};
-    assert.isOk(eventTarget.hasListeners());
-    delete eventTarget.onerror;
-    assert.notOk(eventTarget.hasListeners());
+    assert.isTrue(eventTarget.hasListeners());
+    eventTarget.onerror = null;
+    assert.isFalse(eventTarget.hasListeners());
     eventTarget.addEventListener('error', () => {});
-    assert.isOk(eventTarget.hasListeners());
+    assert.isTrue(eventTarget.hasListeners());
   });
 });

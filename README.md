@@ -314,7 +314,7 @@ xhr.onSend = (xhr) => { /*...*/ };
 By default, setting the `timeout` attribute of a `MockXhr` instance triggers `timeout` events that cancel requests as described in the specification. This can be problematic in some tests and when debugging interactively since request timeouts are then not explicitly triggered by the test code. There are multiple ways to disable this behavior:
 
  - Set `xhr.timeoutEnabled = false` on an `MockXhr` instance to disable for that instance only.
- - Set `MockXhr.timeoutEnabled = false` directly on the `MockXhr` class to disable for all its instances.
+ - Set `MockXhr.timeoutEnabled = false` directly on the `MockXhr` (local) class to disable for all its instances.
  - Call [`server.disableTimeout()`](#disabletimeout-and-enabletimeout) on a mock server to disable for all its `MockXhr` instances.
 
 When the `timeout` attribute is disabled (and also when it's enabled), timeouts can be triggered programmatically using [`setRequestTimeout()`](#setrequesttimeout).
