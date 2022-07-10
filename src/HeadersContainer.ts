@@ -30,7 +30,7 @@ export default class HeadersContainer {
   }
 
   /**
-   * Get all headers as a string. Each header is on its own line.
+   * Get all headers as a string. Each header is on its own line. All header names are lower-case.
    *
    * @returns concatenated headers
    */
@@ -49,7 +49,7 @@ export default class HeadersContainer {
   }
 
   /**
-   * @returns all headers as an object.
+   * @returns all headers as an object. The header names are in lower-case.
    */
   getHash() {
     const headers: Record<string, string> = {};

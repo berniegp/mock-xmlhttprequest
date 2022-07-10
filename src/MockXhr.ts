@@ -19,6 +19,10 @@ interface MockXhrResponse {
   body?: any,
 }
 
+export type OnCreateCallback = (xhr: MockXhr) => void;
+
+export type OnSendCallback = (this: MockXhr, xhr: MockXhr) => void;
+
 /**
  * XMLHttpRequest mock for testing.
  * Based on https://xhr.spec.whatwg.org version '18 August 2020'.
@@ -96,7 +100,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
     this.onreadystatechange = null;
 
     this.timeoutEnabled = true;
-    this._getPrototype().onCreate?.(this);
+    MockXhr.onCreate?.(this);
   }
 
   //-------
@@ -142,17 +146,17 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * Hook for creation of MockXhr instances
    */
-  static onCreate?: (xhr: MockXhr) => void;
+  static onCreate?: OnCreateCallback;
 
   /**
    * Per-instance hook for XMLHttpRequest.send(). Executes in an empty callstack.
    */
-  onSend?: (this: this, xhr: this) => void;
+  onSend?: OnSendCallback;
 
   /**
    * Global hook for XMLHttpRequest.send(). Executes in an empty callstack.
    */
-  static onSend?: (this: MockXhr, xhr: MockXhr) => void;
+  static onSend?: OnSendCallback;
 
   /**
    * @returns request headers container
@@ -256,6 +260,13 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
       statusMessage,
       headers: new HeadersContainer(headers),
     });
+  }
+
+  /**
+   * @returns All response headers as an object. The header names are in lower-case.
+   */
+  getResponseHeadersHash() {
+    return this._response.headers.getHash();
   }
 
   /**
@@ -421,6 +432,9 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   set timeout(value: number) {
     // Since this library is meant to run on node, skip the step involving the Window object.
     this._timeout = value;
+
+    // Use this._getPrototype() to get the value of timeoutEnabled on the most derived class'
+    // prototype. This allows overriding from a derived class.
     if (this._sendFlag && this.timeoutEnabled && this._getPrototype().timeoutEnabled) {
       // A fetch is active so schedule a request timeout
       this._scheduleRequestTimeout();
@@ -521,20 +535,8 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
     this._timeoutReference = Date.now();
     this._scheduleRequestTimeout();
 
-    {
-      // Save the callback in case it changes before it has a chance to run
-      const { onSend } = this;
-      if (onSend) {
-        Promise.resolve(true).then(() => onSend.call(this, this));
-      }
-    }
-    {
-      // Save the callback in case it changes before it has a chance to run
-      const { onSend } = this._getPrototype();
-      if (onSend) {
-        Promise.resolve(true).then(() => onSend.call(this, this));
-      }
-    }
+    this._callOnSend(this.onSend);
+    this._callOnSend(MockXhr.onSend);
   }
 
   /**
@@ -821,6 +823,13 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   //----------
   // Internals
   //----------
+
+  protected _callOnSend(onSend?: OnSendCallback) {
+    // This saves the callback in case it changes before it has a chance to run
+    if (onSend) {
+      Promise.resolve(true).then(() => onSend.call(this, this));
+    }
+  }
 
   private _isNetworkErrorResponse() {
     return this._response.isError;

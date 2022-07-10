@@ -43,9 +43,11 @@ export default class MockXhrServer {
 
   private _xhrFactory: () => MockXhr;
 
-  private _savedXMLHttpRequest?: any;
-
   private _savedContext?: any;
+
+  private _savedContextHadXMLHttpRequest?: boolean;
+
+  private _savedXMLHttpRequest?: any;
 
   private _defaultRoute?: { handler: RequestHandler; count: number; };
 
@@ -84,9 +86,16 @@ export default class MockXhrServer {
    * @param context context object (e.g. global, window)
    * @returns this
    */
-  install(context = global) {
-    this._savedXMLHttpRequest = context.XMLHttpRequest;
+  install(context: any = globalThis) {
     this._savedContext = context;
+
+    // Distinguish between an undefined and a missing XMLHttpRequest propoerty
+    if ('XMLHttpRequest' in context) {
+      this._savedContextHadXMLHttpRequest = true;
+      this._savedXMLHttpRequest = context.XMLHttpRequest;
+    } else {
+      this._savedContextHadXMLHttpRequest = false;
+    }
     context.XMLHttpRequest = this._MockXhr;
     return this;
   }
@@ -99,7 +108,7 @@ export default class MockXhrServer {
       throw new Error('remove() called without a matching install(context).');
     }
 
-    if (this._savedXMLHttpRequest !== undefined) {
+    if (this._savedContextHadXMLHttpRequest) {
       this._savedContext.XMLHttpRequest = this._savedXMLHttpRequest;
       delete this._savedXMLHttpRequest;
     } else {

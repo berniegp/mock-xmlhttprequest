@@ -1,6 +1,7 @@
 import MockXhr from './MockXhr';
 import MockXhrServer from './MockXhrServer';
 
+import type { OnCreateCallback, OnSendCallback } from './MockXhr';
 import type { UrlMatcher, RequestHandler } from './MockXhrServer';
 
 /**
@@ -12,18 +13,33 @@ import type { UrlMatcher, RequestHandler } from './MockXhrServer';
  */
 export function newMockXhr(): typeof MockXhr {
   return class LocalMockXhr extends MockXhr {
-    // Reset to default values
+    // Reset to default value to override the parent class' flag
     static timeoutEnabled = true;
 
-    static onCreate?: (xhr: MockXhr) => void = undefined;
+    static onCreate?: OnCreateCallback;
 
-    static onSend?: (this: MockXhr, xhr: MockXhr) => void = undefined;
+    static onSend?: OnSendCallback;
+
+    constructor() {
+      super();
+
+      // Call the local MockXhr subclass' onCreate hook on the new mock instance
+      LocalMockXhr.onCreate?.(this);
+    }
+
+    send(body: any) {
+      super.send(body);
+
+      // Call the local MockXhr subclass' onSend hook
+      this._callOnSend(LocalMockXhr.onSend);
+    }
   };
 }
 
 /**
  * Create a new mock server using MockXhr.
  *
+ * @param routes routes
  * @returns new mock server
  */
 export function newServer(routes?: Record<string, [UrlMatcher, RequestHandler]>) {
