@@ -4,7 +4,7 @@ import type { TXhrProgressEventNames } from './XhrProgressEventsNames';
  * XMLHttpRequest ProgressEvent
  */
 export default class XhrProgressEvent {
-  readonly type: TXhrProgressEventNames;
+  readonly type: string;
 
   readonly loaded: number;
 

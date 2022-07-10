@@ -10,13 +10,14 @@ export function getBodyByteSize(body?: string | FormData | Blob | BufferSource |
     // A FormData has field-value pairs. This testing code only sums the individual sizes of the
     // values. The full multipart/form-data encoding also adds headers, encoding, etc. which we
     // don't reproduce here.
-    return Array.from((body as FormData).values()).reduce((sum, value) => {
-      const valueSize = (value as File).size || getStringByteLength(String(value));
+    return [...(body as FormData).values()].reduce((sum, value) => {
+      const valueSize = (value as File).size !== undefined
+        ? (value as File).size : getStringByteLength(String(value));
       return sum + valueSize;
     }, 0);
   }
 
-  // Handles Blob and BufferSource;
+  // Handles Blob and BufferSource
   return (body as Blob).size || (body as BufferSource).byteLength || 0;
 }
 

@@ -178,7 +178,7 @@ describe('Factories', () => {
       server.disableTimeout();
       const xhr = server.xhrFactory();
       xhr.open('GET', '/url');
-      // FIXME xhr.send();
+      xhr.send();
 
       xhr.addEventListener('timeout', () => {
         assert.fail('there should be no timeout event');

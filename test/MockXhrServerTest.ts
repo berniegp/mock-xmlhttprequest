@@ -50,22 +50,25 @@ describe('MockXhrServer', () => {
   describe('constructor', () => {
     it('should add routes', () => {
       const { MockXhrClass, responses, doRequest } = makeTestHarness();
+      const handlerFn = (xhr: MockXhr) => { xhr.respond(); };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const server = new MockXhrServer(MockXhrClass, {
         get: ['/get', { status: 200 }],
         'my-method': ['/my-method', { status: 201 }],
-        post: ['/post', { status: 404 }],
+        post: ['/post', [handlerFn, { status: 404 }]],
       });
 
       doRequest('get', '/get');
       doRequest('my-method', '/my-method');
       doRequest('post', '/post');
+      doRequest('post', '/post');
 
       return Promise.resolve(true).then(() => {
-        assert.strictEqual(responses.length, 3, 'handlers called');
+        assert.strictEqual(responses.length, 4, 'handlers called');
         assert.strictEqual(responses[0].status, 200);
         assert.strictEqual(responses[1].status, 201);
-        assert.strictEqual(responses[2].status, 404);
+        assert.strictEqual(responses[2].status, 200);
+        assert.strictEqual(responses[3].status, 404);
       });
     });
   });
@@ -121,7 +124,8 @@ describe('MockXhrServer', () => {
       assert.strictEqual(context.XMLHttpRequest, MockXhrClass, 'XMLHttpRequest property replaced');
 
       server.remove();
-      assert.propertyVal(context, 'XMLHttpRequest', undefined, 'XMLHttpRequest property restored');
+      assert.isTrue('XMLHttpRequest' in context, 'XMLHttpRequest property restored');
+      assert.isUndefined(context.XMLHttpRequest, 'XMLHttpRequest property restored as undefined');
     });
 
     it('should set and delete missing XMLHttpRequest on context argument', () => {
@@ -132,7 +136,7 @@ describe('MockXhrServer', () => {
       assert.strictEqual(context.XMLHttpRequest, MockXhrClass, 'XMLHttpRequest property replaced');
 
       server.remove();
-      assert.notProperty(context, 'XMLHttpRequest', 'XMLHttpRequest property deleted');
+      assert.isFalse('XMLHttpRequest' in context, 'XMLHttpRequest property deleted');
     });
 
     it('should throw if remove() is called without install()', () => {

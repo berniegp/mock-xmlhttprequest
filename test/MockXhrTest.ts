@@ -30,14 +30,14 @@ describe('MockXhr', () => {
   // Returns an array which contains all events fired by the xhr
   function recordEvents(xhr: MockXhr) {
     const events: string[] = [];
-    const recordEvent = (e: XhrProgressEvent, prefix: string) => {
-      prefix = prefix ? 'upload.' : '';
-      events.push(`${prefix}${e.type}(${e.loaded},${e.total},${e.lengthComputable})`);
+    const makeEventRecorder = (prefix = '') => {
+      return (e: XhrProgressEvent) => {
+        events.push(`${prefix}${e.type}(${e.loaded},${e.total},${e.lengthComputable})`);
+      };
     };
-    const recordUploadEvent = (e: XhrProgressEvent) => { recordEvent(e, 'upload'); };
     XHR_PROGRESS_EVENT_NAMES.forEach((event) => {
-      xhr.addEventListener(event, recordEvent as any);
-      xhr.upload.addEventListener(event, recordUploadEvent as any);
+      xhr.addEventListener(event, makeEventRecorder());
+      xhr.upload.addEventListener(event, makeEventRecorder('upload.'));
     });
     xhr.addEventListener('readystatechange', function readystatechange(this: MockXhr) {
       events.push(`readystatechange(${this.readyState})`);
@@ -203,7 +203,7 @@ describe('MockXhr', () => {
         xhr.addEventListener('timeout', () => { done(); });
       });
 
-      it('is measured relative to send()', (done) => {
+      it('delay is measured relative to send()', (done) => {
         const xhr = new MockXhr();
         xhr.open('GET', '/url');
         xhr.send();
@@ -245,7 +245,7 @@ describe('MockXhr', () => {
           assert.fail('there should be no timeout event');
         });
         xhr.timeout = 40;
-        setTimeout(() => { xhr.timeout = 0; }, 0);
+        Promise.resolve(true).then(() => { xhr.timeout = 0; });
 
         // Wait to make sure the timeout has no effect
         setTimeout(done, 100);
@@ -389,7 +389,7 @@ describe('MockXhr', () => {
           let onSendXhrCount = 0;
           xhr.onSend = () => { onSendXhrCount += 1; };
 
-          // Aborted send() during the loadstart event handler
+          // re-open() during the loadstart event handler aborts send()
           xhr.open('GET', '/url');
           xhr.addEventListener('loadstart', () => {
             // Open a new request
@@ -399,8 +399,8 @@ describe('MockXhr', () => {
 
           return Promise.resolve(true).then(() => {
             assert.strictEqual(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
-            assert.strictEqual(onSendCount, 0, 'should not call "global" onSend callback');
-            assert.strictEqual(onSendXhrCount, 0, 'should not call request-local onSend callback');
+            assert.strictEqual(onSendCount, 0, 'onSend() should not be called');
+            assert.strictEqual(onSendXhrCount, 0, 'onSend() should not be called');
           });
         } finally {
           delete MockXhr.onSend;
@@ -530,8 +530,8 @@ describe('MockXhr', () => {
           xhr.send();
 
           return Promise.resolve(true).then(() => {
-            assert.strictEqual(onSendCount, 0, 'onSend() should not be called for aborted send()');
-            assert.strictEqual(onSendXhrCount, 0, 'onSend() should not be called for aborted send()');
+            assert.strictEqual(onSendCount, 0, 'onSend() should not be called');
+            assert.strictEqual(onSendXhrCount, 0, 'onSend() should not be called');
             assert.strictEqual(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
           });
         } finally {

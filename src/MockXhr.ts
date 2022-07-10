@@ -161,30 +161,22 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * @returns request headers container
    */
-  get requestHeaders() {
-    return this._requestHeaders;
-  }
+  get requestHeaders() { return this._requestHeaders; }
 
   /**
    * @returns request method
    */
-  get method() {
-    return this._method ?? '';
-  }
+  get method() { return this._method ?? ''; }
 
   /**
    * @returns request url
    */
-  get url() {
-    return this._url ?? '';
-  }
+  get url() { return this._url ?? ''; }
 
   /**
    * @returns request body
    */
-  get body() {
-    return this._body;
-  }
+  get body() { return this._body; }
 
   /**
    * Note: the non-mocked body size will be larger than this for a multipart/form-data encoded
@@ -352,9 +344,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    *
    * @returns client's state
    */
-  get readyState() {
-    return this._readyState;
-  }
+  get readyState() { return this._readyState; }
 
   //--------
   // Request
@@ -368,7 +358,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * @param url request url
    * @param async async request flag (only true is supported)
    */
-  open(method: string, url: string, async = true) {
+  open(method: string, url: string | URL, async = true) {
     if (!async) {
       throw new Error('async = false is not supported.');
     }
@@ -420,9 +410,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    *
    * @returns timeout attribute
    */
-  get timeout() {
-    return this._timeout;
-  }
+  get timeout() { return this._timeout; }
 
   /**
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-timeout
@@ -436,7 +424,6 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
     // Use this._getPrototype() to get the value of timeoutEnabled on the most derived class'
     // prototype. This allows overriding from a derived class.
     if (this._sendFlag && this.timeoutEnabled && this._getPrototype().timeoutEnabled) {
-      // A fetch is active so schedule a request timeout
       this._scheduleRequestTimeout();
     }
   }
@@ -446,9 +433,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    *
    * @returns withCredentials attribute
    */
-  get withCredentials() {
-    return this._withCredentials;
-  }
+  get withCredentials() { return this._withCredentials; }
 
   /**
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials
@@ -468,9 +453,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    *
    * @returns upload attribute
    */
-  get upload() {
-    return this._upload;
-  }
+  get upload() { return this._upload; }
 
   /**
    * Initiate the request.
@@ -568,18 +551,14 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    *
    * @returns status attribute
    */
-  get status() {
-    return this._response.status;
-  }
+  get status() { return this._response.status; }
 
   /**
    * https://xhr.spec.whatwg.org/#the-statustext-attribute
    *
    * @returns statusText attribute
    */
-  get statusText() {
-    return this._response.statusMessage;
-  }
+  get statusText() { return this._response.statusMessage; }
 
   /**
    * Get a response header value.
@@ -621,9 +600,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    *
    * @returns responseType attribute
    */
-  get responseType() {
-    return this._responseType;
-  }
+  get responseType() { return this._responseType; }
 
   /**
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsetype

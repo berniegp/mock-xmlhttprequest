@@ -13,22 +13,19 @@ interface EventMock {
  * See https://xhr.spec.whatwg.org/#xmlhttprequesteventtarget
  */
 export default class XhrEventTarget implements XMLHttpRequestEventTarget {
-  // Note: These event listeners are redefined here as receiving an Event instead of a ProgressEvent
-  // like TypeScript defines them in its dom library. This follows the XMLHttpRequestEventTarget
-  // spec. See https://xhr.spec.whatwg.org/#xmlhttprequesteventtarget
-  onabort: ((this: XMLHttpRequest, ev: Event) => any) | null;
+  onabort: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
 
-  onerror: ((this: XMLHttpRequest, ev: Event) => any) | null;
+  onerror: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
 
-  onload: ((this: XMLHttpRequest, ev: Event) => any) | null;
+  onload: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
 
-  onloadend: ((this: XMLHttpRequest, ev: Event) => any) | null;
+  onloadend: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
 
-  onloadstart: ((this: XMLHttpRequest, ev: Event) => any) | null;
+  onloadstart: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
 
-  onprogress: ((this: XMLHttpRequest, ev: Event) => any) | null;
+  onprogress: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
 
-  ontimeout: ((this: XMLHttpRequest, ev: Event) => any) | null;
+  ontimeout: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
 
   private _eventContext: XMLHttpRequestEventTarget;
 
@@ -156,7 +153,7 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
     if (XHR_PROGRESS_EVENT_NAMES.includes(event.type as TXhrProgressEventNames)) {
       const listener = this[`on${event.type as TXhrProgressEventNames}`];
       if (listener) {
-        listeners.push(listener);
+        listeners.push(listener as EventListener);
       }
     }
 

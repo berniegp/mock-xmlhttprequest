@@ -89,7 +89,7 @@ export default class MockXhrServer {
   install(context: any = globalThis) {
     this._savedContext = context;
 
-    // Distinguish between an undefined and a missing XMLHttpRequest propoerty
+    // Distinguish between an undefined and a missing XMLHttpRequest property
     if ('XMLHttpRequest' in context) {
       this._savedContextHadXMLHttpRequest = true;
       this._savedXMLHttpRequest = context.XMLHttpRequest;
@@ -218,7 +218,7 @@ export default class MockXhrServer {
     return this._requests;
   }
 
-  _handleRequest(xhr: MockXhr) {
+  private _handleRequest(xhr: MockXhr) {
     // Record the request for easier debugging
     this._requests.push({
       method: xhr.method,
@@ -245,7 +245,7 @@ export default class MockXhrServer {
     }
   }
 
-  _findFirstMatchingRoute(xhr: MockXhr) {
+  private _findFirstMatchingRoute(xhr: MockXhr) {
     const method = normalizeHTTPMethodName(xhr.method);
     if (!this._routes[method]) {
       return undefined;
