@@ -225,15 +225,17 @@ describe('MockXhr', () => {
         xhr.open('GET', '/url');
         xhr.send();
 
-        xhr.addEventListener('timeout', () => {
-          assert.fail('there should be no timeout event');
-        });
+        let gotTimeoutEvent = false;
+        xhr.addEventListener('timeout', () => { gotTimeoutEvent = true; });
         xhr.timeout = 40;
 
         xhr.respond();
 
         // Wait to make sure the timeout has no effect
-        setTimeout(done, 100);
+        setTimeout(() => {
+          assert.isFalse(gotTimeoutEvent, 'there should be no timeout event');
+          done();
+        }, 100);
       });
 
       it('can be cancelled', (done) => {
@@ -241,14 +243,16 @@ describe('MockXhr', () => {
         xhr.open('GET', '/url');
         xhr.send();
 
-        xhr.addEventListener('timeout', () => {
-          assert.fail('there should be no timeout event');
-        });
+        let gotTimeoutEvent = false;
+        xhr.addEventListener('timeout', () => { gotTimeoutEvent = true; });
         xhr.timeout = 40;
         Promise.resolve(true).then(() => { xhr.timeout = 0; });
 
         // Wait to make sure the timeout has no effect
-        setTimeout(done, 100);
+        setTimeout(() => {
+          assert.isFalse(gotTimeoutEvent, 'there should be no timeout event');
+          done();
+        }, 100);
       });
 
       it('can be disabled per instance', (done) => {
@@ -257,13 +261,15 @@ describe('MockXhr', () => {
         xhr.open('GET', '/url');
         xhr.send();
 
-        xhr.addEventListener('timeout', () => {
-          assert.fail('there should be no timeout event');
-        });
+        let gotTimeoutEvent = false;
+        xhr.addEventListener('timeout', () => { gotTimeoutEvent = true; });
         xhr.timeout = 1;
 
         // Wait to make sure the timeout has no effect
-        setTimeout(done, 40);
+        setTimeout(() => {
+          assert.isFalse(gotTimeoutEvent, 'there should be no timeout event');
+          done();
+        }, 40);
       });
 
       it('can be disabled globally', (done) => {
@@ -273,13 +279,15 @@ describe('MockXhr', () => {
           xhr.open('GET', '/url');
           xhr.send();
 
-          xhr.addEventListener('timeout', () => {
-            assert.fail('there should be no timeout event');
-          });
+          let gotTimeoutEvent = false;
+          xhr.addEventListener('timeout', () => { gotTimeoutEvent = true; });
           xhr.timeout = 1;
 
           // Wait to make sure the timeout has no effect
-          setTimeout(done, 40);
+          setTimeout(() => {
+            assert.isFalse(gotTimeoutEvent, 'there should be no timeout event');
+            done();
+          }, 40);
         } finally {
           MockXhr.timeoutEnabled = true;
         }

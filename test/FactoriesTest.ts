@@ -180,13 +180,15 @@ describe('Factories', () => {
       xhr.open('GET', '/url');
       xhr.send();
 
-      xhr.addEventListener('timeout', () => {
-        assert.fail('there should be no timeout event');
-      });
+      let gotTimeoutEvent = false;
+      xhr.addEventListener('timeout', () => { gotTimeoutEvent = true; });
       xhr.timeout = 1;
 
       // Wait to make sure the timeout has no effect
-      setTimeout(done, 40);
+      setTimeout(() => {
+        assert.isFalse(gotTimeoutEvent, 'there should be no timeout event');
+        done();
+      }, 40);
     });
 
     it('should work with the quick start code', () => {
