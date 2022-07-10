@@ -1,11 +1,4 @@
-import { XHR_PROGRESS_EVENT_NAMES } from './XhrProgressEventsNames';
-
 import type { TXhrProgressEventNames } from './XhrProgressEventsNames';
-
-// Used to relax the dispatchEvent() interface from XMLHttpRequestEventTarget
-interface EventMock {
-  type: string;
-}
 
 /**
  * Implementation of XMLHttpRequestEventTarget. A target for dispatching events.
@@ -13,42 +6,50 @@ interface EventMock {
  * See https://xhr.spec.whatwg.org/#xmlhttprequesteventtarget
  */
 export default class XhrEventTarget implements XMLHttpRequestEventTarget {
-  onabort: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
-
-  onerror: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
-
-  onload: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
-
-  onloadend: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
-
-  onloadstart: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
-
-  onprogress: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
-
-  ontimeout: ((this: XMLHttpRequest, ev: ProgressEvent) => any) | null;
-
   private _eventContext: XMLHttpRequestEventTarget;
 
   private _listeners: Map<string, EventListenerEntry[]>;
 
   constructor(eventContext?: XMLHttpRequestEventTarget) {
-    this.onabort = null;
-    this.onerror = null;
-    this.onload = null;
-    this.onloadend = null;
-    this.onloadstart = null;
-    this.onprogress = null;
-    this.ontimeout = null;
-
     this._eventContext = eventContext ?? this;
     this._listeners = new Map();
   }
+
+  get onabort() { return this._getEventHandlerProperty('abort'); }
+
+  set onabort(value: EventHandlerProperty | null) { this._setEventHandlerProperty('abort', value); }
+
+  get onerror() { return this._getEventHandlerProperty('error'); }
+
+  set onerror(value: EventHandlerProperty | null) { this._setEventHandlerProperty('error', value); }
+
+  get onload() { return this._getEventHandlerProperty('load'); }
+
+  set onload(value: EventHandlerProperty | null) { this._setEventHandlerProperty('load', value); }
+
+  get onloadend() { return this._getEventHandlerProperty('loadend'); }
+
+  set onloadend(value: EventHandlerProperty | null) { this._setEventHandlerProperty('loadend', value); }
+
+  get onloadstart() { return this._getEventHandlerProperty('loadstart'); }
+
+  set onloadstart(value: EventHandlerProperty | null) { this._setEventHandlerProperty('loadstart', value); }
+
+  get onprogress() { return this._getEventHandlerProperty('progress'); }
+
+  set onprogress(value: EventHandlerProperty | null) { this._setEventHandlerProperty('progress', value); }
+
+  get ontimeout() { return this._getEventHandlerProperty('timeout'); }
+
+  set ontimeout(value: EventHandlerProperty | null) { this._setEventHandlerProperty('timeout', value); }
 
   /**
    * @returns Whether any event listener is registered
    */
   hasListeners() {
-    return this._listeners.size > 0 || XHR_PROGRESS_EVENT_NAMES.some((e) => this[`on${e}`]);
+    return [...this._listeners.values()].some((listeners) => {
+      return listeners.some(({ removed }) => !removed);
+    });
   }
 
   /**
@@ -75,15 +76,17 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
     options?: boolean | AddEventListenerOptions
   ): void {
     if (listener) {
-      const listenerEntry = makeListenerEntry(listener, options);
+      const listenerEntry = makeListenerEntry(listener, false, options);
       const listeners = this._listeners.get(type) ?? [];
 
       // If eventTarget’s event listener list does not contain an event listener whose type is
       // listener’s type, callback is listener’s callback, and capture is listener’s capture, then
       // append listener to eventTarget’s event listener list.
       // See https://dom.spec.whatwg.org/#add-an-event-listener
-      if (listeners.every(({ listener, useCapture }) => {
-        return listenerEntry.listener !== listener || listenerEntry.useCapture !== useCapture;
+      if (listeners.every(({ isEventHandlerProperty, listener, useCapture }) => {
+        return isEventHandlerProperty
+         || listenerEntry.listener !== listener
+         || listenerEntry.useCapture !== useCapture;
       })) {
         listeners.push(listenerEntry);
         this._listeners.set(type, listeners);
@@ -117,11 +120,14 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
     if (listener) {
       const listeners = this._listeners.get(type);
       if (listeners) {
-        const listenerEntry = makeListenerEntry(listener, options);
-        const index = listeners.findIndex(({ listener, useCapture }) => {
-          return listenerEntry.listener === listener && listenerEntry.useCapture === useCapture;
+        const listenerEntry = makeListenerEntry(listener, false, options);
+        const index = listeners.findIndex(({ isEventHandlerProperty, listener, useCapture }) => {
+          return !isEventHandlerProperty
+            && listenerEntry.listener === listener
+            && listenerEntry.useCapture === useCapture;
         });
         if (index >= 0) {
+          listeners[index].removed = true;
           listeners.splice(index, 1);
         }
       }
@@ -137,53 +143,95 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
   dispatchEvent(event: Event | EventMock): boolean {
     // Only the event listeners registered at this point should be called. Storing them here avoids
     // problems with callbacks that add or remove listeners.
-    const listeners: EventListenerOrEventListenerObject[] = [];
+    const listeners = this._listeners.get(event.type);
+    if (listeners) {
+      [...listeners].forEach((listenerEntry) => {
+        if (!listenerEntry.removed) {
+          if (listenerEntry.once) {
+            const index = listeners.indexOf(listenerEntry);
+            if (index >= 0) {
+              listeners.splice(index, 1);
+            }
+          }
 
-    const registeredListeners = this._listeners.get(event.type);
-    if (registeredListeners) {
-      listeners.push(...registeredListeners.map((listener) => listener.listener));
-
-      // Remove 'once' listeners
-      this._listeners.set(event.type, registeredListeners.filter((listener) => !listener.once));
+          if (typeof listenerEntry.listener === 'function') {
+            listenerEntry.listener.call(this._eventContext, event as Event);
+          } else {
+            listenerEntry.listener.handleEvent(event as Event);
+          }
+        }
+      });
     }
-
-    // Handle event listeners added as object properties (e.g. xhr.onload = ...)
-    // Note: The "cast" is to work around a TypeScript limitation in Array.includes with a string
-    // literal array
-    if (XHR_PROGRESS_EVENT_NAMES.includes(event.type as TXhrProgressEventNames)) {
-      const listener = this[`on${event.type as TXhrProgressEventNames}`];
-      if (listener) {
-        listeners.push(listener as EventListener);
-      }
-    }
-
-    // Call the listeners
-    listeners.forEach((listener) => {
-      if (typeof listener === 'function') {
-        listener.call(this._eventContext, event as Event);
-      } else {
-        listener.handleEvent(event as Event);
-      }
-    });
 
     return true;
   }
+
+  private _getEventHandlerProperty(event: TXhrProgressEventNames) {
+    const listeners = this._listeners.get(event);
+    if (listeners) {
+      const entry = listeners.find((entry) => entry.isEventHandlerProperty);
+      if (entry) {
+        return entry.listener as EventHandlerProperty;
+      }
+    }
+    return null;
+  }
+
+  private _setEventHandlerProperty(
+    event: TXhrProgressEventNames,
+    value?: EventHandlerProperty | null
+  ) {
+    const listeners = this._listeners.get(event);
+    if (listeners) {
+      const index = listeners.findIndex((entry) => entry.isEventHandlerProperty);
+      if (index >= 0) {
+        if (listeners[index].listener === value) {
+          // no change
+          return;
+        }
+
+        listeners[index].removed = true;
+        listeners.splice(index, 1);
+      }
+    }
+
+    if (value) {
+      const listenerEntry = makeListenerEntry(value as EventListener, true);
+      if (listeners) {
+        listeners.push(listenerEntry);
+      } else {
+        this._listeners.set(event, [listenerEntry]);
+      }
+    }
+  }
 }
+
+// Used to relax the dispatchEvent() interface from XMLHttpRequestEventTarget
+interface EventMock {
+  type: string;
+}
+
+type EventHandlerProperty = ((this: XMLHttpRequest, ev: ProgressEvent) => any);
 
 interface EventListenerEntry {
   listener: EventListenerOrEventListenerObject,
+  isEventHandlerProperty: boolean,
   useCapture: boolean,
   once: boolean,
+  removed: boolean,
 }
 
 function makeListenerEntry(
   listener: EventListenerOrEventListenerObject,
+  isEventHandlerProperty: boolean,
   options?: boolean | AddEventListenerOptions
 ): EventListenerEntry {
   const optionsIsBoolean = typeof options === 'boolean';
   return {
     listener,
+    isEventHandlerProperty,
     useCapture: optionsIsBoolean ? options : !!options?.capture,
     once: optionsIsBoolean ? false : !!options?.once,
+    removed: false,
   };
 }
