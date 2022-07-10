@@ -90,8 +90,8 @@ describe('MockXhrServer', () => {
       try {
         const mockGlobalType = {};
         globalThis.XMLHttpRequest = mockGlobalType as unknown as typeof XMLHttpRequest;
-
         const { MockXhrClass } = makeTestHarness();
+
         const server = new MockXhrServer(MockXhrClass).install();
         assert.strictEqual(globalThis.XMLHttpRequest, MockXhrClass, 'XMLHttpRequest type replaced');
 
@@ -102,10 +102,10 @@ describe('MockXhrServer', () => {
       }
     });
 
-    it('should set and restore XMLHttpRequest on given context', () => {
+    it('should set and restore XMLHttpRequest on context argument', () => {
       const context: any = { XMLHttpRequest: 1 };
-
       const { MockXhrClass } = makeTestHarness();
+
       const server = new MockXhrServer(MockXhrClass).install(context);
       assert.strictEqual(context.XMLHttpRequest, MockXhrClass, 'XMLHttpRequest property replaced');
 
@@ -113,10 +113,10 @@ describe('MockXhrServer', () => {
       assert.strictEqual(context.XMLHttpRequest, 1, 'XMLHttpRequest property restored');
     });
 
-    it('should set and restore undefined XMLHttpRequest on given context', () => {
+    it('should set and restore undefined XMLHttpRequest on context argument', () => {
       const context: any = { XMLHttpRequest: undefined };
-
       const { MockXhrClass } = makeTestHarness();
+
       const server = new MockXhrServer(MockXhrClass).install(context);
       assert.strictEqual(context.XMLHttpRequest, MockXhrClass, 'XMLHttpRequest property replaced');
 
@@ -124,10 +124,10 @@ describe('MockXhrServer', () => {
       assert.propertyVal(context, 'XMLHttpRequest', undefined, 'XMLHttpRequest property restored');
     });
 
-    it('should set and delete missing XMLHttpRequest on given context', () => {
+    it('should set and delete missing XMLHttpRequest on context argument', () => {
       const context: any = {};
-
       const { MockXhrClass } = makeTestHarness();
+
       const server = new MockXhrServer(MockXhrClass).install(context);
       assert.strictEqual(context.XMLHttpRequest, MockXhrClass, 'XMLHttpRequest property replaced');
 
@@ -175,9 +175,7 @@ describe('MockXhrServer', () => {
       const server = new MockXhrServer(MockXhrClass);
 
       let handlerArgument: MockXhr;
-      server.addHandler('method', '/path', (xhr) => {
-        handlerArgument = xhr;
-      });
+      server.addHandler('method', '/path', (xhr) => { handlerArgument = xhr; });
       const requestXhr = doRequest('method', '/path');
 
       return Promise.resolve(true).then(() => {
@@ -272,9 +270,7 @@ describe('MockXhrServer', () => {
       const server = new MockXhrServer(MockXhrClass, {
         get: ['/get', { status: 200 }],
       });
-      server.addHandler('method', '/path', (xhr) => {
-        xhr.respond(404);
-      });
+      server.addHandler('method', '/path', (xhr) => { xhr.respond(404); });
 
       doRequest('GET', '/get');
       doRequest('method', '/path');
@@ -404,8 +400,7 @@ describe('MockXhrServer', () => {
     it('should return all received requests', () => {
       const { MockXhrClass, doRequest } = makeTestHarness();
       const server = new MockXhrServer(MockXhrClass);
-      const handler = (xhr: MockXhr) => { xhr.respond(404); };
-      server.addHandler('method', '/path', handler);
+      server.addHandler('method', '/path', (xhr) => { xhr.respond(404); });
       doRequest('method', '/path1');
       doRequest('get', '/path2');
       doRequest('POST', '/post', { header: '123' }, 12345);
