@@ -159,22 +159,22 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   static onSend?: OnSendCallback;
 
   /**
-   * @returns request headers container
+   * @returns Request headers container
    */
   get requestHeaders() { return this._requestHeaders; }
 
   /**
-   * @returns request method
+   * @returns Request method
    */
   get method() { return this._method ?? ''; }
 
   /**
-   * @returns request url
+   * @returns Request url
    */
   get url() { return this._url ?? ''; }
 
   /**
-   * @returns request body
+   * @returns Request body
    */
   get body() { return this._body; }
 
@@ -184,7 +184,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * can therefore be seen as a floor value for the real thing that is nonetheless useful to
    * simulate upload progress events.
    *
-   * @returns request body's total byte size
+   * @returns Request body's total byte size
    */
   getRequestBodySize() {
     if (!this._sendFlag) {
@@ -196,7 +196,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * Fire a request upload progress event.
    *
-   * @param transmitted bytes transmitted
+   * @param transmitted Bytes transmitted
    */
   uploadProgress(transmitted: number) {
     if (!this._sendFlag || this._uploadCompleteFlag) {
@@ -212,10 +212,10 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * Complete response method. Sets the response headers and body. Will set the
    * state to DONE.
    *
-   * @param status response http status (default 200)
-   * @param headers name-value headers (optional)
-   * @param body response body (default null)
-   * @param statusText response http status text (optional)
+   * @param status Response http status (default 200)
+   * @param headers Name-value headers (optional)
+   * @param body Response body (default null)
+   * @param statusText Response http status text (optional)
    */
   respond(
     status?: number,
@@ -230,9 +230,9 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * Set only the response headers. Will change the state to HEADERS_RECEIVED.
    *
-   * @param status response http status (default 200)
-   * @param headers name-value headers (optional)
-   * @param statusText response http status text (optional)
+   * @param status Response http status (default 200)
+   * @param headers Name-value headers (optional)
+   * @param statusText Response http status text (optional)
    */
   setResponseHeaders(
     status?: number,
@@ -264,8 +264,8 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * Fire a response progress event. Will set the state to LOADING.
    *
-   * @param transmitted transmitted bytes
-   * @param length total bytes
+   * @param transmitted Transmitted bytes
+   * @param length Total bytes
    */
   downloadProgress(transmitted: number, length: number) {
     if (this._readyState !== MockXhr.HEADERS_RECEIVED
@@ -288,7 +288,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * Set the response body. Will set the state to DONE.
    *
-   * @param body response body (default null)
+   * @param body Response body (default null)
    */
   setResponseBody(body: any = null) {
     if (!this._sendFlag
@@ -342,7 +342,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-readystate
    *
-   * @returns client's state
+   * @returns Client's state
    */
   get readyState() { return this._readyState; }
 
@@ -354,9 +354,9 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * Set the request method and url.
    * https://xhr.spec.whatwg.org/#the-open()-method
    *
-   * @param method request HTTP method (GET, POST, etc.)
-   * @param url request url
-   * @param async async request flag (only true is supported)
+   * @param method Request HTTP method (GET, POST, etc.)
+   * @param url Request url
+   * @param async Async request flag (only true is supported)
    */
   open(method: string, url: string | URL, async = true) {
     if (!async) {
@@ -387,8 +387,8 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * Add a request header value.
    * https://xhr.spec.whatwg.org/#the-setrequestheader()-method
    *
-   * @param name header name
-   * @param value header value
+   * @param name Header name
+   * @param value Header value
    */
   setRequestHeader(name: string, value: string) {
     if (this._readyState !== MockXhr.OPENED || this._sendFlag) {
@@ -459,7 +459,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * Initiate the request.
    * https://xhr.spec.whatwg.org/#the-send()-method
    *
-   * @param body request body
+   * @param body Request body
    */
   send(body: any = null) {
     if (this._readyState !== MockXhr.OPENED || this._sendFlag) {
@@ -564,8 +564,8 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * Get a response header value.
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getresponseheader
    *
-   * @param name header name
-   * @returns header value
+   * @param name Header name
+   * @returns Header value
    */
   getResponseHeader(name: string): string | null {
     return this._response.headers.getHeader(name);
@@ -575,7 +575,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * Get all response headers as a string.
    * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getallresponseheaders
    *
-   * @returns concatenated headers
+   * @returns Concatenated headers
    */
   getAllResponseHeaders(): string {
     return this._response.headers.getAll();
@@ -624,7 +624,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * https://xhr.spec.whatwg.org/#the-response-attribute
    *
-   * @returns response
+   * @returns response attribute
    */
   get response() {
     if (this._responseType === '' || this._responseType === 'text') {
@@ -719,7 +719,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * Process response task. When the response headers are received.
    * https://xhr.spec.whatwg.org/#the-send()-method
    *
-   * @param response response
+   * @param response Response
    */
   private _processResponse(response: MockXhrResponse) {
     this._response = response;
@@ -777,7 +777,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * The request error steps for event 'event'.
    * https://xhr.spec.whatwg.org/#request-error-steps
    *
-   * @param event event name
+   * @param event Event name
    */
   private _requestErrorSteps(event: TXhrProgressEventNames) {
     this._readyState = MockXhr.DONE;

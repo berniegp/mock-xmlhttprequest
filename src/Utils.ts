@@ -55,8 +55,8 @@ const forbiddenHeaderRegEx = new RegExp(`^(${forbiddenHeaders.join('|')}|Proxy-.
 /**
  * See https://fetch.spec.whatwg.org/#forbidden-header-name
  *
- * @param name header name
- * @returns whether the request header name is forbidden for XMLHttpRequest
+ * @param name Header name
+ * @returns Whether the request header name is forbidden for XMLHttpRequest
  */
 export function isRequestHeaderForbidden(name: string) {
   return forbiddenHeaderRegEx.test(name);
@@ -65,8 +65,8 @@ export function isRequestHeaderForbidden(name: string) {
 /**
  * See https://fetch.spec.whatwg.org/#forbidden-method
  *
- * @param name method name
- * @returns whether the request method is forbidden for XMLHttpRequest
+ * @param method Method name
+ * @returns Whether the request method is forbidden for XMLHttpRequest
  */
 export function isRequestMethodForbidden(method: string) {
   return /^(CONNECT|TRACE|TRACK)$/i.test(method);
@@ -88,7 +88,7 @@ const upperCaseMethodsRegEx = new RegExp(`^(${upperCaseMethods.join('|')})$`, 'i
  * See https://fetch.spec.whatwg.org/#concept-method-normalize
  *
  * @param method HTTP method name
- * @returns normalized method name
+ * @returns Normalized method name
  */
 export function normalizeHTTPMethodName(method: string) {
   if (upperCaseMethodsRegEx.test(method)) {
@@ -155,7 +155,7 @@ const statusTexts: Record<number, string> = {
 
 /**
  * @param status HTTP status code
- * @returns status text
+ * @returns Status text
  */
 export function getStatusText(status: number) {
   return statusTexts[status] ?? 'Unknown Status';

@@ -45,7 +45,7 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
   }
 
   /**
-   * @returns whether any event listener is registered
+   * @returns Whether any event listener is registered
    */
   hasListeners() {
     return this._listeners.size > 0 || XHR_PROGRESS_EVENT_NAMES.some((e) => this[`on${e}`]);
@@ -55,9 +55,9 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
    * Add an event listener.
    * See https://dom.spec.whatwg.org/#dom-eventtarget-addeventlistener
    *
-   * @param type event type ('load', 'abort', etc)
-   * @param listener listener callback
-   * @param options options object or the useCapture flag
+   * @param type Event type ('load', 'abort', etc)
+   * @param listener Listener callback
+   * @param options Options object or the useCapture flag
    */
   addEventListener<K extends keyof XMLHttpRequestEventTargetEventMap>(
     type: K,
@@ -95,9 +95,9 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
    * Remove an event listener.
    * See https://dom.spec.whatwg.org/#dom-eventtarget-removeeventlistener
    *
-   * @param type event type ('load', 'abort', etc)
-   * @param listener listener callback
-   * @param options options object or the useCapture flag
+   * @param type Event type ('load', 'abort', etc)
+   * @param listener Listener callback
+   * @param options Options object or the useCapture flag
    */
   removeEventListener<K extends keyof XMLHttpRequestEventTargetEventMap>(
     type: K,
@@ -131,8 +131,8 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
   /**
    * Calls all the listeners for the event.
    *
-   * @param event event
-   * @returns always true since none of the xhr event are cancelable
+   * @param event Event
+   * @returns Always true since none of the xhr event are cancelable
    */
   dispatchEvent(event: Event | EventMock): boolean {
     // Only the event listeners registered at this point should be called. Storing them here avoids

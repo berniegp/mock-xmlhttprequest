@@ -9,7 +9,7 @@ import type { UrlMatcher, RequestHandler } from './MockXhrServer';
  * since "global" hooks can be registered directly on the subclass. These hooks don't need to then
  * be removed after tests because they are local to the new subclass.
  *
- * @returns new MockXhr subclass
+ * @returns New MockXhr subclass
  */
 export function newMockXhr(): typeof MockXhr {
   return class LocalMockXhr extends MockXhr {
@@ -39,8 +39,8 @@ export function newMockXhr(): typeof MockXhr {
 /**
  * Create a new mock server using MockXhr.
  *
- * @param routes routes
- * @returns new mock server
+ * @param routes Routes
+ * @returns New mock server
  */
 export function newServer(routes?: Record<string, [UrlMatcher, RequestHandler]>) {
   return new MockXhrServer(newMockXhr(), routes);

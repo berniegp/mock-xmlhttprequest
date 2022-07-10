@@ -5,7 +5,7 @@ export default class HeadersContainer {
   private _headers: Map<string, string>;
 
   /**
-   * @param headers initial headers
+   * @param headers Initial headers
    */
   constructor(headers?: Record<string, string> | null) {
     this._headers = new Map();
@@ -22,8 +22,8 @@ export default class HeadersContainer {
   }
 
   /**
-   * @param name header name (case-insensitive)
-   * @returns header value or null
+   * @param name Header name (case-insensitive)
+   * @returns Header value or null
    */
   getHeader(name: string) {
     return this._headers.get(name.toUpperCase()) ?? null;
@@ -32,7 +32,7 @@ export default class HeadersContainer {
   /**
    * Get all headers as a string. Each header is on its own line. All header names are lower-case.
    *
-   * @returns concatenated headers
+   * @returns Concatenated headers
    */
   getAll() {
     // Sort the header names. It's not mandated by RFC 7230 but it makes assertion testing easier
@@ -49,7 +49,7 @@ export default class HeadersContainer {
   }
 
   /**
-   * @returns all headers as an object. The header names are in lower-case.
+   * @returns All headers as an object. The header names are in lower-case.
    */
   getHash() {
     const headers: Record<string, string> = {};
@@ -62,8 +62,8 @@ export default class HeadersContainer {
   /**
    * Add a header value, combining it with any previous value for the same header name.
    *
-   * @param name header name
-   * @param value header value
+   * @param name Header name
+   * @param value Header value
    */
   addHeader(name: string, value: string) {
     name = name.toUpperCase();

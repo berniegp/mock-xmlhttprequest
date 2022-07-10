@@ -55,7 +55,7 @@ export default class MockXhrServer {
    * Constructor
    *
    * @param xhrMock XMLHttpRequest mock class
-   * @param routes routes
+   * @param routes Routes
    */
   constructor(xhrMock: typeof MockXhr, routes?: Record<string, [UrlMatcher, RequestHandler]>) {
     this._MockXhr = xhrMock;
@@ -79,7 +79,7 @@ export default class MockXhrServer {
   /**
    * For backwards compatibility with versions < 4.1.0
    *
-   * @deprecated use the MockXhr property instead
+   * @deprecated Use the MockXhr property instead
    */
   public get xhrMock() {
     return this._MockXhr;
@@ -92,7 +92,7 @@ export default class MockXhrServer {
   /**
    * Install the server's XMLHttpRequest mock in the context. Revert with remove().
    *
-   * @param context context object (e.g. global, window)
+   * @param context Context object (e.g. global, window)
    * @returns this
    */
   install(context: any = globalThis) {
@@ -143,8 +143,8 @@ export default class MockXhrServer {
   /**
    * Add a GET request handler.
    *
-   * @param matcher url matcher
-   * @param handler request handler
+   * @param matcher Url matcher
+   * @param handler Request handler
    * @returns this
    */
   get(matcher: UrlMatcher, handler: RequestHandler) {
@@ -154,8 +154,8 @@ export default class MockXhrServer {
   /**
    * Add a POST request handler.
    *
-   * @param matcher url matcher
-   * @param handler request handler
+   * @param matcher Url matcher
+   * @param handler Request handler
    * @returns this
    */
   post(matcher: UrlMatcher, handler: RequestHandler) {
@@ -165,8 +165,8 @@ export default class MockXhrServer {
   /**
    * Add a PUT request handler.
    *
-   * @param matcher url matcher
-   * @param handler request handler
+   * @param matcher Url matcher
+   * @param handler Request handler
    * @returns this
    */
   put(matcher: UrlMatcher, handler: RequestHandler) {
@@ -176,8 +176,8 @@ export default class MockXhrServer {
   /**
    * Add a DELETE request handler.
    *
-   * @param matcher url matcher
-   * @param handler request handler
+   * @param matcher Url matcher
+   * @param handler Request handler
    * @returns this
    */
   delete(matcher: UrlMatcher, handler: RequestHandler) {
@@ -188,8 +188,8 @@ export default class MockXhrServer {
    * Add a request handler.
    *
    * @param method HTTP method
-   * @param matcher url matcher
-   * @param handler request handler
+   * @param matcher Url matcher
+   * @param handler Request handler
    * @returns this
    */
   addHandler(method: string, matcher: UrlMatcher, handler: RequestHandler) {
@@ -203,7 +203,7 @@ export default class MockXhrServer {
   /**
    * Set the default request handler for requests that don't match any route.
    *
-   * @param handler request handler
+   * @param handler Request handler
    * @returns this
    */
   setDefaultHandler(handler: RequestHandler) {
@@ -221,7 +221,7 @@ export default class MockXhrServer {
   }
 
   /**
-   * @returns list of requests received by the server. Entries: { method, url, headers, body? }
+   * @returns List of requests received by the server. Entries: { method, url, headers, body? }
    */
   getRequestLog(): readonly RequestLogEntry[] {
     return this._requests;
