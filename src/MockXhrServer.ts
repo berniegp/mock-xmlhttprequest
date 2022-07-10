@@ -76,6 +76,15 @@ export default class MockXhrServer {
     return this._MockXhr;
   }
 
+  /**
+   * For backwards compatibility with versions < 4.1.0
+   *
+   * @deprecated use the MockXhr property instead
+   */
+  public get xhrMock() {
+    return this._MockXhr;
+  }
+
   public get xhrFactory() {
     return this._xhrFactory;
   }
