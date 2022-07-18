@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-
+import Blob from 'fetch-blob';
 import { getBodyByteSize } from '../src/Utils';
 
 class BlobMock {
@@ -50,6 +50,18 @@ describe('Utils', () => {
     });
 
     it('should return FormData byte size', () => {
+      const form = new FormData();
+      form.append('my_field', 'abcd');
+      form.append('my_emojis', '😂👍');
+      form.append('my_blob', new BlobMock(10));
+      assert.equal(getBodyByteSize(form), 4 + 8 + 10);
+      // there's no global.Blob under pure node
+      assert.equal(global.Blob, undefined);
+    });
+
+    it('should return FormData byte size with Blob available', () => {
+      // mock blob in browser
+      global.Blob = Blob;
       const form = new FormData();
       form.append('my_field', 'abcd');
       form.append('my_emojis', '😂👍');

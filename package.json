@@ -47,6 +47,7 @@
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "esm": "^3.2.25",
+    "fetch-blob": "^2.1.2",
     "mocha": "^8.4.0",
     "rollup": "^2.47.0",
     "terser": "^5.7.0",

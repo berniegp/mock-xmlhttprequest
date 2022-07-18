@@ -22,7 +22,7 @@ export function getBodyByteSize(body) {
 
 function getStringByteLength(string) {
   // Compute the byte length of the string (which is not the same as string.length)
-  return global.Blob ? new global.Blob(string).size : Buffer.byteLength(string);
+  return global.Blob ? new global.Blob([string], { type: 'text/plain' }).size : Buffer.byteLength(string);
 }
 
 // Disallowed request headers for setRequestHeader()
