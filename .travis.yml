@@ -8,3 +8,4 @@ os:
     - osx
     - windows
 dist: focal
+osx_image: xcode12
