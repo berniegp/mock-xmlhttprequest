@@ -3,3 +3,8 @@ node_js:
     - "14"
     - "16"
     - "18"
+os:
+    - linux
+    - osx
+    - windows
+dist: focal
