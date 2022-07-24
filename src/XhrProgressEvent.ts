@@ -1,11 +1,11 @@
+import XhrEvent from './XhrEvent';
+
 import type { TXhrProgressEventNames } from './XhrProgressEventsNames';
 
 /**
  * XMLHttpRequest ProgressEvent
  */
-export default class XhrProgressEvent {
-  readonly type: string;
-
+export default class XhrProgressEvent extends XhrEvent {
   readonly loaded: number;
 
   readonly total: number;
@@ -18,7 +18,7 @@ export default class XhrProgressEvent {
    * @param total Total bytes
    */
   constructor(type: TXhrProgressEventNames, loaded = 0, total = 0) {
-    this.type = type;
+    super(type);
     this.loaded = loaded;
     this.total = total;
     this.lengthComputable = total > 0;

@@ -1,4 +1,5 @@
 import HeadersContainer from './HeadersContainer';
+import XhrEvent from './XhrEvent';
 import XhrProgressEvent from './XhrProgressEvent';
 import {
   getBodyByteSize,
@@ -826,9 +827,9 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   }
 
   private _fireReadyStateChange() {
-    const event = new Event('readystatechange');
+    const event = new XhrEvent('readystatechange');
     if (this.onreadystatechange) {
-      this.onreadystatechange(event);
+      this.onreadystatechange(event as Event);
     }
     this.dispatchEvent(event);
   }
