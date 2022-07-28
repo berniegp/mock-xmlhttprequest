@@ -22,6 +22,7 @@
     "tsc:validate:build": "tsc --noEmit -p build/tsconfig.json",
     "lint": "eslint .",
     "test": "cross-env TS_NODE_PROJECT='test/tsconfig.json' mocha",
+    "test:ci": "npm run test && npm run lint",
     "test:watch": "npm run test -- --watch",
     "prepare": "npm run build:clean && npm run build && npm run build:dts",
     "prepublishOnly": "npm run lint && npm run tsc:validate && npm run test"
