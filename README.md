@@ -33,55 +33,69 @@ via [npm (node package manager)](https://github.com/npm/npm)
 
 ## Quick Start
 ```javascript
-const assert = require('assert');
-const MockXMLHttpRequest = require('mock-xmlhttprequest');
+const newServer = require('mock-xmlhttprequest').newServer;
 
-// Install the server's XMLHttpRequest mock in the "global" context.
-// "new XMLHttpRequest()" will then create a mock request to which the server will reply.
-const server = MockXMLHttpRequest.newServer({
-  get: ['/my/url', {
-    // status: 200 is the default
-    headers: { 'Content-Type': 'application/json' },
-    body: '{ "message": "Success!" }',
-  }],
-}).install( /* optional context; defaults to global */ );
+// Adapt based on your testing framework. This example uses Mocha and Chai's syntax.
 
-// Do something that send()s an XMLHttpRequest to '/my/url'
-const result = MyModuleUsingXhr.someAjaxMethod();
+it('should produce a success response', () => {
+  const server = newServer({
+    get: ['/my/url', {
+      // status: 200 is the default
+      headers: { 'Content-Type': 'application/json' },
+      body: '{ "message": "Success!" }',
+    }],
+  });
 
-// Assuming someAjaxMethod() returns the parsed JSON body
-assert.equal(result.message, 'Success!');
+  try {
+    // Install the server's XMLHttpRequest mock in the "global" context.
+    // "new XMLHttpRequest()" will then create a mock request to which the server will reply.
+    server.install(/* optional context; defaults to globalThis */);
 
-// Restore the original XMLHttpRequest from the context given to install()
-server.remove();
+    // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
+    return functionToTest().then((result) => {
+      // Assuming the Promise returned by functionToTest() resolves to the parsed JSON response
+      assert.equal(result.message, 'Success!');
+    });
+  } finally {
+    // Restore the original XMLHttpRequest
+    server.remove();
+  }
+});
 ```
 
 ## Low-Level Quick Start
 An alternative usage pattern not using the mock server based only on the `MockXhr` class. Mostly here for historical reasons because it predates the mock server.
 
 ```javascript
-const assert = require('assert');
-const MockXMLHttpRequest = require('mock-xmlhttprequest');
-const MockXhr = MockXMLHttpRequest.newMockXhr();
+const newMockXhr = require('mock-xmlhttprequest').newMockXhr;
 
-// Mock JSON response
-MockXhr.onSend = (xhr) => {
-  const responseHeaders = { 'Content-Type': 'application/json' };
-  const response = '{ "message": "Success!" }';
-  xhr.respond(200, responseHeaders, response);
-};
+// Adapt based on your testing framework. This example uses Mocha and Chai's syntax.
 
-// Install in the global context so "new XMLHttpRequest()" uses the XMLHttpRequest mock
-global.XMLHttpRequest = MockXhr;
+it('should produce a success response', () => {
+  // Get a "local" MockXhr mock subclass
+  const MockXhr = newMockXhr();
 
-// Do something that send()s an XMLHttpRequest to '/my/url'
-const result = MyModuleUsingXhr.someAjaxMethod();
+  // Mock JSON response
+  MockXhr.onSend = (xhr) => {
+    const responseHeaders = { 'Content-Type': 'application/json' };
+    const response = '{ "message": "Success!" }';
+    xhr.respond(200, responseHeaders, response);
+  };
 
-// Assuming someAjaxMethod() returns the value of the 'result' property
-assert.equal(result.message, 'Success!');
+  try {
+    // Install in the global context so "new XMLHttpRequest()" uses the XMLHttpRequest mock
+    global.XMLHttpRequest = MockXhr;
 
-// Remove the mock class from the global context
-delete global.XMLHttpRequest;
+    // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
+    return functionToTest().then((result) => {
+      // Assuming the Promise returned by functionToTest() resolves to the parsed JSON response
+      assert.equal(result.message, 'Success!');
+    });
+  } finally {
+    // Restore the original XMLHttpRequest
+    delete global.XMLHttpRequest;
+  }
+});
 ```
 
 ## Features

@@ -147,6 +147,7 @@ describe('Factories', () => {
         });
       }
 
+      // Get a "local" MockXhr mock subclass
       const MockXhr = newMockXhr();
 
       // Mock JSON response
@@ -166,7 +167,7 @@ describe('Factories', () => {
           assert.equal(result.message, 'Success!');
         });
       } finally {
-        // Remove the mock class from the global context
+        // Restore the original XMLHttpRequest
         delete global.XMLHttpRequest;
       }
     });
@@ -221,7 +222,7 @@ describe('Factories', () => {
           assert.equal(result.message, 'Success!');
         });
       } finally {
-        // Restore the original XMLHttpRequest from the context given to install()
+        // Restore the original XMLHttpRequest
         server.remove();
       }
     });
