@@ -3,7 +3,13 @@ import { assert } from 'chai';
 import { getBodyByteSize } from '../src/Utils';
 
 class BlobMock {
-  constructor(public size: number) {}
+  constructor(array: any[]) {
+    assert.isArray(array);
+  }
+
+  static testSize = 0;
+
+  get size() { return BlobMock.testSize; }
 }
 
 class BufferSourceMock {
@@ -33,14 +39,29 @@ describe('Utils', () => {
       assert.strictEqual(getBodyByteSize(null), 0);
     });
 
-    it('should return string byte length', () => {
+    it('should return string byte length using Blob', () => {
+      // The Blob code path of getBodyByteSize() requires Blob in the global context.
+      const savedBlob = globalThis.Blob;
+      globalThis.Blob = BlobMock as unknown as typeof globalThis.Blob;
+      try {
+        // Doesn't match the string size below on purpose to validate that the Blob mock is used
+        BlobMock.testSize = 10;
+        assert.strictEqual(getBodyByteSize('abcd'), 10, 'uses the Blob size');
+      } finally {
+        globalThis.Blob = savedBlob;
+      }
+    });
+
+    it('should return string byte length using BufferSource', () => {
       assert.strictEqual(getBodyByteSize('abcd'), 4, 'single code unit characters');
       assert.strictEqual(getBodyByteSize('😂👍'), 8, 'multi code unit characters');
       assert.strictEqual(getBodyByteSize('a😂b👍c'), 11, 'mixed code unit characters');
     });
 
     it('should return Blob byte size', () => {
-      const blob = new BlobMock(10);
+      // Doesn't match the string size below on purpose to validate that the Blob mock is used
+      BlobMock.testSize = 10;
+      const blob = new BlobMock(['abcd']);
       assert.strictEqual(getBodyByteSize(blob as Blob), 10);
     });
 
@@ -57,7 +78,10 @@ describe('Utils', () => {
         const form = new FormDataMock();
         form.append('my_field', 'abcd');
         form.append('my_emojis', '😂👍');
-        form.append('my_blob', new BlobMock(10));
+
+        // Doesn't match the string size below on purpose to validate that the Blob mock is used
+        BlobMock.testSize = 10;
+        form.append('my_blob', new BlobMock(['abcd']));
         assert.strictEqual(getBodyByteSize(form as unknown as FormData), 4 + 8 + 10);
       } finally {
         globalThis.FormData = savedFormData;

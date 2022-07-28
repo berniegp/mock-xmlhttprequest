@@ -11,8 +11,7 @@ export function getBodyByteSize(body?: string | FormData | Blob | BufferSource |
     // values. The full multipart/form-data encoding also adds headers, encoding, etc. which we
     // don't reproduce here.
     return [...(body as FormData).values()].reduce((sum, value) => {
-      const valueSize = (value as File).size !== undefined
-        ? (value as File).size : getStringByteLength(String(value));
+      const valueSize = (value as File).size ?? getStringByteLength(String(value.toString()));
       return sum + valueSize;
     }, 0);
   }
