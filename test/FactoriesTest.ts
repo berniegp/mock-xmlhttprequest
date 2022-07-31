@@ -71,63 +71,66 @@ describe('Factories', () => {
       });
     });
 
-    describe('Hooks', () => {
-      it('should call global and local onCreate()', () => {
+    describe('Lifefycle hooks', () => {
+      it('onCreate()', () => {
         try {
           const LocalMockXhr = newMockXhr();
-          let onCreateLocalCount = 0;
-          LocalMockXhr.onCreate = () => {
-            onCreateLocalCount += 1;
+          const calls: string[] = [];
+          const args: MockXhr[] = [];
+
+          MockXhr.onCreate = (arg) => {
+            calls.push('global');
+            args.push(arg);
           };
 
-          let onCreateCount = 0;
-          MockXhr.onCreate = () => {
-            onCreateCount += 1;
+          LocalMockXhr.onCreate = (arg) => {
+            calls.push('subclass');
+            args.push(arg);
           };
 
           const xhr = new LocalMockXhr();
 
           assert.instanceOf(xhr, MockXhr);
-          assert.strictEqual(onCreateCount, 1, 'global onCreate() called');
-          assert.strictEqual(onCreateLocalCount, 1, 'local onCreate() called');
+          assert.deepEqual(calls, ['global', 'subclass'], 'hooks called in the right order');
+          assert.deepEqual(args, [xhr, xhr], 'correct parameters for callbacks');
         } finally {
           delete MockXhr.onCreate;
         }
       });
 
-      it('should call global onSend(), local onSend() and xhr.onSend()', () => {
+      it('onSend()()', () => {
         try {
           const LocalMockXhr = newMockXhr();
           const xhr = new LocalMockXhr();
+          const calls: string[] = [];
+          const thisValues: MockXhr[] = [];
+          const args: MockXhr[] = [];
 
-          let paramsOk = true;
-          let onSendLocalCount = 0;
-          LocalMockXhr.onSend = function onSendLocal(arg) {
-            paramsOk &&= this === xhr && arg === xhr;
-            onSendLocalCount += 1;
-          };
-
-          // Add a "global" onSend callback
-          let onSendCount = 0;
-          MockXhr.onSend = function onSend(arg) {
-            paramsOk &&= this === xhr && arg === xhr;
-            onSendCount += 1;
-          };
-
-          // Add a request-local onSend callback
-          let onSendXhrCount = 0;
           xhr.onSend = function onSendXhr(arg) {
-            paramsOk &&= this === xhr && arg === xhr;
-            onSendXhrCount += 1;
+            calls.push('xhr');
+            thisValues.push(this);
+            args.push(arg);
           };
+
+          MockXhr.onSend = function onSend(arg) {
+            calls.push('global');
+            thisValues.push(this);
+            args.push(arg);
+          };
+
+          LocalMockXhr.onSend = function onSendLocal(arg) {
+            calls.push('subclass');
+            thisValues.push(this);
+            args.push(arg);
+          };
+
           xhr.open('GET', '/url');
           xhr.send();
 
           return Promise.resolve(true).then(() => {
-            assert.isTrue(paramsOk, 'correct parameters for callbacks');
-            assert.strictEqual(onSendLocalCount, 1, 'subclass onSend callback called');
-            assert.strictEqual(onSendCount, 1, '"global" onSend callback called');
-            assert.strictEqual(onSendXhrCount, 1, 'request-local onSend callback called');
+            assert.deepEqual(calls, ['xhr', 'global', 'subclass'], 'hooks called in the right order');
+            assert.deepEqual(thisValues, [xhr, xhr, xhr], 'correct contexts for callbacks');
+            assert.deepEqual(args, [xhr, xhr, xhr], 'correct parameters for callbacks');
           });
         } finally {
           delete MockXhr.onSend;
@@ -147,7 +150,7 @@ describe('Factories', () => {
         });
       }
 
-      // Get a "local" MockXhr mock subclass
+      // Get a "local" MockXhr subclass
       const MockXhr = newMockXhr();
 
       // Mock JSON response
