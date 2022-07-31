@@ -61,9 +61,9 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
 
   private _readyState: number;
 
-  private _withCredentials: boolean;
-
   private _timeout: number;
+
+  private _withCredentials: boolean;
 
   private readonly _upload: XhrEventTarget;
 
@@ -90,8 +90,8 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
     this._requestHeaders = new HeadersContainer();
 
     this._readyState = MockXhr.UNSENT;
-    this._withCredentials = false;
     this._timeout = 0;
+    this._withCredentials = false;
     this._upload = new XhrEventTarget(this);
     this.responseURL = '';
     this._responseType = '';
