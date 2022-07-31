@@ -180,10 +180,10 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   get body() { return this._body; }
 
   /**
-   * Note: the non-mocked body size will be larger than this for a multipart/form-data encoded
-   * FormData body since it will include headers, encoding, etc. The value returned by this method
-   * can therefore be seen as a floor value for the real thing that is nonetheless useful to
-   * simulate upload progress events.
+   * Note: this isn't completely accurate for a multipart/form-data encoded FormData request body.
+   * MockXhr not consider headers, encoding, and other factors that influence the request body size
+   * of non-mocked XMLHttpRequest. You can consider the value returned by this method as a floor
+   * value for the request body size. This can still be useful to simulate upload progress events.
    *
    * @returns Request body's total byte size
    */
@@ -210,8 +210,8 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   }
 
   /**
-   * Complete response method. Sets the response headers and body. Will set the
-   * state to DONE.
+   * Complete response method that sets the response headers and body. Changes the request's
+   * readyState to DONE.
    *
    * @param status Response http status (default 200)
    * @param headers Name-value headers (optional)
@@ -229,7 +229,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   }
 
   /**
-   * Set only the response headers. Will change the state to HEADERS_RECEIVED.
+   * Set the response headers. Changes the request's readyState to HEADERS_RECEIVED.
    *
    * @param status Response http status (default 200)
    * @param headers Name-value headers (optional)
@@ -263,7 +263,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   }
 
   /**
-   * Fire a response progress event. Will set the state to LOADING.
+   * Fire a response progress event. Changes the request's readyState to LOADING.
    *
    * @param transmitted Transmitted bytes
    * @param length Total bytes
@@ -287,7 +287,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   }
 
   /**
-   * Set the response body. Will set the state to DONE.
+   * Set the response body. Changes the request's readyState to DONE.
    *
    * @param body Response body (default null)
    */
@@ -315,7 +315,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   }
 
   /**
-   * Simulate a network error. Will set the state to DONE.
+   * Simulate a network error. Changes the request's readyState to DONE.
    */
   setNetworkError() {
     if (!this._sendFlag) {
@@ -325,7 +325,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   }
 
   /**
-   * Simulate a request timeout. Will set the state to DONE.
+   * Simulate a request timeout. Changes the request's readyState to DONE.
    */
   setRequestTimeout() {
     if (!this._sendFlag) {

@@ -5,9 +5,10 @@ import type { OnCreateCallback, OnSendCallback } from './MockXhr';
 import type { UrlMatcher, RequestHandler } from './MockXhrServer';
 
 /**
- * Create a new "local" MockXhr subclass. This makes it easier to have self-contained unit tests
- * since "global" hooks can be registered directly on the subclass. These hooks don't need to then
- * be removed after tests because they are local to the new subclass.
+ * Create a new "local" MockXhr subclass. Using a subclass of `MockXhr` in each test case makes it
+ * easier to ensure they are self-contained. For example if you set the onSend static propertiy on
+ * a subclass, this will only affect that subclass and not the others created in your other test
+ * cases. You therefore don't need to add cleanup code to revert the changes made to the subclass.
  *
  * @returns New MockXhr subclass
  */
@@ -37,10 +38,8 @@ export function newMockXhr(): typeof MockXhr {
 }
 
 /**
- * Create a new mock server using MockXhr.
- *
  * @param routes Routes
- * @returns New mock server
+ * @returns new MockXhrServerserver with its own MockXhr subclass.
  */
 export function newServer(routes?: Record<string, [UrlMatcher, RequestHandler]>) {
   return new MockXhrServer(newMockXhr(), routes);

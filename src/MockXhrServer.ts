@@ -90,7 +90,8 @@ export default class MockXhrServer {
   }
 
   /**
-   * Install the server's XMLHttpRequest mock in the context. Revert with remove().
+   * Install the server's XMLHttpRequest mock in the global context. You can specify a different
+   * context with the optional `context` argument. Revert with remove().
    *
    * @param context Context object (e.g. global, window)
    * @returns this
@@ -110,7 +111,7 @@ export default class MockXhrServer {
   }
 
   /**
-   * Remove the server as the global XMLHttpRequest mock. Reverts the actions of install(global).
+   * Revert the changes made by install(). Call this after your tests.
    */
   remove() {
     if (!this._savedContext) {
