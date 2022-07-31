@@ -18,6 +18,14 @@ describe('HeadersContainer', () => {
       });
       assert.strictEqual(headers.getHeader('header'), '1, 1');
     });
+
+    it('should support copy construction', () => {
+      const headers = new HeadersContainer({
+        header: '1',
+        HEADER: '1',
+      });
+      assert.strictEqual(headers.getHeader('header'), '1, 1');
+    });
   });
 
   it('should store headers', () => {

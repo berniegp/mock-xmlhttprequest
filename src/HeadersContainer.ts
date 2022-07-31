@@ -7,10 +7,17 @@ export default class HeadersContainer {
   /**
    * @param headers Initial headers
    */
-  constructor(headers?: Record<string, string> | null) {
+  constructor(headers?: Record<string, string> | null);
+  constructor(src: HeadersContainer);
+  constructor(headersOrSrc?: Record<string, string> | null | HeadersContainer) {
     this._headers = new Map();
-    if (headers) {
-      Object.entries(headers).forEach(([key, value]) => this.addHeader(key, value));
+    if (headersOrSrc) {
+      if (headersOrSrc instanceof HeadersContainer) {
+        // eslint-disable-next-line no-underscore-dangle
+        this._headers = new Map(headersOrSrc._headers);
+      } else {
+        Object.entries(headersOrSrc).forEach(([key, value]) => this.addHeader(key, value));
+      }
     }
   }
 

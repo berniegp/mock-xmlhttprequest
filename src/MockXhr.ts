@@ -29,26 +29,26 @@ export type OnSendCallback = (this: MockXhr, xhr: MockXhr) => void;
  * Based on https://xhr.spec.whatwg.org version '18 August 2020'.
  *
  * Supports:
- *  - events and states
+ *  - Events and states
  *  - open(), setRequestHeader(), send() and abort()
- *  - upload and download progress events
- *  - response status, statusText, headers and body
- *  - the timeout attribute (can be disabled) (since v4.0.0)
- *  - simulating a network error
- *  - simulating a request timeout (see MockXhr.setRequestTimeout())
+ *  - Upload and download progress events
+ *  - Response status, statusText, headers and body
+ *  - The timeout attribute (can be disabled)
+ *  - Simulating a network error (see setNetworkError())
+ *  - Simulating a request timeout (see setRequestTimeout())
  *
  * Partial support:
  *  - overrideMimeType(): throws when required, but has no other effect.
- *  - responseType: '', 'text' and 'json' are fully supported. Other responseType values can also be
- *    used, but they will return the response body given to setResponseBody() as-is in xhr.response.
+ *  - responseType: '', 'text' and 'json' are fully supported. The responseType values will have
+ *    no effect on the response body passed to setResponseBody().
  *  - responseXml: the response body is not converted to a document response. To get a document
- *    response, use it directly as the response body in setResponseBody().
+ *    response, pass it directly as the response body in setResponseBody().
+ *  - responseUrl: the final request URL after redirects isn't automatically set. This can be
+ *    emulated in a request handler.
  *
  * Not supported:
- * - synchronous requests (i.e. async == false)
- * - parsing the url and setting the username and password since there are no actual HTTP requests
- * - responseUrl (i.e. the final request url with redirects) is not automatically set. This can be
- *   emulated in a request handler.
+ * - Synchronous requests (i.e. async set to false in open())
+ * - Parsing the request URL in open() and throwing SyntaxError on failure.
  */
 export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   private _requestHeaders: HeadersContainer;
@@ -162,7 +162,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   /**
    * @returns Request headers container
    */
-  get requestHeaders() { return this._requestHeaders; }
+  get requestHeaders() { return new HeadersContainer(this._requestHeaders); }
 
   /**
    * @returns Request method

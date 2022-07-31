@@ -18,7 +18,7 @@ export type RequestHandler =
   | (Partial<RequestHandlerResponse> | RequestHandlerCallback)[];
 
 interface Route {
-  matcher: UrlMatcher,
+  urlMatcher: UrlMatcher,
   handler: RequestHandler,
   count: number,
 }
@@ -62,8 +62,8 @@ export default class MockXhrServer {
     this._requests = [];
     this._routes = {};
     if (routes) {
-      Object.entries(routes).forEach(([method, [requestMatcher, handler]]) => {
-        this.addHandler(method, requestMatcher, handler);
+      Object.entries(routes).forEach(([method, [urlMatcher, handler]]) => {
+        this.addHandler(method, urlMatcher, handler);
       });
     }
     xhrMock.onSend = (xhr) => { this._handleRequest(xhr); };
@@ -144,60 +144,60 @@ export default class MockXhrServer {
   /**
    * Add a GET request handler.
    *
-   * @param matcher Url matcher
+   * @param urlMatcher Url matcher
    * @param handler Request handler
    * @returns this
    */
-  get(matcher: UrlMatcher, handler: RequestHandler) {
-    return this.addHandler('GET', matcher, handler);
+  get(urlMatcher: UrlMatcher, handler: RequestHandler) {
+    return this.addHandler('GET', urlMatcher, handler);
   }
 
   /**
    * Add a POST request handler.
    *
-   * @param matcher Url matcher
+   * @param urlMatcher Url matcher
    * @param handler Request handler
    * @returns this
    */
-  post(matcher: UrlMatcher, handler: RequestHandler) {
-    return this.addHandler('POST', matcher, handler);
+  post(urlMatcher: UrlMatcher, handler: RequestHandler) {
+    return this.addHandler('POST', urlMatcher, handler);
   }
 
   /**
    * Add a PUT request handler.
    *
-   * @param matcher Url matcher
+   * @param urlMatcher Url matcher
    * @param handler Request handler
    * @returns this
    */
-  put(matcher: UrlMatcher, handler: RequestHandler) {
-    return this.addHandler('PUT', matcher, handler);
+  put(urlMatcher: UrlMatcher, handler: RequestHandler) {
+    return this.addHandler('PUT', urlMatcher, handler);
   }
 
   /**
    * Add a DELETE request handler.
    *
-   * @param matcher Url matcher
+   * @param urlMatcher Url matcher
    * @param handler Request handler
    * @returns this
    */
-  delete(matcher: UrlMatcher, handler: RequestHandler) {
-    return this.addHandler('DELETE', matcher, handler);
+  delete(urlMatcher: UrlMatcher, handler: RequestHandler) {
+    return this.addHandler('DELETE', urlMatcher, handler);
   }
 
   /**
    * Add a request handler.
    *
    * @param method HTTP method
-   * @param matcher Url matcher
+   * @param urlMatcher Url matcher
    * @param handler Request handler
    * @returns this
    */
-  addHandler(method: string, matcher: UrlMatcher, handler: RequestHandler) {
+  addHandler(method: string, urlMatcher: UrlMatcher, handler: RequestHandler) {
     // Match the processing done in MockXHR for the method name
     method = normalizeHTTPMethodName(method);
     const routes = this._routes[method] ?? (this._routes[method] = []);
-    routes.push({ matcher, handler, count: 0 });
+    routes.push({ urlMatcher, handler, count: 0 });
     return this;
   }
 
@@ -222,10 +222,10 @@ export default class MockXhrServer {
   }
 
   /**
-   * @returns List of requests received by the server. Entries: { method, url, headers, body? }
+   * @returns Array of requests received by the server. Entries: { method, url, headers, body? }
    */
   getRequestLog(): readonly RequestLogEntry[] {
-    return this._requests;
+    return [...this._requests];
   }
 
   private _handleRequest(xhr: MockXhr) {
@@ -263,13 +263,13 @@ export default class MockXhrServer {
 
     const { url } = xhr;
     return this._routes[method].find((route) => {
-      const { matcher } = route;
-      if (typeof matcher === 'function') {
-        return matcher(url);
-      } else if (matcher instanceof RegExp) {
-        return matcher.test(url);
+      const { urlMatcher } = route;
+      if (typeof urlMatcher === 'function') {
+        return urlMatcher(url);
+      } else if (urlMatcher instanceof RegExp) {
+        return urlMatcher.test(url);
       }
-      return matcher === url;
+      return urlMatcher === url;
     });
   }
 }

@@ -166,7 +166,7 @@ describe('Factories', () => {
 
         // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
         return functionToTest().then((result) => {
-          // Assuming the Promise returned by functionToTest() resolves to the parsed JSON response
+          // Assuming the returned Promise resolves to the parsed JSON response
           assert.equal(result.message, 'Success!');
         });
       } finally {
@@ -221,7 +221,7 @@ describe('Factories', () => {
 
         // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
         return functionToTest().then((result) => {
-          // Assuming the Promise returned by functionToTest() resolves to the parsed JSON response
+          // Assuming the returned Promise resolves to the parsed JSON response
           assert.equal(result.message, 'Success!');
         });
       } finally {
