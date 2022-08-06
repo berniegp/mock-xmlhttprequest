@@ -63,12 +63,12 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
   addEventListener<K extends keyof XMLHttpRequestEventTargetEventMap>(
     type: K,
     listener: (this: XMLHttpRequestEventTarget, ev: XMLHttpRequestEventTargetEventMap[K]) => any,
-    options?: boolean | AddEventListenerOptions | undefined
+    options?: boolean | AddEventListenerOptions
   ): void;
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
-    options?: boolean | AddEventListenerOptions | undefined
+    options?: boolean | AddEventListenerOptions
   ): void;
   addEventListener(
     type: string,
@@ -105,12 +105,12 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
   removeEventListener<K extends keyof XMLHttpRequestEventTargetEventMap>(
     type: K,
     listener: (this: XMLHttpRequestEventTarget, ev: XMLHttpRequestEventTargetEventMap[K]) => any,
-    options?: boolean | EventListenerOptions | undefined
+    options?: boolean | EventListenerOptions
   ): void;
   removeEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
-    options?: boolean | EventListenerOptions | undefined
+    options?: boolean | EventListenerOptions
   ): void;
   removeEventListener(
     type: string,
