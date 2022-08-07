@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/berniegp/mock-xmlhttprequest.svg?branch=master)](https://travis-ci.org/berniegp/mock-xmlhttprequest)
+[![Build Status](https://app.travis-ci.com/berniegp/mock-xmlhttprequest.svg?branch=master)](https://app.travis-ci.com/berniegp/mock-xmlhttprequest)
 
 # mock-xmlhttprequest
 This library is a mock of `XMLHttpRequest` that provides a simple interface to simulate interactions with `XMLHttpRequest`. It is a drop-in replacement for `XMLHttpRequest` for your tests.
