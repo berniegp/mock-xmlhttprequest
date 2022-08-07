@@ -39,7 +39,7 @@ describe('HeadersContainer', () => {
     assert.strictEqual(headers.getHeader('not-exists'), null);
   });
 
-  it('headers should be case-insensitive', () => {
+  it('headers should be case insensitive', () => {
     const headers = new HeadersContainer();
     headers.addHeader('header', '1');
     assert.strictEqual(headers.getHeader('HEADER'), '1');

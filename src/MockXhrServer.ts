@@ -1,16 +1,18 @@
 import MockXhr from './MockXhr';
 import { normalizeHTTPMethodName } from './Utils';
 
+import type MockXhrRequest from './MockXhrRequest';
+
 export type UrlMatcher = ((url: string) => boolean) | string | RegExp;
 
-interface RequestHandlerResponse {
+export interface RequestHandlerResponse {
   status: number;
   statusText: string;
   headers: Record<string, string>;
   body: string;
 }
 
-type RequestHandlerCallback = (xhr: MockXhr) => void;
+type RequestHandlerCallback = (request: MockXhrRequest) => void;
 
 export type RequestHandler =
   Partial<RequestHandlerResponse>
@@ -66,7 +68,7 @@ export default class MockXhrServer {
         this.addHandler(method, urlMatcher, handler);
       });
     }
-    xhrMock.onSend = (xhr) => { this._handleRequest(xhr); };
+    xhrMock.onSend = (request) => { this._handleRequest(request); };
 
     // Setup a mock request factory for users
     this._xhrFactory = () => new this._MockXhr();
@@ -228,16 +230,16 @@ export default class MockXhrServer {
     return [...this._requests];
   }
 
-  private _handleRequest(xhr: MockXhr) {
+  private _handleRequest(request: MockXhrRequest) {
     // Record the request for easier debugging
     this._requests.push({
-      method: xhr.method,
-      url: xhr.url,
-      headers: xhr.requestHeaders.getHash(),
-      body: xhr.body,
+      method: request.method,
+      url: request.url,
+      headers: request.requestHeaders.getHash(),
+      body: request.body,
     });
 
-    const route = this._findFirstMatchingRoute(xhr) ?? this._defaultRoute;
+    const route = this._findFirstMatchingRoute(request) ?? this._defaultRoute;
     if (route) {
       // Routes can have arrays of handlers. Each one is used once and the last one is used if out
       // of elements.
@@ -248,20 +250,20 @@ export default class MockXhrServer {
       route.count += 1;
 
       if (typeof handler === 'function') {
-        handler(xhr);
+        handler(request);
       } else {
-        xhr.respond(handler.status, handler.headers, handler.body, handler.statusText);
+        request.respond(handler.status, handler.headers, handler.body, handler.statusText);
       }
     }
   }
 
-  private _findFirstMatchingRoute(xhr: MockXhr) {
-    const method = normalizeHTTPMethodName(xhr.method);
+  private _findFirstMatchingRoute(request: MockXhrRequest) {
+    const method = normalizeHTTPMethodName(request.method);
     if (!this._routes[method]) {
       return undefined;
     }
 
-    const { url } = xhr;
+    const { url } = request;
     return this._routes[method].find((route) => {
       const { urlMatcher } = route;
       if (typeof urlMatcher === 'function') {

@@ -1,4 +1,6 @@
 import HeadersContainer from './HeadersContainer';
+import MockXhrRequest from './MockXhrRequest';
+import RequestData from './RequestData';
 import XhrEvent from './XhrEvent';
 import XhrProgressEvent from './XhrProgressEvent';
 import {
@@ -10,6 +12,7 @@ import {
 } from './Utils';
 import XhrEventTarget from './XhrEventTarget';
 
+import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver';
 import type { TXhrProgressEventNames } from './XhrProgressEventsNames';
 
 interface MockXhrResponse {
@@ -22,7 +25,7 @@ interface MockXhrResponse {
 
 export type OnCreateCallback = (xhr: MockXhr) => void;
 
-export type OnSendCallback = (this: MockXhr, xhr: MockXhr) => void;
+export type OnSendCallback = (this: MockXhrRequest, request: MockXhrRequest) => void;
 
 /**
  * XMLHttpRequest mock for testing.
@@ -39,8 +42,8 @@ export type OnSendCallback = (this: MockXhr, xhr: MockXhr) => void;
  *
  * Partial support:
  *  - overrideMimeType(): throws when required, but has no other effect.
- *  - responseType: '', 'text' and 'json' are fully supported. The responseType values will have
- *    no effect on the response body passed to setResponseBody().
+ *  - responseType: '', 'text' and 'json' are fully supported. The responseType values have no
+ *    effect on the response body passed to setResponseBody().
  *  - responseXml: the response body is not converted to a document response. To get a document
  *    response, pass it directly as the response body in setResponseBody().
  *  - responseUrl: the final request URL after redirects isn't automatically set. This can be
@@ -50,20 +53,22 @@ export type OnSendCallback = (this: MockXhr, xhr: MockXhr) => void;
  * - Synchronous requests (i.e. async set to false in open())
  * - Parsing the request URL in open() and throwing SyntaxError on failure.
  */
-export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
+export default class MockXhr
+  extends XhrEventTarget
+  implements XMLHttpRequest, MockXhrResponseReceiver {
   private _requestHeaders: HeadersContainer;
 
   private _method?: string;
 
   private _url?: string;
 
-  private _body?: any;
-
   private _readyState: number;
 
   private _timeout: number;
 
   private _withCredentials: boolean;
+
+  private _currentRequest?: MockXhrRequest;
 
   private readonly _upload: XhrEventTarget;
 
@@ -159,101 +164,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    */
   static onSend?: OnSendCallback;
 
-  /**
-   * @returns Request headers container
-   */
-  get requestHeaders() { return new HeadersContainer(this._requestHeaders); }
-
-  /**
-   * @returns Request method
-   */
-  get method() { return this._method ?? ''; }
-
-  /**
-   * @returns Request url
-   */
-  get url() { return this._url ?? ''; }
-
-  /**
-   * @returns Request body
-   */
-  get body() { return this._body; }
-
-  /**
-   * Note: this isn't completely accurate for a multipart/form-data encoded FormData request body.
-   * MockXhr not consider headers, encoding, and other factors that influence the request body size
-   * of non-mocked XMLHttpRequest. You can consider the value returned by this method as a floor
-   * value for the request body size. This can still be useful to simulate upload progress events.
-   *
-   * @returns Request body's total byte size
-   */
-  getRequestBodySize() {
-    if (!this._sendFlag) {
-      throw new Error('Mock usage error detected.');
-    }
-    return getBodyByteSize(this._body);
-  }
-
-  /**
-   * Fire a request upload progress event.
-   *
-   * @param transmitted Bytes transmitted
-   */
-  uploadProgress(transmitted: number) {
-    if (!this._sendFlag || this._uploadCompleteFlag) {
-      throw new Error('Mock usage error detected.');
-    }
-    if (this._uploadListenerFlag) {
-      // If no listeners were registered before send(), no upload events should be fired.
-      this._fireUploadEvent('progress', transmitted, this.getRequestBodySize());
-    }
-  }
-
-  /**
-   * Complete response method that sets the response headers and body. Changes the request's
-   * readyState to DONE.
-   *
-   * @param status Response http status (default 200)
-   * @param headers Name-value headers (optional)
-   * @param body Response body (default null)
-   * @param statusText Response http status text (optional)
-   */
-  respond(
-    status?: number,
-    headers?: Record<string, string> | null,
-    body?: any,
-    statusText?: string
-  ) {
-    this.setResponseHeaders(status, headers, statusText);
-    this.setResponseBody(body);
-  }
-
-  /**
-   * Set the response headers. Changes the request's readyState to HEADERS_RECEIVED.
-   *
-   * @param status Response http status (default 200)
-   * @param headers Name-value headers (optional)
-   * @param statusText Response http status text (optional)
-   */
-  setResponseHeaders(
-    status?: number,
-    headers?: Record<string, string> | null,
-    statusText?: string
-  ) {
-    if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
-      throw new Error('Mock usage error detected.');
-    }
-    if (this._body) {
-      this._requestEndOfBody();
-    }
-    status = typeof status === 'number' ? status : 200;
-    const statusMessage = statusText ?? getStatusText(status);
-    this._processResponse({
-      status,
-      statusMessage,
-      headers: new HeadersContainer(headers),
-    });
-  }
+  get currentRequest() { return this._currentRequest; }
 
   /**
    * @returns All response headers as an object. The header names are in lower-case.
@@ -262,78 +173,151 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
     return this._response.headers.getHash();
   }
 
+  //------------------------
+  // MockXhrResponseReceiver
+  //------------------------
+
+  /**
+   * Fire a request upload progress event.
+   *
+   * @param request Originating request
+   * @param transmitted Bytes transmitted
+   */
+  uploadProgress(request: RequestData, transmitted: number) {
+    // Only act if the originating request is the current active request
+    if (this._currentRequest?.requestData === request) {
+      if (!this._sendFlag || this._uploadCompleteFlag) {
+        throw new Error('Mock usage error detected.');
+      }
+      if (this._uploadListenerFlag) {
+        // If no listeners were registered before send(), no upload events should be fired.
+        this._fireUploadEvent('progress', transmitted, getBodyByteSize(request.body));
+      }
+    }
+  }
+
+  /**
+   * Set the response headers. Changes the request's readyState to HEADERS_RECEIVED.
+   *
+   * @param request Originating request
+   * @param status Response http status (default 200)
+   * @param headers Name-value headers (optional)
+   * @param statusText Response http status text (optional)
+   */
+  setResponseHeaders(
+    request: RequestData,
+    status?: number,
+    headers?: Record<string, string> | null,
+    statusText?: string
+  ) {
+    // Only act if the originating request is the current active request
+    if (this._currentRequest?.requestData === request) {
+      if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
+        throw new Error('Mock usage error detected.');
+      }
+      if (request.body) {
+        this._requestEndOfBody(getBodyByteSize(request.body));
+      }
+      status = typeof status === 'number' ? status : 200;
+      const statusMessage = statusText ?? getStatusText(status);
+      this._processResponse({
+        status,
+        statusMessage,
+        headers: new HeadersContainer(headers),
+      });
+    }
+  }
+
   /**
    * Fire a response progress event. Changes the request's readyState to LOADING.
    *
+   * @param request Originating request
    * @param transmitted Transmitted bytes
    * @param length Total bytes
    */
-  downloadProgress(transmitted: number, length: number) {
-    if (this._readyState !== MockXhr.HEADERS_RECEIVED
-      && this._readyState !== MockXhr.LOADING) {
-      throw new Error('Mock usage error detected.');
-    }
+  downloadProgress(request: RequestData, transmitted: number, length: number) {
+    // Only act if the originating request is the current active request
+    if (this._currentRequest?.requestData === request) {
+      if (this._readyState !== MockXhr.HEADERS_RECEIVED
+        && this._readyState !== MockXhr.LOADING) {
+        throw new Error('Mock usage error detected.');
+      }
 
-    // Useless condition but follows the spec's wording
-    if (this._readyState === MockXhr.HEADERS_RECEIVED) {
-      this._readyState = MockXhr.LOADING;
-    }
+      // Useless condition but follows the spec's wording
+      if (this._readyState === MockXhr.HEADERS_RECEIVED) {
+        this._readyState = MockXhr.LOADING;
+      }
 
-    // As stated in https://xhr.spec.whatwg.org/#the-send()-method
-    // Web compatibility is the reason readystatechange fires more often than
-    // state changes.
-    this._fireReadyStateChange();
-    this._fireEvent('progress', transmitted, length);
+      // As stated in https://xhr.spec.whatwg.org/#the-send()-method
+      // Web compatibility is the reason readystatechange fires more often than
+      // state changes.
+      this._fireReadyStateChange();
+      this._fireEvent('progress', transmitted, length);
+    }
   }
 
   /**
    * Set the response body. Changes the request's readyState to DONE.
    *
-   * @param body Response body (default null)
+   * @param request Originating request
+   * @param body Response body
    */
-  setResponseBody(body: any = null) {
-    if (!this._sendFlag
-      || (this._readyState !== MockXhr.OPENED
-        && this._readyState !== MockXhr.HEADERS_RECEIVED
-        && this._readyState !== MockXhr.LOADING)) {
-      throw new Error('Mock usage error detected.');
+  setResponseBody(request: RequestData, body: any) {
+    // Only act if the originating request is the current active request
+    if (this._currentRequest?.requestData === request) {
+      if (!this._sendFlag
+        || (this._readyState !== MockXhr.OPENED
+          && this._readyState !== MockXhr.HEADERS_RECEIVED
+          && this._readyState !== MockXhr.LOADING)) {
+        throw new Error('Mock usage error detected.');
+      }
+
+      if (this._readyState === MockXhr.OPENED) {
+        // Default "200 - OK" response headers
+        this.setResponseHeaders(request);
+      }
+
+      // As stated in https://xhr.spec.whatwg.org/#the-send()-method
+      // Web compatibility is the reason readystatechange fires more often than
+      // state changes.
+      this._readyState = MockXhr.LOADING;
+      this._fireReadyStateChange();
+
+      this._response.body = body;
+      this._handleResponseEndOfBody();
     }
-
-    if (this._readyState === MockXhr.OPENED) {
-      // Default "200 - OK" response headers
-      this.setResponseHeaders();
-    }
-
-    // As stated in https://xhr.spec.whatwg.org/#the-send()-method
-    // Web compatibility is the reason readystatechange fires more often than
-    // state changes.
-    this._readyState = MockXhr.LOADING;
-    this._fireReadyStateChange();
-
-    this._response.body = body;
-    this._handleResponseEndOfBody();
   }
 
   /**
    * Simulate a network error. Changes the request's readyState to DONE.
+   *
+   * @param request Originating request
    */
-  setNetworkError() {
-    if (!this._sendFlag) {
-      throw new Error('Mock usage error detected.');
+  setNetworkError(request: RequestData) {
+    // Only act if the originating request is the current active request
+    if (this._currentRequest?.requestData === request) {
+      if (!this._sendFlag) {
+        throw new Error('Mock usage error detected.');
+      }
+      this._processResponse(makeNetworkErrorResponse());
     }
-    this._processResponse(makeNetworkErrorResponse());
   }
 
   /**
    * Simulate a request timeout. Changes the request's readyState to DONE.
+   *
+   * @param request Originating request
    */
-  setRequestTimeout() {
-    if (!this._sendFlag) {
-      throw new Error('Mock usage error detected.');
+  setRequestTimeout(request: RequestData) {
+    // Only act if the originating request is the current active request
+    if (this._currentRequest?.requestData === request) {
+      if (!this._sendFlag) {
+        throw new Error('Mock usage error detected.');
+      }
+      this._terminateRequest();
+      this._timedOutFlag = true;
+      this._processResponse(makeNetworkErrorResponse());
     }
-    this._terminateRequest();
-    this._timedOutFlag = true;
-    this._processResponse(makeNetworkErrorResponse());
   }
 
   //-------
@@ -501,14 +485,13 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
     }
 
     this._uploadListenerFlag = this._upload.hasListeners();
-    this._body = body;
-    this._uploadCompleteFlag = this._body === null;
+    this._uploadCompleteFlag = body === null;
     this._timedOutFlag = false;
     this._sendFlag = true;
 
     this._fireEvent('loadstart', 0, 0);
     if (!this._uploadCompleteFlag && this._uploadListenerFlag) {
-      this._fireUploadEvent('loadstart', 0, this.getRequestBodySize());
+      this._fireUploadEvent('loadstart', 0, getBodyByteSize(body));
     }
 
     // Other interactions are done through the mock's response methods
@@ -519,8 +502,21 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
     this._timeoutReference = Date.now();
     this._scheduleRequestTimeout();
 
-    this._callOnSend(this.onSend);
+    const requestData = new RequestData(
+      new HeadersContainer(this._requestHeaders),
+      this._method as string,
+      this._url as string,
+      body,
+      this._withCredentials
+    );
+    this._currentRequest = new MockXhrRequest(requestData, this);
+
     this._callOnSend(MockXhr.onSend);
+    const prototype = this._getPrototype();
+    if (prototype !== MockXhr) {
+      this._callOnSend(prototype.onSend);
+    }
+    this._callOnSend(this.onSend);
   }
 
   /**
@@ -702,17 +698,18 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    * Note: the "process request body" task is in the MockXhr response methods
    * Process request end-of-body task. When the whole request is sent.
    * https://xhr.spec.whatwg.org/#the-send()-method
+   *
+   * @param bodySize request body size in bytes
    */
-  private _requestEndOfBody() {
+  private _requestEndOfBody(bodySize: number) {
     this._uploadCompleteFlag = true;
 
     if (this._uploadListenerFlag) {
       // If no listeners were registered before send(), these steps do not run.
-      const length = this.getRequestBodySize();
-      const transmitted = length;
-      this._fireUploadEvent('progress', transmitted, length);
-      this._fireUploadEvent('load', transmitted, length);
-      this._fireUploadEvent('loadend', transmitted, length);
+      const transmitted = bodySize;
+      this._fireUploadEvent('progress', transmitted, bodySize);
+      this._fireUploadEvent('load', transmitted, bodySize);
+      this._fireUploadEvent('loadend', transmitted, bodySize);
     }
   }
 
@@ -725,7 +722,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   private _processResponse(response: MockXhrResponse) {
     this._response = response;
     this._handleResponseErrors();
-    if (this._isNetworkErrorResponse()) {
+    if (this._response.isError) {
       return;
     }
     this._readyState = MockXhr.HEADERS_RECEIVED;
@@ -745,13 +742,14 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
    */
   private _handleResponseEndOfBody() {
     this._handleResponseErrors();
-    if (this._isNetworkErrorResponse()) {
+    if (this._response.isError) {
       return;
     }
     const length = this._response.body?.length ?? 0;
     this._fireEvent('progress', length, length);
     this._readyState = MockXhr.DONE;
     this._sendFlag = false;
+    this._terminateRequest();
     this._fireReadyStateChange();
     this._fireEvent('load', length, length);
     this._fireEvent('loadend', length, length);
@@ -768,7 +766,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
     if (this._timedOutFlag) {
       // Timeout
       this._requestErrorSteps('timeout');
-    } else if (this._isNetworkErrorResponse()) {
+    } else if (this._response.isError) {
       // Network error
       this._requestErrorSteps('error');
     }
@@ -803,19 +801,17 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
   //----------
 
   protected _callOnSend(onSend?: OnSendCallback) {
-    // This saves the callback in case it changes before it has a chance to run
+    // Saves the callback and request data in case they change before then() executes
     if (onSend) {
-      Promise.resolve(true).then(() => onSend.call(this, this));
+      const request = this._currentRequest as MockXhrRequest;
+      Promise.resolve(true).then(() => onSend.call(request, request));
     }
-  }
-
-  private _isNetworkErrorResponse() {
-    return this._response.isError;
   }
 
   private _terminateRequest() {
     delete this._method;
     delete this._url;
+    delete this._currentRequest;
   }
 
   private _fireEvent(name: TXhrProgressEventNames, transmitted: number, length: number) {
@@ -846,7 +842,7 @@ export default class MockXhr extends XhrEventTarget implements XMLHttpRequest {
       const delay = Math.max(0, this._timeout - (Date.now() - this._timeoutReference));
       this._timeoutTask = setTimeout(() => {
         if (this._sendFlag) {
-          this.setRequestTimeout();
+          this._currentRequest!.setRequestTimeout();
         }
         delete this._timeoutTask;
       }, delay);
