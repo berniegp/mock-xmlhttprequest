@@ -13,9 +13,10 @@
     "dist/**/*"
   ],
   "scripts": {
-    "build": "rollup --config build/rollup.config.ts --configPlugin \"typescript={tsconfig: \\\"./build/tsconfig.json\\\"}\"",
+    "build": "npm run build:src && npm run build:dts",
     "build:clean": "rimraf dist",
     "build:dts": "tsc -p build/tsconfig.dts.json",
+    "build:src": "rollup --config build/rollup.config.ts --configPlugin \"typescript={tsconfig: \\\"./build/tsconfig.json\\\"}\"",
     "tsc:validate": "npm run tsc:validate:src && npm run tsc:validate:test && npm run tsc:validate:build",
     "tsc:validate:src": "tsc --noEmit",
     "tsc:validate:test": "tsc --noEmit -p test/tsconfig.json",
@@ -24,7 +25,7 @@
     "test": "cross-env TS_NODE_PROJECT='test/tsconfig.json' mocha",
     "test:ci": "npm run test && npm run lint",
     "test:watch": "npm run test -- --watch",
-    "prepare": "npm run build:clean && npm run build && npm run build:dts",
+    "prepare": "npm run build:clean && npm run build",
     "prepublishOnly": "npm run lint && npm run tsc:validate && npm run test"
   },
   "repository": {
