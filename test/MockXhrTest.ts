@@ -242,7 +242,26 @@ describe('MockXhr', () => {
             restore();
           }
           const setTimeoutArg = calls[0][1];
-          assert.isTrue(setTimeoutArg <= delay - 20);
+          assert.isAtMost(setTimeoutArg, delay - 20);
+          done();
+        }, 20);
+      });
+
+      it('measures timeout delay relative to send() and clamp to 0', (done) => {
+        const xhr = new MockXhr();
+
+        xhr.open('GET', '/url');
+        xhr.send();
+
+        setTimeout(() => {
+          const { calls, restore } = mockSetTimeout();
+          try {
+            xhr.timeout = 1;
+          } finally {
+            restore();
+          }
+          const setTimeoutArg = calls[0][1];
+          assert.strictEqual(setTimeoutArg, 0, 'timeout delay clamped to 0');
           done();
         }, 20);
       });
@@ -1410,6 +1429,8 @@ describe('MockXhr', () => {
         const done: Promise<MockXhrRequest> = new Promise((resolve) => { xhr.onSend = resolve; });
         xhr.open('GET', '/url');
         xhr.send();
+        xhr.timeoutEnabled = false;
+        xhr.timeout = 1;
 
         return done.then((request) => {
           const events = recordEvents(xhr);
@@ -1425,11 +1446,24 @@ describe('MockXhr', () => {
         });
       });
 
+      it('should throw if timeout === 0', () => {
+        const xhr = new MockXhr();
+        const done: Promise<MockXhrRequest> = new Promise((resolve) => { xhr.onSend = resolve; });
+        xhr.open('GET', '/url');
+        xhr.send();
+
+        return done.then((request) => {
+          assert.throws(() => request.setRequestTimeout());
+        });
+      });
+
       it('should time out the request after setResponseHeaders()', () => {
         const xhr = new MockXhr();
         const done: Promise<MockXhrRequest> = new Promise((resolve) => { xhr.onSend = resolve; });
         xhr.open('GET', '/url');
         xhr.send();
+        xhr.timeoutEnabled = false;
+        xhr.timeout = 1;
 
         return done.then((request) => {
           request.setResponseHeaders();
@@ -1451,6 +1485,8 @@ describe('MockXhr', () => {
         const done: Promise<MockXhrRequest> = new Promise((resolve) => { xhr.onSend = resolve; });
         xhr.open('GET', '/url');
         xhr.send();
+        xhr.timeoutEnabled = false;
+        xhr.timeout = 1;
 
         return done.then((request) => {
           request.setResponseHeaders();
@@ -1474,6 +1510,8 @@ describe('MockXhr', () => {
         xhr.open('POST', '/url');
         const events = recordEvents(xhr); // Add listeners BEFORE send()
         xhr.send('body');
+        xhr.timeoutEnabled = false;
+        xhr.timeout = 1;
 
         return done.then((request) => {
           request.setRequestTimeout();

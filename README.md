@@ -434,6 +434,8 @@ Simulates a request timeout. Changes the request's `readyState` to `DONE`.
 
 Fires the appropriate events including the `timeout` event.
 
+Throws an error if the `request` attribute is equal to 0 since timeouts do not occur in that case.
+
 After you call this method, you can't use other mock response methods. This restriction is lifted if you call `open()` again.
 
 ### newMockXhr()

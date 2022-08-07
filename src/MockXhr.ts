@@ -311,7 +311,7 @@ export default class MockXhr
   setRequestTimeout(request: RequestData) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
-      if (!this._sendFlag) {
+      if (!this._sendFlag || this.timeout === 0) {
         throw new Error('Mock usage error detected.');
       }
       this._terminateRequest();
