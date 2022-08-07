@@ -73,7 +73,7 @@ export function isRequestMethodForbidden(method: string) {
 
 // Normalize method names as described in open()
 // https://xhr.spec.whatwg.org/#the-open()-method
-const upperCaseMethods = [
+export const upperCaseMethods = [
   'DELETE',
   'GET',
   'HEAD',

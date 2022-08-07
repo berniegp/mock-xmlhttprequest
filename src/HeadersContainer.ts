@@ -23,13 +23,16 @@ export default class HeadersContainer {
 
   /**
    * Reset the container to its empty state.
+   *
+   * @returns this
    */
   reset() {
     this._headers.clear();
+    return this;
   }
 
   /**
-   * @param name Header name (case-insensitive)
+   * @param name Header name (case insensitive)
    * @returns Header value or null
    */
   getHeader(name: string) {
@@ -71,6 +74,7 @@ export default class HeadersContainer {
    *
    * @param name Header name
    * @param value Header value
+   * @returns this
    */
   addHeader(name: string, value: string) {
     name = name.toUpperCase();
@@ -79,5 +83,6 @@ export default class HeadersContainer {
       value = `${currentValue}, ${value}`;
     }
     this._headers.set(name, value);
+    return this;
   }
 }

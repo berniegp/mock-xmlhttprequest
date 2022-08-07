@@ -1,6 +1,7 @@
 import { assert } from 'chai';
 
 import MockXhr from '../src/MockXhr';
+import MockXhrRequest from '../src/MockXhrRequest';
 import { newMockXhr, newServer } from '../src/Factories';
 
 describe('Factories', () => {
@@ -71,7 +72,7 @@ describe('Factories', () => {
       });
     });
 
-    describe('Lifefycle hooks', () => {
+    describe('Lifecycle hooks', () => {
       it('onCreate()', () => {
         try {
           const LocalMockXhr = newMockXhr();
@@ -98,39 +99,44 @@ describe('Factories', () => {
         }
       });
 
-      it('onSend()()', () => {
+      it('onSend()', () => {
         try {
           const LocalMockXhr = newMockXhr();
           const xhr = new LocalMockXhr();
           const calls: string[] = [];
-          const thisValues: MockXhr[] = [];
-          const args: MockXhr[] = [];
+          const thisValues: MockXhrRequest[] = [];
+          const args: MockXhrRequest[] = [];
 
-          xhr.onSend = function onSendXhr(arg) {
-            calls.push('xhr');
-            thisValues.push(this);
-            args.push(arg);
-          };
+          const done = new Promise((resolve) => {
+            MockXhr.onSend = function onSend(arg) {
+              calls.push('global');
+              thisValues.push(this);
+              args.push(arg);
+            };
 
-          MockXhr.onSend = function onSend(arg) {
-            calls.push('global');
-            thisValues.push(this);
-            args.push(arg);
-          };
+            LocalMockXhr.onSend = function onSendLocal(arg) {
+              calls.push('subclass');
+              thisValues.push(this);
+              args.push(arg);
+            };
 
-          LocalMockXhr.onSend = function onSendLocal(arg) {
-            calls.push('subclass');
-            thisValues.push(this);
-            args.push(arg);
-          };
+            xhr.onSend = function onSendXhr(arg) {
+              calls.push('xhr');
+              thisValues.push(this);
+              args.push(arg);
+              resolve(true);
+            };
+          });
 
           xhr.open('GET', '/url');
           xhr.send();
 
-          return Promise.resolve(true).then(() => {
-            assert.deepEqual(calls, ['xhr', 'global', 'subclass'], 'hooks called in the right order');
-            assert.deepEqual(thisValues, [xhr, xhr, xhr], 'correct contexts for callbacks');
-            assert.deepEqual(args, [xhr, xhr, xhr], 'correct parameters for callbacks');
+          return done.then(() => {
+            const req = xhr.currentRequest;
+            assert.instanceOf(req, MockXhrRequest);
+            assert.deepEqual(calls, ['global', 'subclass', 'xhr'], 'hooks called in the right order');
+            assert.deepEqual(thisValues, [req, req, req], 'correct contexts for callbacks');
+            assert.deepEqual(args, [req, req, req], 'correct parameters for callbacks');
           });
         } finally {
           delete MockXhr.onSend;
@@ -154,10 +160,10 @@ describe('Factories', () => {
       const MockXhr = newMockXhr();
 
       // Mock JSON response
-      MockXhr.onSend = (xhr: MockXhr) => {
+      MockXhr.onSend = (request) => {
         const responseHeaders = { 'Content-Type': 'application/json' };
         const response = '{ "message": "Success!" }';
-        xhr.respond(200, responseHeaders, response);
+        request.respond(200, responseHeaders, response);
       };
 
       try {
@@ -166,7 +172,7 @@ describe('Factories', () => {
 
         // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
         return functionToTest().then((result) => {
-          // Assuming the returned Promise resolves to the parsed JSON response
+          // This assumes the returned Promise resolves to the parsed JSON response
           assert.equal(result.message, 'Success!');
         });
       } finally {
@@ -179,13 +185,13 @@ describe('Factories', () => {
   describe('newServer()', () => {
     it('should isolate MockXMLHttpRequest.timeoutEnabled', (done) => {
       const server = newServer();
-      server.disableTimeout();
       const xhr = server.xhrFactory();
+      let gotTimeoutEvent = false;
+
+      server.disableTimeout();
+      xhr.addEventListener('timeout', () => { gotTimeoutEvent = true; });
       xhr.open('GET', '/url');
       xhr.send();
-
-      let gotTimeoutEvent = false;
-      xhr.addEventListener('timeout', () => { gotTimeoutEvent = true; });
       xhr.timeout = 1;
 
       // Wait to make sure the timeout has no effect
@@ -215,13 +221,13 @@ describe('Factories', () => {
       });
 
       try {
-        // Install the server's XMLHttpRequest mock in the "global" context.
-        // "new XMLHttpRequest()" will then create a mock request to which the server will reply.
+        // Installs the server's XMLHttpRequest mock in the "global" context.
+        // After this, "new XMLHttpRequest()" creates a mock request to which the server replies.
         server.install(/* optional context; defaults to globalThis */);
 
         // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
         return functionToTest().then((result) => {
-          // Assuming the returned Promise resolves to the parsed JSON response
+          // This assumes the returned Promise resolves to the parsed JSON response
           assert.equal(result.message, 'Success!');
         });
       } finally {

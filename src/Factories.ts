@@ -27,13 +27,6 @@ export function newMockXhr(): typeof MockXhr {
       // Call the local MockXhr subclass' onCreate hook on the new mock instance
       LocalMockXhr.onCreate?.(this);
     }
-
-    send(body: any) {
-      super.send(body);
-
-      // Call the local MockXhr subclass' onSend hook
-      this._callOnSend(LocalMockXhr.onSend);
-    }
   };
 }
 
