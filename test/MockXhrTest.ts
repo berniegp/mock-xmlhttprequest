@@ -10,26 +10,6 @@ import { XHR_PROGRESS_EVENT_NAMES } from '../src/XhrProgressEventsNames';
 
 import type XhrProgressEvent from '../src/XhrProgressEvent';
 
-// Temporary fix until https://github.com/DefinitelyTyped/DefinitelyTyped/pull/61161 is merged
-declare global {
-  namespace Chai {
-    interface AssertStatic {
-      throws(
-        fn: () => void,
-        errMsgMatcher?: RegExp | string,
-        ignored?: any,
-        message?: string
-      ) : void;
-      throws(
-        fn: () => void,
-        errorLike?: ErrorConstructor | Error | null,
-        errMsgMatcher?: RegExp | string | null,
-        message?: string,
-      ): void;
-    }
-  }
-}
-
 describe('MockXhr', () => {
   // Returns an array which contains all events fired by the xhr
   function recordEvents(xhr: MockXhr) {
