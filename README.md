@@ -248,7 +248,8 @@ This supports three options:
 
       { status: 200, headers: {}, body: null, statusText: 'OK' }
 - A `Function` that calls the [mock response methods](#mock-response-methods) directly. The function receives a [`MockXhrRequest`](#mockxhrrequest-class) instance as an argument.
-- An array of `object` and `Function` request handlers. The first request gets the first handler, the second gets the second handler and so on. The last handler is reused when there are more requests than handlers.
+- A `string` with the value `'error'` or `'timeout'`. This triggers either an [error](#setnetworkerror) or [timeout](#setrequesttimeout) respectively.
+- An array of the request handler options above. The first request gets the first handler, the second gets the second handler and so on. The last handler is reused when there are more requests than handlers.
 
 These handlers are all equivalent:
 ```javascript

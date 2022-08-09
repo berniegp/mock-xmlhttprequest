@@ -14,10 +14,13 @@ export interface RequestHandlerResponse {
 
 type RequestHandlerCallback = (request: MockXhrRequest) => void;
 
-export type RequestHandler =
+type SingleRequestHandler =
   Partial<RequestHandlerResponse>
   | RequestHandlerCallback
-  | (Partial<RequestHandlerResponse> | RequestHandlerCallback)[];
+  | 'error'
+  | 'timeout';
+
+export type RequestHandler = SingleRequestHandler | SingleRequestHandler[];
 
 interface Route {
   urlMatcher: UrlMatcher,
@@ -251,6 +254,10 @@ export default class MockXhrServer {
 
       if (typeof handler === 'function') {
         handler(request);
+      } else if (handler === 'error') {
+        request.setNetworkError();
+      } else if (handler === 'timeout') {
+        request.setRequestTimeout();
       } else {
         request.respond(handler.status, handler.headers, handler.body, handler.statusText);
       }

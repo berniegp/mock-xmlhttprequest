@@ -48,6 +48,15 @@ describe('MockXhrServer', () => {
     assert.strictEqual(xhr.statusText, response.statusText ?? getStatusText(status), 'status text');
   }
 
+  // Asserts that the response is a network error
+  function assertNetworkErrorResponse(xhr: MockXhr) {
+    assert.strictEqual(xhr.getAllResponseHeaders(), '', 'Response headers');
+    assert.strictEqual(xhr.status, 0, 'xhr.status == 0');
+    assert.strictEqual(xhr.statusText, '', 'empty xhr.statusText');
+    assert.strictEqual(xhr.response, '', 'empty xhr.response');
+    assert.strictEqual(xhr.responseText, '', 'empty xhr.responseText');
+  }
+
   describe('constructor', () => {
     it('should add routes', () => {
       const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
@@ -155,7 +164,7 @@ describe('MockXhrServer', () => {
   });
 
   describe('addHandler()', () => {
-    it('should support response hash as handler', () => {
+    it('should support response hash handler', () => {
       const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
       const server = new MockXhrServer(MockXhrClass);
       const response = {
@@ -173,7 +182,7 @@ describe('MockXhrServer', () => {
       });
     });
 
-    it('should support callback as handler', () => {
+    it('should support Function handler', () => {
       const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
       const server = new MockXhrServer(MockXhrClass);
 
@@ -186,7 +195,38 @@ describe('MockXhrServer', () => {
       });
     });
 
-    it('should support callback as url matcher', () => {
+    it('should support \'error\' handler', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+
+      server.addHandler('method', '/path', 'error');
+      const xhr = doRequest('method', '/path');
+      let onerrorRaised = false;
+      xhr.onerror = () => { onerrorRaised = true; };
+
+      return waitForResponses().then(() => {
+        assertNetworkErrorResponse(xhr);
+        assert.isTrue(onerrorRaised);
+      });
+    });
+
+    it('should support \'timeout\' handler', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+
+      server.addHandler('method', '/path', 'timeout');
+      const xhr = doRequest('method', '/path');
+      let ontimeoutRaised = false;
+      xhr.ontimeout = () => { ontimeoutRaised = true; };
+      xhr.timeout = 1;
+
+      return waitForResponses().then(() => {
+        assertNetworkErrorResponse(xhr);
+        assert.isTrue(ontimeoutRaised);
+      });
+    });
+
+    it('should support Function url matcher', () => {
       const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
       const server = new MockXhrServer(MockXhrClass);
       const status = 201;
@@ -200,7 +240,7 @@ describe('MockXhrServer', () => {
       });
     });
 
-    it('should support regex as url matcher', () => {
+    it('should support regex url matcher', () => {
       const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
       const server = new MockXhrServer(MockXhrClass);
       const status = 201;
@@ -224,14 +264,18 @@ describe('MockXhrServer', () => {
       };
       const handler = (request: MockXhrRequest) => { request.respond(404); };
 
-      server.addHandler('method', '/path', [response, handler, response]);
-      doRequest('method', '/path');
+      server.addHandler('method', '/path', ['timeout', handler, response]);
+      const xhr = doRequest('method', '/path');
+      let ontimeoutRaised = false;
+      xhr.ontimeout = () => { ontimeoutRaised = true; };
+      xhr.timeout = 1;
       doRequest('method', '/path');
       doRequest('method', '/path');
       doRequest('method', '/path');
 
       return waitForResponses().then((xhrs) => {
-        assertResponse(xhrs[0], response);
+        assert.isTrue(ontimeoutRaised);
+        assertNetworkErrorResponse(xhrs[0]);
         assert.strictEqual(xhrs[1].status, 404);
         assertResponse(xhrs[2], response);
         assertResponse(xhrs[3], response);
@@ -319,7 +363,7 @@ describe('MockXhrServer', () => {
   });
 
   describe('setDefaultHandler()', () => {
-    it('should support response hash as handler', () => {
+    it('should support response hash handler', () => {
       const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
       const server = new MockXhrServer(MockXhrClass);
       const response = {
@@ -337,7 +381,7 @@ describe('MockXhrServer', () => {
       });
     });
 
-    it('should support callback as handler', () => {
+    it('should support Function handler', () => {
       const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
       const server = new MockXhrServer(MockXhrClass);
 
@@ -347,6 +391,37 @@ describe('MockXhrServer', () => {
 
       return waitForResponses().then(() => {
         assert.strictEqual(xhr.status, 201);
+      });
+    });
+
+    it('should support \'error\' handler', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+
+      server.setDefaultHandler('error');
+      const xhr = doRequest('method', '/path');
+      let onerrorRaised = false;
+      xhr.onerror = () => { onerrorRaised = true; };
+
+      return waitForResponses().then(() => {
+        assertNetworkErrorResponse(xhr);
+        assert.isTrue(onerrorRaised);
+      });
+    });
+
+    it('should support \'timeout\' handler', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+
+      server.setDefaultHandler('timeout');
+      const xhr = doRequest('method', '/path');
+      let ontimeoutRaised = false;
+      xhr.ontimeout = () => { ontimeoutRaised = true; };
+      xhr.timeout = 1;
+
+      return waitForResponses().then(() => {
+        assertNetworkErrorResponse(xhr);
+        assert.isTrue(ontimeoutRaised);
       });
     });
 
@@ -361,14 +436,18 @@ describe('MockXhrServer', () => {
       };
       const handler = (request: MockXhrRequest) => { request.respond(404); };
 
-      server.setDefaultHandler([response, handler, response]);
-      doRequest('method', '/path');
+      server.setDefaultHandler(['timeout', handler, response]);
+      const xhr = doRequest('method', '/path');
+      let ontimeoutRaised = false;
+      xhr.ontimeout = () => { ontimeoutRaised = true; };
+      xhr.timeout = 1;
       doRequest('method', '/path');
       doRequest('method', '/path');
       doRequest('method', '/path');
 
       return waitForResponses().then((xhrs) => {
-        assertResponse(xhrs[0], response);
+        assert.isTrue(ontimeoutRaised);
+        assertNetworkErrorResponse(xhrs[0]);
         assert.strictEqual(xhrs[1].status, 404);
         assertResponse(xhrs[2], response);
         assertResponse(xhrs[3], response);
