@@ -1,6 +1,13 @@
 import { assert } from 'chai';
 
-import { getBodyByteSize } from '../src/Utils';
+import {
+  getBodyByteSize,
+  isRequestHeaderForbidden,
+  isRequestMethodForbidden,
+  upperCaseMethods,
+  normalizeHTTPMethodName,
+  getStatusText,
+} from '../src/Utils';
 
 class BlobMock {
   constructor(array: any[]) {
@@ -86,6 +93,56 @@ describe('Utils', () => {
       } finally {
         globalThis.FormData = savedFormData;
       }
+    });
+  });
+
+  describe('isRequestHeaderForbidden', () => {
+    ['Content-Length', 'proxy-123', 'sec-234'].forEach((header) => {
+      it(`${header} is forbidden`, () => {
+        assert.isTrue(isRequestHeaderForbidden(header));
+        assert.isTrue(isRequestHeaderForbidden(header.toUpperCase()));
+        assert.isTrue(isRequestHeaderForbidden(header.toLowerCase()));
+      });
+    });
+
+    it('doesn\'t forbit other headers', () => {
+      assert.isFalse(isRequestMethodForbidden('My-Header'));
+      assert.isFalse(isRequestMethodForbidden('My-Proxy-123'));
+    });
+  });
+
+  describe('isRequestMethodForbidden', () => {
+    ['CONNECT', 'TRACE', 'TRACK'].forEach((method) => {
+      it(`${method} is forbidden`, () => {
+        assert.isTrue(isRequestMethodForbidden(method));
+        assert.isTrue(isRequestMethodForbidden(method.toLowerCase()));
+      });
+    });
+
+    it('doesn\'t forbit other methods', () => {
+      assert.isFalse(isRequestMethodForbidden('MyMethod'));
+    });
+  });
+
+  describe('normalizeHTTPMethodName', () => {
+    upperCaseMethods.forEach((method) => {
+      it(`makes ${method} upper case`, () => {
+        assert.strictEqual(normalizeHTTPMethodName(method.toLowerCase()), method);
+      });
+    });
+
+    it('doesn\'t modify other methods', () => {
+      assert.strictEqual(normalizeHTTPMethodName('MyMethod'), 'MyMethod');
+    });
+  });
+
+  describe('getStatusText', () => {
+    it('returns status text', () => {
+      assert.strictEqual(getStatusText(501), 'Not Implemented');
+    });
+
+    it('returns default status if unknown', () => {
+      assert.strictEqual(getStatusText(1234), 'Unknown Status');
     });
   });
 });

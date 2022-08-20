@@ -61,6 +61,8 @@ export function isRequestHeaderForbidden(name: string) {
   return forbiddenHeaderRegEx.test(name);
 }
 
+const isRequestMethodForbiddenRegEx = /^(CONNECT|TRACE|TRACK)$/i;
+
 /**
  * See https://fetch.spec.whatwg.org/#forbidden-method
  *
@@ -68,7 +70,7 @@ export function isRequestHeaderForbidden(name: string) {
  * @returns Whether the request method is forbidden for XMLHttpRequest
  */
 export function isRequestMethodForbidden(method: string) {
-  return /^(CONNECT|TRACE|TRACK)$/i.test(method);
+  return isRequestMethodForbiddenRegEx.test(method);
 }
 
 // Normalize method names as described in open()
