@@ -9,7 +9,7 @@ export default class RequestData {
     private readonly _method: string,
     private readonly _url: string,
     private readonly _body: any = null,
-    private readonly _withCredentials: boolean = false
+    private readonly _credentialsMode: boolean = false
   ) {}
 
   /**
@@ -23,5 +23,5 @@ export default class RequestData {
 
   get body() { return this._body; }
 
-  get withCredentials() { return this._withCredentials; }
+  get withCredentials() { return this._credentialsMode; }
 }

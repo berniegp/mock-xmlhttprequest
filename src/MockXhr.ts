@@ -16,7 +16,7 @@ import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver';
 import type { TXhrProgressEventNames } from './XhrProgressEventsNames';
 
 interface MockXhrResponse {
-  isError?: boolean,
+  isNetworkError?: boolean,
   status: number,
   statusMessage: string,
   headers: HeadersContainer,
@@ -56,21 +56,21 @@ export type OnSendCallback = (this: MockXhrRequest, request: MockXhrRequest) => 
 export default class MockXhr
   extends XhrEventTarget
   implements XMLHttpRequest, MockXhrResponseReceiver {
-  private _requestHeaders: HeadersContainer;
+  private _authorRequestHeaders: HeadersContainer;
 
-  private _method?: string;
+  private _requestMethod?: string;
 
-  private _url?: string;
+  private _requestUrl?: string;
 
   private _readyState: number;
 
   private _timeout: number;
 
-  private _withCredentials: boolean;
+  private _crossOriginCredentials: boolean;
 
   private _currentRequest?: MockXhrRequest;
 
-  private readonly _upload: XhrEventTarget;
+  private readonly _uploadObject: XhrEventTarget;
 
   responseURL: string;
 
@@ -92,12 +92,12 @@ export default class MockXhr
 
   constructor() {
     super();
-    this._requestHeaders = new HeadersContainer();
+    this._authorRequestHeaders = new HeadersContainer();
 
     this._readyState = MockXhr.UNSENT;
     this._timeout = 0;
-    this._withCredentials = false;
-    this._upload = new XhrEventTarget(this);
+    this._crossOriginCredentials = false;
+    this._uploadObject = new XhrEventTarget(this);
     this.responseURL = '';
     this._responseType = '';
     this._response = makeNetworkErrorResponse();
@@ -164,6 +164,9 @@ export default class MockXhr
    */
   static onSend?: OnSendCallback;
 
+  /**
+   * @returns The current active request, if any
+   */
   get currentRequest() { return this._currentRequest; }
 
   /**
@@ -182,6 +185,7 @@ export default class MockXhr
    *
    * @param request Originating request
    * @param transmitted Bytes transmitted
+   * @see {@link https://xhr.spec.whatwg.org/#the-send()-method "processRequestBodyChunkLength" steps}
    */
   uploadProgress(request: RequestData, transmitted: number) {
     // Only act if the originating request is the current active request
@@ -194,7 +198,7 @@ export default class MockXhr
       }
       if (this._uploadListenerFlag) {
         // If no listeners were registered before send(), no upload events should be fired.
-        this._fireUploadEvent('progress', transmitted, getBodyByteSize(request.body));
+        this._fireUploadProgressEvent('progress', transmitted, getBodyByteSize(request.body));
       }
     }
   }
@@ -222,7 +226,7 @@ export default class MockXhr
         throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be OPENED (${MockXhr.OPENED})`);
       }
       if (request.body) {
-        this._requestEndOfBody(getBodyByteSize(request.body));
+        this._processRequestEndOfBody(getBodyByteSize(request.body));
       }
       status = typeof status === 'number' ? status : 200;
       const statusMessage = statusText ?? getStatusText(status);
@@ -240,6 +244,7 @@ export default class MockXhr
    * @param request Originating request
    * @param transmitted Transmitted bytes
    * @param length Total bytes
+   * @see {@link https://xhr.spec.whatwg.org/#the-send()-method "processBodyChunk" steps}
    */
   downloadProgress(request: RequestData, transmitted: number, length: number) {
     // Only act if the originating request is the current active request
@@ -250,16 +255,14 @@ export default class MockXhr
           + `HEADERS_RECEIVED (${MockXhr.HEADERS_RECEIVED}) or LOADING (${MockXhr.LOADING})`);
       }
 
-      // Useless condition but follows the spec's wording
       if (this._readyState === MockXhr.HEADERS_RECEIVED) {
         this._readyState = MockXhr.LOADING;
       }
 
       // As stated in https://xhr.spec.whatwg.org/#the-send()-method
-      // Web compatibility is the reason readystatechange fires more often than
-      // state changes.
-      this._fireReadyStateChange();
-      this._fireEvent('progress', transmitted, length);
+      // Web compatibility is the reason readystatechange fires more often than state changes.
+      this._fireReadyStateChangeEvent();
+      this._fireProgressEvent('progress', transmitted, length);
     }
   }
 
@@ -291,7 +294,7 @@ export default class MockXhr
       // Web compatibility is the reason readystatechange fires more often than
       // state changes.
       this._readyState = MockXhr.LOADING;
-      this._fireReadyStateChange();
+      this._fireReadyStateChangeEvent();
 
       this._response.body = body;
       this._handleResponseEndOfBody();
@@ -327,7 +330,7 @@ export default class MockXhr
       if (this.timeout === 0) {
         throw new Error('Mock usage error detected: the timeout attribute must be greater than 0 for a timeout to occur');
       }
-      this._terminateRequest();
+      this._terminateFetchController();
       this._timedOutFlag = true;
       this._processResponse(makeNetworkErrorResponse());
     }
@@ -338,9 +341,8 @@ export default class MockXhr
   //-------
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-readystate
-   *
    * @returns Client's state
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-readystate}
    */
   get readyState() { return this._readyState; }
 
@@ -350,11 +352,11 @@ export default class MockXhr
 
   /**
    * Set the request method and url.
-   * https://xhr.spec.whatwg.org/#the-open()-method
    *
    * @param method Request HTTP method (GET, POST, etc.)
    * @param url Request url
-   * @param async Async request flag (only true is supported)
+   * @param async Async request flag (only true or omitted is supported)
+   * @see {@link https://xhr.spec.whatwg.org/#the-open()-method}
    */
   open(method: string, url: string | URL, async = true) {
     if (!async) {
@@ -366,27 +368,27 @@ export default class MockXhr
     method = normalizeHTTPMethodName(method);
     // Skip parsing the url and setting the username and password
 
-    this._terminateRequest();
+    this._terminateFetchController();
 
     // Set variables
     this._sendFlag = false;
     this._uploadListenerFlag = false;
-    this._method = method;
-    this._url = url.toString();
-    this._requestHeaders.reset();
+    this._requestMethod = method;
+    this._requestUrl = url.toString();
+    this._authorRequestHeaders.reset();
     this._response = makeNetworkErrorResponse();
     if (this._readyState !== MockXhr.OPENED) {
       this._readyState = MockXhr.OPENED;
-      this._fireReadyStateChange();
+      this._fireReadyStateChangeEvent();
     }
   }
 
   /**
    * Add a request header value.
-   * https://xhr.spec.whatwg.org/#the-setrequestheader()-method
    *
    * @param name Header name
    * @param value Header value
+   * @see {@link https://xhr.spec.whatwg.org/#the-setrequestheader()-method}
    */
   setRequestHeader(name: string, value: string) {
     if (this._readyState !== MockXhr.OPENED || this._sendFlag) {
@@ -399,21 +401,19 @@ export default class MockXhr
     if (!isRequestHeaderForbidden(name)) {
       // Normalize value
       value = value.trim();
-      this._requestHeaders.addHeader(name, value);
+      this._authorRequestHeaders.addHeader(name, value);
     }
   }
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-timeout
-   *
    * @returns timeout attribute
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-timeout}
    */
   get timeout() { return this._timeout; }
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-timeout
-   *
    * @param value timeout value
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-timeout}
    */
   set timeout(value: number) {
     // Since this library is meant to run on node, skip the step involving the Window object.
@@ -427,43 +427,40 @@ export default class MockXhr
   }
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials
-   *
    * @returns withCredentials attribute
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials}
    */
-  get withCredentials() { return this._withCredentials; }
+  get withCredentials() { return this._crossOriginCredentials; }
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials
-   *
    * @param value withCredentials value
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials}
    */
   set withCredentials(value: boolean) {
     if ((this._readyState !== MockXhr.UNSENT && this._readyState !== MockXhr.OPENED)
       || this._sendFlag) {
       throwError('InvalidStateError');
     }
-    this._withCredentials = !!value;
+    this._crossOriginCredentials = !!value;
   }
 
   /**
-   * https://xhr.spec.whatwg.org/#the-upload-attribute
-   *
    * @returns upload attribute
+   * @see {@link https://xhr.spec.whatwg.org/#the-upload-attribute}
    */
-  get upload() { return this._upload; }
+  get upload() { return this._uploadObject; }
 
   /**
    * Initiate the request.
-   * https://xhr.spec.whatwg.org/#the-send()-method
    *
    * @param body Request body
+   * @see {@link https://xhr.spec.whatwg.org/#the-send()-method}
    */
   send(body: any = null) {
     if (this._readyState !== MockXhr.OPENED || this._sendFlag) {
       throwError('InvalidStateError');
     }
-    if (this._method === 'GET' || this._method === 'HEAD') {
+    if (this._requestMethod === 'GET' || this._requestMethod === 'HEAD') {
       body = null;
     }
 
@@ -492,22 +489,21 @@ export default class MockXhr
       * for little gain. If I'm wrong, please open an issue or better yet a pull request.
       */
 
-      if (this._requestHeaders.getHeader('Content-Type') === null && extractedContentType !== null) {
-        this._requestHeaders.addHeader('Content-Type', extractedContentType);
+      if (this._authorRequestHeaders.getHeader('Content-Type') === null && extractedContentType !== null) {
+        this._authorRequestHeaders.addHeader('Content-Type', extractedContentType);
       }
     }
 
-    this._uploadListenerFlag = this._upload.hasListeners();
+    this._uploadListenerFlag = this._uploadObject.hasListeners();
     this._uploadCompleteFlag = body === null;
     this._timedOutFlag = false;
     this._sendFlag = true;
 
-    this._fireEvent('loadstart', 0, 0);
+    this._fireProgressEvent('loadstart', 0, 0);
     if (!this._uploadCompleteFlag && this._uploadListenerFlag) {
-      this._fireUploadEvent('loadstart', 0, getBodyByteSize(body));
+      this._fireUploadProgressEvent('loadstart', 0, getBodyByteSize(body));
     }
 
-    // Other interactions are done through the mock's response methods
     if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
       return;
     }
@@ -516,11 +512,11 @@ export default class MockXhr
     this._scheduleRequestTimeout();
 
     const requestData = new RequestData(
-      new HeadersContainer(this._requestHeaders),
-      this._method as string,
-      this._url as string,
+      new HeadersContainer(this._authorRequestHeaders),
+      this._requestMethod as string,
+      this._requestUrl as string,
       body,
-      this._withCredentials
+      this._crossOriginCredentials
     );
     this._currentRequest = new MockXhrRequest(requestData, this);
 
@@ -534,10 +530,10 @@ export default class MockXhr
 
   /**
    * Abort the request.
-   * https://xhr.spec.whatwg.org/#the-abort()-method
+   * @see {@link https://xhr.spec.whatwg.org/#the-abort()-method}
    */
   abort() {
-    this._terminateRequest();
+    this._terminateFetchController();
 
     if ((this._readyState === MockXhr.OPENED && this._sendFlag)
       || this._readyState === MockXhr.HEADERS_RECEIVED
@@ -557,25 +553,23 @@ export default class MockXhr
   //---------
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-status
-   *
    * @returns status attribute
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-status}
    */
   get status() { return this._response.status; }
 
   /**
-   * https://xhr.spec.whatwg.org/#the-statustext-attribute
-   *
    * @returns statusText attribute
+   * @see {@link https://xhr.spec.whatwg.org/#the-statustext-attribute}
    */
   get statusText() { return this._response.statusMessage; }
 
   /**
    * Get a response header value.
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getresponseheader
    *
    * @param name Header name
    * @returns Header value
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getresponseheader}
    */
   getResponseHeader(name: string): string | null {
     return this._response.headers.getHeader(name);
@@ -583,9 +577,9 @@ export default class MockXhr
 
   /**
    * Get all response headers as a string.
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getallresponseheaders
    *
    * @returns Concatenated headers
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-getallresponseheaders}
    */
   getAllResponseHeaders(): string {
     return this._response.headers.getAll();
@@ -593,9 +587,9 @@ export default class MockXhr
 
   /**
    * Throws when required, but has no other effect.
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-overridemimetype
    *
    * @param mime MIME type
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-overridemimetype}
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   overrideMimeType(mime: string) {
@@ -606,16 +600,14 @@ export default class MockXhr
   }
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsetype
-   *
    * @returns responseType attribute
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsetype}
    */
   get responseType() { return this._responseType; }
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsetype
-   *
    * @param value responseType value
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsetype}
    */
   set responseType(value: XMLHttpRequestResponseType) {
     // Since this library is meant to run on node, skip the steps involving the Window object.
@@ -632,9 +624,8 @@ export default class MockXhr
   }
 
   /**
-   * https://xhr.spec.whatwg.org/#the-response-attribute
-   *
    * @returns response attribute
+   * @see {@link https://xhr.spec.whatwg.org/#the-response-attribute}
    */
   get response() {
     if (this._responseType === '' || this._responseType === 'text') {
@@ -666,9 +657,8 @@ export default class MockXhr
   }
 
   /**
-   * https://xhr.spec.whatwg.org/#the-responsetext-attribute
-   *
    * @returns responseText attribute
+   * @see {@link https://xhr.spec.whatwg.org/#the-responsetext-attribute}
    */
   get responseText() {
     if (this._responseType !== '' && this._responseType !== 'text') {
@@ -684,9 +674,8 @@ export default class MockXhr
   }
 
   /**
-   * https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsexml
-   *
    * @returns responseXML attribute
+   * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-responsexml}
    */
   get responseXML() {
     if (this._responseType !== '' && this._responseType !== 'document') {
@@ -708,41 +697,42 @@ export default class MockXhr
   //------------------------------
 
   /**
-   * Note: the "process request body" task is in the MockXhr response methods
-   * Process request end-of-body task. When the whole request is sent.
-   * https://xhr.spec.whatwg.org/#the-send()-method
+   * Steps for when the request upload is complete.
    *
    * @param bodySize request body size in bytes
+   * @see {@link https://xhr.spec.whatwg.org/#the-send()-method "processRequestEndOfBody" steps}
    */
-  private _requestEndOfBody(bodySize: number) {
+  private _processRequestEndOfBody(bodySize: number) {
     this._uploadCompleteFlag = true;
 
     if (this._uploadListenerFlag) {
       // If no listeners were registered before send(), these steps do not run.
       const transmitted = bodySize;
-      this._fireUploadEvent('progress', transmitted, bodySize);
-      this._fireUploadEvent('load', transmitted, bodySize);
-      this._fireUploadEvent('loadend', transmitted, bodySize);
+      this._fireUploadProgressEvent('progress', transmitted, bodySize);
+      this._fireUploadProgressEvent('load', transmitted, bodySize);
+      this._fireUploadProgressEvent('loadend', transmitted, bodySize);
     }
   }
 
   /**
-   * Process response task. When the response headers are received.
-   * https://xhr.spec.whatwg.org/#the-send()-method
+   * Steps for when the response headers are received.
    *
    * @param response Response
+   * @see {@link https://xhr.spec.whatwg.org/#the-send()-method "processResponse" steps}
    */
   private _processResponse(response: MockXhrResponse) {
     this._response = response;
-    this._handleResponseErrors();
-    if (this._response.isError) {
+    this._handleErrors();
+    if (this._response.isNetworkError) {
       return;
     }
+
     this._readyState = MockXhr.HEADERS_RECEIVED;
-    this._fireReadyStateChange();
+    this._fireReadyStateChangeEvent();
     if (this._readyState !== MockXhr.HEADERS_RECEIVED) {
       return;
     }
+
     if (this._response.body === null) {
       this._handleResponseEndOfBody();
     }
@@ -751,62 +741,64 @@ export default class MockXhr
 
   /**
    * Handle response end-of-body for response.
-   * https://xhr.spec.whatwg.org/#handle-response-end-of-body
+   *
+   * @see {@link https://xhr.spec.whatwg.org/#handle-response-end-of-body}
    */
   private _handleResponseEndOfBody() {
-    this._handleResponseErrors();
-    if (this._response.isError) {
+    this._handleErrors();
+    if (this._response.isNetworkError) {
       return;
     }
     const length = this._response.body?.length ?? 0;
-    this._fireEvent('progress', length, length);
+    this._fireProgressEvent('progress', length, length);
     this._readyState = MockXhr.DONE;
     this._sendFlag = false;
-    this._terminateRequest();
-    this._fireReadyStateChange();
-    this._fireEvent('load', length, length);
-    this._fireEvent('loadend', length, length);
+    this._terminateFetchController();
+    this._fireReadyStateChangeEvent();
+    this._fireProgressEvent('load', length, length);
+    this._fireProgressEvent('loadend', length, length);
   }
 
   /**
-   * Handle errors for response.
-   * https://xhr.spec.whatwg.org/#handle-errors
+   * The "handle errors" steps.
+   *
+   * @see {@link https://xhr.spec.whatwg.org/#handle-errors}
    */
-  private _handleResponseErrors() {
+  private _handleErrors() {
     if (!this._sendFlag) {
       return;
     }
     if (this._timedOutFlag) {
       // Timeout
       this._requestErrorSteps('timeout');
-    } else if (this._response.isError) {
+    } else if (this._response.isNetworkError) {
       // Network error
       this._requestErrorSteps('error');
     }
   }
 
   /**
-   * The request error steps for event 'event'.
-   * https://xhr.spec.whatwg.org/#request-error-steps
+   * The "request error steps" for event 'event'.
    *
    * @param event Event name
+   * @see {@link https://xhr.spec.whatwg.org/#request-error-steps}
    */
   private _requestErrorSteps(event: TXhrProgressEventNames) {
     this._readyState = MockXhr.DONE;
     this._sendFlag = false;
     this._response = makeNetworkErrorResponse();
-    this._fireReadyStateChange();
+    this._fireReadyStateChangeEvent();
     if (!this._uploadCompleteFlag) {
       this._uploadCompleteFlag = true;
 
       if (this._uploadListenerFlag) {
         // If no listeners were registered before send(), no upload events should be fired.
-        this._fireUploadEvent(event, 0, 0);
-        this._fireUploadEvent('loadend', 0, 0);
+        this._fireUploadProgressEvent(event, 0, 0);
+        this._fireUploadProgressEvent('loadend', 0, 0);
       }
     }
-    this._fireEvent(event, 0, 0);
-    this._fireEvent('loadend', 0, 0);
+    this._fireProgressEvent(event, 0, 0);
+    this._fireProgressEvent('loadend', 0, 0);
   }
 
   //----------
@@ -821,21 +813,25 @@ export default class MockXhr
     }
   }
 
-  private _terminateRequest() {
-    delete this._method;
-    delete this._url;
+  private _terminateFetchController() {
+    delete this._requestMethod;
+    delete this._requestUrl;
     delete this._currentRequest;
   }
 
-  private _fireEvent(name: TXhrProgressEventNames, transmitted: number, length: number) {
+  private _fireProgressEvent(name: TXhrProgressEventNames, transmitted: number, length: number) {
     this.dispatchEvent(new XhrProgressEvent(name, transmitted, length));
   }
 
-  private _fireUploadEvent(name: TXhrProgressEventNames, transmitted: number, length: number) {
-    this._upload.dispatchEvent(new XhrProgressEvent(name, transmitted, length));
+  private _fireUploadProgressEvent(
+    name: TXhrProgressEventNames,
+    transmitted: number,
+    length: number
+  ) {
+    this._uploadObject.dispatchEvent(new XhrProgressEvent(name, transmitted, length));
   }
 
-  private _fireReadyStateChange() {
+  private _fireReadyStateChangeEvent() {
     const event = new XhrEvent('readystatechange');
     if (this.onreadystatechange) {
       this.onreadystatechange(event as Event);
@@ -875,7 +871,7 @@ function throwError(type: string, text = '') {
 
 function makeNetworkErrorResponse(): MockXhrResponse {
   return {
-    isError: true,
+    isNetworkError: true,
     status: 0,
     statusMessage: '',
     headers: new HeadersContainer(),
