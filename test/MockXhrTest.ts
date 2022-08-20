@@ -91,6 +91,16 @@ describe('MockXhr', () => {
         });
       });
 
+      it('should reject async = false', () => {
+        const xhr = new MockXhr();
+        const events = recordEvents(xhr);
+        assert.throws(() => { xhr.open('GET', '/url', false); }, null, null, 'sync false throws');
+        assert.throws(() => { xhr.open('GET', '/url', null as any); }, null, null, 'sync null throws');
+        assert.throws(() => { xhr.open('GET', '/url', undefined); }, null, null, 'sync undefined throws');
+        assert.throws(() => { xhr.open('GET', '/url', '' as any); }, null, null, 'sync empty string throws');
+        assert.lengthOf(events, 0, 'no events fired');
+      });
+
       it('should reject non-methods', () => {
         const xhr = new MockXhr();
         const tryMethod = (method: string) => {

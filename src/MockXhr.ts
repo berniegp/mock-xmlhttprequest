@@ -359,8 +359,8 @@ export default class MockXhr
    * @param async Async request flag (only true or omitted is supported)
    * @see {@link https://xhr.spec.whatwg.org/#the-open()-method}
    */
-  open(method: string, url: string | URL, async = true) {
-    if (!async) {
+  open(method: string, url: string | URL, async?: boolean) {
+    if (!async && arguments.length > 2) {
       throw new Error('async = false is not supported.');
     }
     if (!isRequestMethod(method)) {
