@@ -1,10 +1,10 @@
 root = true
 
 [*]
+end_of_line = lf
 charset = utf-8
 
-[*.js]
-end_of_line = lf
+[*.{js,cjs,mjs,ts}]
 insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space
