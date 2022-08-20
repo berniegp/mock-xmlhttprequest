@@ -186,8 +186,11 @@ export default class MockXhr
   uploadProgress(request: RequestData, transmitted: number) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
-      if (!this._sendFlag || this._uploadCompleteFlag) {
-        throw new Error('Mock usage error detected.');
+      if (!this._sendFlag) {
+        throw new Error('Mock usage error detected: call send() first (the "send() flag" is not set)');
+      }
+      if (this._uploadCompleteFlag) {
+        throw new Error('Mock usage error detected: upload already completed (the "upload complete flag" is set)');
       }
       if (this._uploadListenerFlag) {
         // If no listeners were registered before send(), no upload events should be fired.
@@ -212,8 +215,11 @@ export default class MockXhr
   ) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
-      if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
-        throw new Error('Mock usage error detected.');
+      if (!this._sendFlag) {
+        throw new Error('Mock usage error detected: call send() first (the "send() flag" is not set)');
+      }
+      if (this._readyState !== MockXhr.OPENED) {
+        throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be OPENED (${MockXhr.OPENED})`);
       }
       if (request.body) {
         this._requestEndOfBody(getBodyByteSize(request.body));
@@ -240,7 +246,8 @@ export default class MockXhr
     if (this._currentRequest?.requestData === request) {
       if (this._readyState !== MockXhr.HEADERS_RECEIVED
         && this._readyState !== MockXhr.LOADING) {
-        throw new Error('Mock usage error detected.');
+        throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be `
+          + `HEADERS_RECEIVED (${MockXhr.HEADERS_RECEIVED}) or LOADING (${MockXhr.LOADING})`);
       }
 
       // Useless condition but follows the spec's wording
@@ -265,11 +272,14 @@ export default class MockXhr
   setResponseBody(request: RequestData, body: any) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
-      if (!this._sendFlag
-        || (this._readyState !== MockXhr.OPENED
+      if (!this._sendFlag) {
+        throw new Error('Mock usage error detected: call send() first (the "send() flag" is not set)');
+      }
+      if (this._readyState !== MockXhr.OPENED
           && this._readyState !== MockXhr.HEADERS_RECEIVED
-          && this._readyState !== MockXhr.LOADING)) {
-        throw new Error('Mock usage error detected.');
+          && this._readyState !== MockXhr.LOADING) {
+        throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be `
+          + `OPENED (${MockXhr.OPENED}), HEADERS_RECEIVED (${MockXhr.HEADERS_RECEIVED}) or LOADING (${MockXhr.LOADING})`);
       }
 
       if (this._readyState === MockXhr.OPENED) {
@@ -297,7 +307,7 @@ export default class MockXhr
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
       if (!this._sendFlag) {
-        throw new Error('Mock usage error detected.');
+        throw new Error('Mock usage error detected: call send() first (the "send() flag" is not set)');
       }
       this._processResponse(makeNetworkErrorResponse());
     }
@@ -311,8 +321,11 @@ export default class MockXhr
   setRequestTimeout(request: RequestData) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
-      if (!this._sendFlag || this.timeout === 0) {
-        throw new Error('Mock usage error detected.');
+      if (!this._sendFlag) {
+        throw new Error('Mock usage error detected: call send() first (the "send() flag" is not set)');
+      }
+      if (this.timeout === 0) {
+        throw new Error('Mock usage error detected: the timeout attribute must be greater than 0 for a timeout to occur');
       }
       this._terminateRequest();
       this._timedOutFlag = true;

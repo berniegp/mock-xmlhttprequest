@@ -382,6 +382,8 @@ Note: this isn't completely accurate when the `body` is a `multipart/form-data` 
 #### Mock response methods
 These methods provide a programmatic interface to respond to `MockXhr` requests.
 
+If a call to a response method is invalid, it throws an `Error` with a message that contains "Mock usage error detected".
+
 ##### uploadProgress(transmitted)
 Fires a request upload progress event where `transmitted` is the number of bytes transmitted.
 
