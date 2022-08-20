@@ -3,6 +3,7 @@ import { assert } from 'chai';
 import {
   getBodyByteSize,
   isRequestHeaderForbidden,
+  isRequestMethod,
   isRequestMethodForbidden,
   upperCaseMethods,
   normalizeHTTPMethodName,
@@ -108,6 +109,19 @@ describe('Utils', () => {
     it('doesn\'t forbit other headers', () => {
       assert.isFalse(isRequestMethodForbidden('My-Header'));
       assert.isFalse(isRequestMethodForbidden('My-Proxy-123'));
+    });
+  });
+
+  describe('isRequestMethod', () => {
+    ['get', 'CONNECT', 'MyMethod', '!#$%&\'*+-.^_`|~'].forEach((method) => {
+      it(`${method} is a method`, () => {
+        assert.isTrue(isRequestMethod(method));
+      });
+    });
+
+    it('doesn\'t recognize non-methods', () => {
+      assert.isFalse(isRequestMethod('\\'));
+      assert.isFalse(isRequestMethod(';'));
     });
   });
 

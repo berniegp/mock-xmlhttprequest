@@ -61,6 +61,17 @@ export function isRequestHeaderForbidden(name: string) {
   return forbiddenHeaderRegEx.test(name);
 }
 
+const isRequestMethodRegEx = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/;
+
+/**
+ * See https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6
+ * @param method Method name
+ * @returns Whether the request method is valid
+ */
+export function isRequestMethod(method?: string) {
+  return method && isRequestMethodRegEx.test(method);
+}
+
 const isRequestMethodForbiddenRegEx = /^(CONNECT|TRACE|TRACK)$/i;
 
 /**

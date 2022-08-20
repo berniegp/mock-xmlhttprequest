@@ -91,6 +91,17 @@ describe('MockXhr', () => {
         });
       });
 
+      it('should reject non-methods', () => {
+        const xhr = new MockXhr();
+        const tryMethod = (method: string) => {
+          return () => { xhr.open(method, '/url'); };
+        };
+        const events = recordEvents(xhr);
+        assert.throws(tryMethod('\\'), null, null, 'non-method throws');
+        assert.throws(tryMethod(';'), null, null, 'non-method throws');
+        assert.lengthOf(events, 0, 'no events fired');
+      });
+
       it('should reject forbidden methods', () => {
         const xhr = new MockXhr();
         const tryMethod = (method: string) => {

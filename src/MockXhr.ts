@@ -7,6 +7,7 @@ import {
   getBodyByteSize,
   getStatusText,
   isRequestHeaderForbidden,
+  isRequestMethod,
   isRequestMethodForbidden,
   normalizeHTTPMethodName,
 } from './Utils';
@@ -361,6 +362,9 @@ export default class MockXhr
   open(method: string, url: string | URL, async = true) {
     if (!async) {
       throw new Error('async = false is not supported.');
+    }
+    if (!isRequestMethod(method)) {
+      throwError('SyntaxError', `Method "${method}" is not a method.`);
     }
     if (isRequestMethodForbidden(method)) {
       throwError('SecurityError', `Method "${method}" forbidden.`);
