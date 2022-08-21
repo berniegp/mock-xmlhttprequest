@@ -1,14 +1,6 @@
 import { assert } from 'chai';
 
-import {
-  getBodyByteSize,
-  isRequestHeaderForbidden,
-  isRequestMethod,
-  isRequestMethodForbidden,
-  upperCaseMethods,
-  normalizeHTTPMethodName,
-  getStatusText,
-} from '../src/Utils';
+import * as Utils from '../src/Utils';
 
 class BlobMock {
   constructor(array: any[]) {
@@ -43,8 +35,8 @@ class FormDataMock {
 describe('Utils', () => {
   describe('getBodyByteSize', () => {
     it('should return 0 for empty body', () => {
-      assert.strictEqual(getBodyByteSize(), 0);
-      assert.strictEqual(getBodyByteSize(null), 0);
+      assert.strictEqual(Utils.getBodyByteSize(), 0);
+      assert.strictEqual(Utils.getBodyByteSize(null), 0);
     });
 
     it('should return string byte length using Blob', () => {
@@ -54,28 +46,28 @@ describe('Utils', () => {
       try {
         // Doesn't match the string size below on purpose to validate that the Blob mock is used
         BlobMock.testSize = 10;
-        assert.strictEqual(getBodyByteSize('abcd'), 10, 'uses the Blob size');
+        assert.strictEqual(Utils.getBodyByteSize('abcd'), 10, 'uses the Blob size');
       } finally {
         globalThis.Blob = savedBlob;
       }
     });
 
     it('should return string byte length using BufferSource', () => {
-      assert.strictEqual(getBodyByteSize('abcd'), 4, 'single code unit characters');
-      assert.strictEqual(getBodyByteSize('😂👍'), 8, 'multi code unit characters');
-      assert.strictEqual(getBodyByteSize('a😂b👍c'), 11, 'mixed code unit characters');
+      assert.strictEqual(Utils.getBodyByteSize('abcd'), 4, 'single code unit characters');
+      assert.strictEqual(Utils.getBodyByteSize('😂👍'), 8, 'multi code unit characters');
+      assert.strictEqual(Utils.getBodyByteSize('a😂b👍c'), 11, 'mixed code unit characters');
     });
 
     it('should return Blob byte size', () => {
       // Doesn't match the string size below on purpose to validate that the Blob mock is used
       BlobMock.testSize = 10;
       const blob = new BlobMock(['abcd']);
-      assert.strictEqual(getBodyByteSize(blob as Blob), 10);
+      assert.strictEqual(Utils.getBodyByteSize(blob as Blob), 10);
     });
 
     it('should return BufferSource byte size', () => {
       const bufferSource = new BufferSourceMock(10);
-      assert.strictEqual(getBodyByteSize(bufferSource as BufferSource), 10);
+      assert.strictEqual(Utils.getBodyByteSize(bufferSource as BufferSource), 10);
     });
 
     it('should return FormData byte size', () => {
@@ -90,73 +82,100 @@ describe('Utils', () => {
         // Doesn't match the string size below on purpose to validate that the Blob mock is used
         BlobMock.testSize = 10;
         form.append('my_blob', new BlobMock(['abcd']));
-        assert.strictEqual(getBodyByteSize(form as unknown as FormData), 4 + 8 + 10);
+        assert.strictEqual(Utils.getBodyByteSize(form as unknown as FormData), 4 + 8 + 10);
       } finally {
         globalThis.FormData = savedFormData;
       }
     });
   });
 
-  describe('isRequestHeaderForbidden', () => {
-    ['Content-Length', 'proxy-123', 'sec-234'].forEach((header) => {
-      it(`${header} is forbidden`, () => {
-        assert.isTrue(isRequestHeaderForbidden(header));
-        assert.isTrue(isRequestHeaderForbidden(header.toUpperCase()));
-        assert.isTrue(isRequestHeaderForbidden(header.toLowerCase()));
+  describe('isHeaderName', () => {
+    ['Content-Length', 'CONNECT', 'MyMethod', '!#$%&\'*+-.^_`|~'].forEach((method) => {
+      it(`accepts '${method}' as a header name`, () => {
+        assert.isTrue(Utils.isHeaderName(method));
       });
     });
 
-    it('doesn\'t forbit other headers', () => {
-      assert.isFalse(isRequestMethodForbidden('My-Header'));
-      assert.isFalse(isRequestMethodForbidden('My-Proxy-123'));
+    it('rejects invalid header names', () => {
+      assert.isFalse(Utils.isHeaderName('\\'));
+      assert.isFalse(Utils.isHeaderName(';'));
     });
   });
 
-  describe('isRequestMethod', () => {
-    ['get', 'CONNECT', 'MyMethod', '!#$%&\'*+-.^_`|~'].forEach((method) => {
-      it(`${method} is a method`, () => {
-        assert.isTrue(isRequestMethod(method));
+  describe('isHeaderValue', () => {
+    ['value', '', 'gzip , chunked', 'abrowser/0.001 (C O M M E N T)', '", , ,"'].forEach((method) => {
+      it(`accepts '${method}' as a header value`, () => {
+        assert.isTrue(Utils.isHeaderValue(method));
       });
     });
 
-    it('doesn\'t recognize non-methods', () => {
-      assert.isFalse(isRequestMethod('\\'));
-      assert.isFalse(isRequestMethod(';'));
+    it('rejects invalid header values', () => {
+      assert.isFalse(Utils.isHeaderValue(' with leading space'));
+      assert.isFalse(Utils.isHeaderValue('with trailing space '));
+      assert.isFalse(Utils.isHeaderValue('with null (\0) char'));
     });
   });
 
   describe('isRequestMethodForbidden', () => {
     ['CONNECT', 'TRACE', 'TRACK'].forEach((method) => {
-      it(`${method} is forbidden`, () => {
-        assert.isTrue(isRequestMethodForbidden(method));
-        assert.isTrue(isRequestMethodForbidden(method.toLowerCase()));
+      it(`forbids '${method}'`, () => {
+        assert.isTrue(Utils.isRequestMethodForbidden(method));
+        assert.isTrue(Utils.isRequestMethodForbidden(method.toLowerCase()));
       });
     });
 
-    it('doesn\'t forbit other methods', () => {
-      assert.isFalse(isRequestMethodForbidden('MyMethod'));
+    it('accepts valid methods', () => {
+      assert.isFalse(Utils.isRequestMethodForbidden('MyMethod'));
+    });
+  });
+
+  describe('isRequestMethod', () => {
+    ['get', 'CONNECT', 'MyMethod', '!#$%&\'*+-.^_`|~'].forEach((method) => {
+      it(`accepts '${method}' as a method`, () => {
+        assert.isTrue(Utils.isRequestMethod(method));
+      });
+    });
+
+    it('rejects invalid methods', () => {
+      assert.isFalse(Utils.isRequestMethod('\\'));
+      assert.isFalse(Utils.isRequestMethod(';'));
     });
   });
 
   describe('normalizeHTTPMethodName', () => {
-    upperCaseMethods.forEach((method) => {
-      it(`makes ${method} upper case`, () => {
-        assert.strictEqual(normalizeHTTPMethodName(method.toLowerCase()), method);
+    Utils.upperCaseMethods.forEach((method) => {
+      it(`makes '${method}' upper case`, () => {
+        assert.strictEqual(Utils.normalizeHTTPMethodName(method.toLowerCase()), method);
       });
     });
 
     it('doesn\'t modify other methods', () => {
-      assert.strictEqual(normalizeHTTPMethodName('MyMethod'), 'MyMethod');
+      assert.strictEqual(Utils.normalizeHTTPMethodName('MyMethod'), 'MyMethod');
+    });
+  });
+
+  describe('isRequestHeaderForbidden', () => {
+    ['Content-Length', 'proxy-123', 'sec-234'].forEach((header) => {
+      it(`forbids '${header}'`, () => {
+        assert.isTrue(Utils.isRequestHeaderForbidden(header));
+        assert.isTrue(Utils.isRequestHeaderForbidden(header.toUpperCase()));
+        assert.isTrue(Utils.isRequestHeaderForbidden(header.toLowerCase()));
+      });
+    });
+
+    it('accepts valid headers', () => {
+      assert.isFalse(Utils.isRequestMethodForbidden('My-Header'));
+      assert.isFalse(Utils.isRequestMethodForbidden('My-Proxy-123'));
     });
   });
 
   describe('getStatusText', () => {
     it('returns status text', () => {
-      assert.strictEqual(getStatusText(501), 'Not Implemented');
+      assert.strictEqual(Utils.getStatusText(501), 'Not Implemented');
     });
 
     it('returns default status if unknown', () => {
-      assert.strictEqual(getStatusText(1234), 'Unknown Status');
+      assert.strictEqual(Utils.getStatusText(1234), 'Unknown Status');
     });
   });
 });

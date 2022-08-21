@@ -26,6 +26,37 @@ function getStringByteLength(string: string) {
   return typeof Blob !== 'undefined' ? new Blob([string]).size : Buffer.byteLength(string);
 }
 
+const isTokenRegEx = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/;
+
+/**
+ * See https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6
+ * @param token Token
+ * @returns Whether token is a valid token
+ */
+function isToken(token?: string) {
+  return typeof token === 'string' && isTokenRegEx.test(token);
+}
+
+/**
+ * https://datatracker.ietf.org/doc/html/rfc7230#section-3.2
+ * @param headerName Header name
+ * @returns Whether headerName is a valid header name
+ */
+export function isHeaderName(headerName?: string) {
+  return isToken(headerName);
+}
+
+/**
+ * https://fetch.spec.whatwg.org/#header-value
+ * @param headerValue Header value
+ * @returns Whether headerValue is a valid header value
+ */
+export function isHeaderValue(headerValue: string) {
+  return typeof headerValue === 'string'
+    && headerValue.trim().length === headerValue.length
+    && headerValue.indexOf('\0') === -1;
+}
+
 // Disallowed request headers for setRequestHeader()
 const forbiddenHeaders = [
   'Accept-Charset',
@@ -61,15 +92,13 @@ export function isRequestHeaderForbidden(name: string) {
   return forbiddenHeaderRegEx.test(name);
 }
 
-const isRequestMethodRegEx = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/;
-
 /**
- * See https://datatracker.ietf.org/doc/html/rfc7230#section-3.2.6
+ * See https://datatracker.ietf.org/doc/html/rfc7230#section-3.1.1
  * @param method Method name
- * @returns Whether the request method is valid
+ * @returns Whether method is a valid request method
  */
 export function isRequestMethod(method?: string) {
-  return method && isRequestMethodRegEx.test(method);
+  return isToken(method);
 }
 
 const isRequestMethodForbiddenRegEx = /^(CONNECT|TRACE|TRACK)$/i;

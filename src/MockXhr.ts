@@ -3,14 +3,7 @@ import MockXhrRequest from './MockXhrRequest';
 import RequestData from './RequestData';
 import XhrEvent from './XhrEvent';
 import XhrProgressEvent from './XhrProgressEvent';
-import {
-  getBodyByteSize,
-  getStatusText,
-  isRequestHeaderForbidden,
-  isRequestMethod,
-  isRequestMethodForbidden,
-  normalizeHTTPMethodName,
-} from './Utils';
+import * as Utils from './Utils';
 import XhrEventTarget from './XhrEventTarget';
 
 import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver';
@@ -205,7 +198,7 @@ export default class MockXhr
       }
       if (this._uploadListenerFlag) {
         // If no listeners were registered before send(), no upload events should be fired.
-        this._fireUploadProgressEvent('progress', transmitted, getBodyByteSize(request.body));
+        this._fireUploadProgressEvent('progress', transmitted, Utils.getBodyByteSize(request.body));
       }
     }
   }
@@ -233,10 +226,10 @@ export default class MockXhr
         throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be OPENED (${MockXhr.OPENED})`);
       }
       if (request.body) {
-        this._processRequestEndOfBody(getBodyByteSize(request.body));
+        this._processRequestEndOfBody(Utils.getBodyByteSize(request.body));
       }
       status = typeof status === 'number' ? status : 200;
-      const statusMessage = statusText ?? getStatusText(status);
+      const statusMessage = statusText ?? Utils.getStatusText(status);
       this._processResponse({
         status,
         statusMessage,
@@ -369,13 +362,13 @@ export default class MockXhr
     if (!async && arguments.length > 2) {
       throw new Error('async = false is not supported.');
     }
-    if (!isRequestMethod(method)) {
+    if (!Utils.isRequestMethod(method)) {
       throwError('SyntaxError', `Method "${method}" is not a method.`);
     }
-    if (isRequestMethodForbidden(method)) {
+    if (Utils.isRequestMethodForbidden(method)) {
       throwError('SecurityError', `Method "${method}" forbidden.`);
     }
-    method = normalizeHTTPMethodName(method);
+    method = Utils.normalizeHTTPMethodName(method);
     // Skip parsing the url and setting the username and password
 
     this._terminateFetchController();
@@ -408,11 +401,20 @@ export default class MockXhr
       throw new SyntaxError();
     }
 
-    if (!isRequestHeaderForbidden(name)) {
-      // Normalize value
-      value = value.trim();
-      this._authorRequestHeaders.addHeader(name, value);
+    // Normalize value
+    value = value.trim();
+
+    if (!Utils.isHeaderName(name)) {
+      throwError('SyntaxError', `Name "${name}" is not a header name.`);
+    } else if (!Utils.isHeaderValue(value)) {
+      throwError('SyntaxError', `Value "${value}" is not a header value.`);
     }
+
+    if (Utils.isRequestHeaderForbidden(name)) {
+      return;
+    }
+
+    this._authorRequestHeaders.addHeader(name, value);
   }
 
   /**
@@ -511,7 +513,7 @@ export default class MockXhr
 
     this._fireProgressEvent('loadstart', 0, 0);
     if (!this._uploadCompleteFlag && this._uploadListenerFlag) {
-      this._fireUploadProgressEvent('loadstart', 0, getBodyByteSize(body));
+      this._fireUploadProgressEvent('loadstart', 0, Utils.getBodyByteSize(body));
     }
 
     if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
