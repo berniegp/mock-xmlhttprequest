@@ -15,7 +15,8 @@ describe('MockXhr', () => {
   function recordEvents(xhr: MockXhr) {
     const events: string[] = [];
     const makeEventRecorder = (prefix = '') => {
-      return (e: XhrProgressEvent) => {
+      return (evt: Event) => {
+        const e = evt as unknown as XhrProgressEvent;
         events.push(`${prefix}${e.type}(${e.loaded},${e.total},${e.lengthComputable})`);
       };
     };
@@ -58,6 +59,43 @@ describe('MockXhr', () => {
     it('should have a readyState attribute', () => {
       const xhr = new MockXhr();
       assert.strictEqual(xhr.readyState, MockXhr.UNSENT, 'initial value');
+    });
+
+    it('should not call readyState listeners added in dispatchEvent() listeners', () => {
+      const xhr = new MockXhr();
+
+      xhr.onreadystatechange = () => {
+        xhr.addEventListener('readystatechange', () => {
+          assert.fail('listener added in callback should not be called');
+        });
+      };
+
+      xhr.open('GET', '/url');
+    });
+
+    it('should not call readyState listeners removed in dispatchEvent() listeners', () => {
+      const xhr = new MockXhr();
+
+      function callback1() {
+        xhr.removeEventListener('readystatechange', callback2);
+        xhr.removeEventListener('readystatechange', callback3);
+        xhr.onreadystatechange = null;
+      }
+      function callback2() {
+        assert.fail('listener added in callback should not be called');
+      }
+      function callback3() {
+        assert.fail('listener added in callback should not be called');
+      }
+      function callback4() {
+        assert.fail('listener added in callback should not be called');
+      }
+      xhr.addEventListener('readystatechange', callback1);
+      xhr.addEventListener('readystatechange', callback2);
+      xhr.addEventListener('readystatechange', callback3, { once: true });
+      xhr.onreadystatechange = callback4;
+
+      xhr.open('GET', '/url');
     });
   });
 

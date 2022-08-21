@@ -1,5 +1,3 @@
-import type { TXhrProgressEventNames } from './XhrProgressEventsNames';
-
 /**
  * Implementation of XMLHttpRequestEventTarget. A target for dispatching events.
  *
@@ -47,9 +45,7 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
    * @returns Whether any event listener is registered
    */
   hasListeners() {
-    return [...this._listeners.values()].some((listeners) => {
-      return listeners.some(({ removed }) => !removed);
-    });
+    return [...this._listeners.values()].some((listeners) => listeners.length > 0);
   }
 
   /**
@@ -166,7 +162,7 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
     return true;
   }
 
-  private _getEventHandlerProperty(event: TXhrProgressEventNames) {
+  protected _getEventHandlerProperty(event: string) {
     const listeners = this._listeners.get(event);
     if (listeners) {
       const entry = listeners.find((entry) => entry.isEventHandlerProperty);
@@ -177,8 +173,8 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
     return null;
   }
 
-  private _setEventHandlerProperty(
-    event: TXhrProgressEventNames,
+  protected _setEventHandlerProperty(
+    event: string,
     value?: EventHandlerProperty | null
   ) {
     const listeners = this._listeners.get(event);

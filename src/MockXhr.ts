@@ -134,7 +134,13 @@ export default class MockXhr
 
   readonly DONE = MockXhr.DONE;
 
-  onreadystatechange: ((this: XMLHttpRequest, ev: Event) => any) | null;
+  get onreadystatechange() {
+    return this._getEventHandlerProperty('readystatechange') as ((this: XMLHttpRequest, ev: Event) => any);
+  }
+
+  set onreadystatechange(value: ((this: XMLHttpRequest, ev: Event) => any) | null) {
+    this._setEventHandlerProperty('readystatechange', value);
+  }
 
   //---------
   // Mock API
@@ -837,9 +843,6 @@ export default class MockXhr
 
   private _fireReadyStateChangeEvent() {
     const event = new XhrEvent('readystatechange');
-    if (this.onreadystatechange) {
-      this.onreadystatechange(event as Event);
-    }
     this.dispatchEvent(event);
   }
 

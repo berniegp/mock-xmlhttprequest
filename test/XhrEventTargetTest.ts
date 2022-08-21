@@ -236,13 +236,13 @@ describe('EventTarget', () => {
         eventTarget.onerror = null;
       }
       function callback2() {
-        assert.fail('listened added in callback should not be called');
+        assert.fail('listener added in callback should not be called');
       }
       function callback3() {
-        assert.fail('listened added in callback should not be called');
+        assert.fail('listener added in callback should not be called');
       }
       function callback4() {
-        assert.fail('listened added in callback should not be called');
+        assert.fail('listener added in callback should not be called');
       }
       eventTarget.addEventListener(event.type, callback1);
       eventTarget.addEventListener(event.type, callback2);
