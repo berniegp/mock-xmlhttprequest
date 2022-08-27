@@ -1,5 +1,4 @@
 import RequestData from './RequestData';
-import { getBodyByteSize } from './Utils';
 
 import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver';
 
@@ -39,21 +38,15 @@ export default class MockXhrRequest {
    *
    * @returns Request body's total byte size
    */
-  getRequestBodySize() {
-    return getBodyByteSize(this.body);
-  }
+  getRequestBodySize() { return this._requestData.getRequestBodySize(); }
 
   /**
    * Fire a request upload progress event.
    *
-   * @param transmitted Bytes transmitted
+   * @param transmitted Transmitted bytes
    */
   uploadProgress(transmitted: number) {
-    this._responseReceiver.uploadProgress(
-      this._requestData,
-      transmitted,
-      this.getRequestBodySize()
-    );
+    this._responseReceiver.uploadProgress(this._requestData, transmitted);
   }
 
   /**
@@ -94,7 +87,7 @@ export default class MockXhrRequest {
    * Fire a response progress event. Changes the request's readyState to LOADING.
    *
    * @param transmitted Transmitted bytes
-   * @param length Total bytes
+   * @param length Body length in bytes
    */
   downloadProgress(transmitted: number, length: number) {
     this._responseReceiver.downloadProgress(this._requestData, transmitted, length);

@@ -412,7 +412,7 @@ After you call this method, you can use the following mock response methods:
 - [`setRequestTimeout()`](#setrequesttimeout).
 
 ##### downloadProgress(transmitted, length)
-Fires a response progress event. Changes the request's `readyState` to `LOADING`.
+Fires a response progress event. Changes the request's `readyState` to `LOADING` if it is `HEADERS_RECEIVED`.
 
 You must call [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok) before this method.
 
@@ -452,7 +452,7 @@ Returns a new `MockXhrServer` with its own unique `MockXhr` subclass. See [`newM
 Add [routes](#routes) to the `MockXhrServer` with the optional `routes` argument. See the [constructor](#mockxhrserverroutes) for details.
 
 ## XMLHttpRequest features
-Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org) version '18 August 2020'.
+Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org) version '15 August 2022'.
 
 ### Supported
 - Events and states.

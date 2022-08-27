@@ -4,7 +4,7 @@ import type RequestData from './RequestData';
  * Methods for responding to MockXhr requests
  */
 export interface MockXhrResponseReceiver {
-  uploadProgress(request: RequestData, transmitted: number, length: number) : void;
+  uploadProgress(request: RequestData, requestBodyTransmitted: number) : void;
 
   setResponseHeaders(
     request: RequestData,
@@ -13,7 +13,7 @@ export interface MockXhrResponseReceiver {
     statusText?: string
   ) : void;
 
-  downloadProgress(request: RequestData, transmitted: number, length: number): void;
+  downloadProgress(request: RequestData, receivedBytesLength: number, length: number): void;
 
   setResponseBody(request: RequestData, body: any): void;
 

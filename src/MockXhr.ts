@@ -21,9 +21,11 @@ export type OnCreateCallback = (xhr: MockXhr) => void;
 
 export type OnSendCallback = (this: MockXhrRequest, request: MockXhrRequest) => void;
 
+const RESPONSE_TYPES = ['', 'arraybuffer', 'blob', 'document', 'json', 'text'];
+
 /**
  * XMLHttpRequest mock for testing.
- * Based on https://xhr.spec.whatwg.org version '18 August 2020'.
+ * Based on https://xhr.spec.whatwg.org version '15 August 2022'.
  *
  * Supports:
  *  - Events and states
@@ -184,10 +186,10 @@ export default class MockXhr
    * Fire a request upload progress event.
    *
    * @param request Originating request
-   * @param transmitted Bytes transmitted
+   * @param requestBodyTransmitted Bytes transmitted
    * @see {@link https://xhr.spec.whatwg.org/#the-send()-method "processRequestBodyChunkLength" steps}
    */
-  uploadProgress(request: RequestData, transmitted: number) {
+  uploadProgress(request: RequestData, requestBodyTransmitted: number) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
       if (!this._sendFlag) {
@@ -196,9 +198,17 @@ export default class MockXhr
       if (this._uploadCompleteFlag) {
         throw new Error('Mock usage error detected: upload already completed (the "upload complete flag" is set)');
       }
+      const requestBodyLength = request.getRequestBodySize();
+      if (requestBodyTransmitted > requestBodyLength) {
+        throw new Error(`Mock usage error detected: upload progress "requestBodyTransmitted" (${requestBodyTransmitted}) `
+          + `is greater than "requestBodyLength" (${requestBodyLength})`);
+      }
+
+      // Don't throttle events based on elapsed time because it would make tests much slower and
+      // harder to write.
       if (this._uploadListenerFlag) {
         // If no listeners were registered before send(), no upload events should be fired.
-        this._fireUploadProgressEvent('progress', transmitted, Utils.getBodyByteSize(request.body));
+        this._fireUploadProgressEvent('progress', requestBodyTransmitted, requestBodyLength);
       }
     }
   }
@@ -225,8 +235,9 @@ export default class MockXhr
       if (this._readyState !== MockXhr.OPENED) {
         throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be OPENED (${MockXhr.OPENED})`);
       }
+
       if (request.body) {
-        this._processRequestEndOfBody(Utils.getBodyByteSize(request.body));
+        this._processRequestEndOfBody(request.getRequestBodySize(), request.getRequestBodySize());
       }
       status = typeof status === 'number' ? status : 200;
       const statusMessage = statusText ?? Utils.getStatusText(status);
@@ -242,11 +253,11 @@ export default class MockXhr
    * Fire a response progress event. Changes the request's readyState to LOADING.
    *
    * @param request Originating request
-   * @param transmitted Transmitted bytes
-   * @param length Total bytes
+   * @param receivedBytesLength Received bytes' length
+   * @param length Body length in bytes
    * @see {@link https://xhr.spec.whatwg.org/#the-send()-method "processBodyChunk" steps}
    */
-  downloadProgress(request: RequestData, transmitted: number, length: number) {
+  downloadProgress(request: RequestData, receivedBytesLength: number, length: number) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
       if (this._readyState !== MockXhr.HEADERS_RECEIVED
@@ -262,7 +273,7 @@ export default class MockXhr
       // As stated in https://xhr.spec.whatwg.org/#the-send()-method
       // Web compatibility is the reason readystatechange fires more often than state changes.
       this._fireReadyStateChangeEvent();
-      this._fireProgressEvent('progress', transmitted, length);
+      this._fireProgressEvent('progress', receivedBytesLength, length);
     }
   }
 
@@ -286,7 +297,8 @@ export default class MockXhr
       }
 
       if (this._readyState === MockXhr.OPENED) {
-        // Default "200 - OK" response headers
+        // Apply default "200 - OK" response headers if the user didn't call setResponseHeaders()
+        // before this point.
         this.setResponseHeaders(request);
       }
 
@@ -296,7 +308,7 @@ export default class MockXhr
       this._readyState = MockXhr.LOADING;
       this._fireReadyStateChangeEvent();
 
-      this._response.body = body;
+      this._response.body = body ?? null;
       this._handleResponseEndOfBody();
     }
   }
@@ -330,8 +342,9 @@ export default class MockXhr
       if (this.timeout === 0) {
         throw new Error('Mock usage error detected: the timeout attribute must be greater than 0 for a timeout to occur');
       }
-      this._terminateFetchController();
+
       this._timedOutFlag = true;
+      this._terminateFetchController();
       this._processResponse(makeNetworkErrorResponse());
     }
   }
@@ -428,7 +441,6 @@ export default class MockXhr
    * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-timeout}
    */
   set timeout(value: number) {
-    // Since this library is meant to run on node, skip the step involving the Window object.
     this._timeout = value;
 
     // Use this._getPrototype() to get the value of timeoutEnabled on the most derived class'
@@ -481,7 +493,7 @@ export default class MockXhr
 
       // Document body type not supported
 
-      // https://fetch.spec.whatwg.org/#concept-bodyinit-extract
+      // https://fetch.spec.whatwg.org/#bodyinit-safely-extract
       {
         let contentType = null;
         if (typeof body === 'string') {
@@ -490,38 +502,20 @@ export default class MockXhr
           // As specified for Blob
           contentType = body.type;
         }
-
-        // BufferSource, FormData, etc. not handled specially
         extractedContentType = contentType;
       }
 
-      /*
-      * Skipping step "4. If author request headers contains `Content-Type`, then:"
-      * Parsing mime type strings and overriding the charset to UTF-8 seems like a lot of work
-      * for little gain. If I'm wrong, please open an issue or better yet a pull request.
-      */
-
-      if (this._authorRequestHeaders.getHeader('Content-Type') === null && extractedContentType !== null) {
+      const originalAuthorContentType = this._authorRequestHeaders.getHeader('Content-Type');
+      if (originalAuthorContentType !== null) {
+        // Skipping the steps that parse mime type strings and potentially overrides the charset to
+        // UTF-8. This seems like a lot of work for little gain. If I'm wrong, please open an issue
+        // or better yet a pull request.
+      } else if (extractedContentType !== null) {
         this._authorRequestHeaders.addHeader('Content-Type', extractedContentType);
       }
     }
 
     this._uploadListenerFlag = this._uploadObject.hasListeners();
-    this._uploadCompleteFlag = body === null;
-    this._timedOutFlag = false;
-    this._sendFlag = true;
-
-    this._fireProgressEvent('loadstart', 0, 0);
-    if (!this._uploadCompleteFlag && this._uploadListenerFlag) {
-      this._fireUploadProgressEvent('loadstart', 0, Utils.getBodyByteSize(body));
-    }
-
-    if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
-      return;
-    }
-
-    this._timeoutReference = Date.now();
-    this._scheduleRequestTimeout();
 
     const requestData = new RequestData(
       new HeadersContainer(this._authorRequestHeaders),
@@ -530,7 +524,28 @@ export default class MockXhr
       body,
       this._crossOriginCredentials
     );
-    this._currentRequest = new MockXhrRequest(requestData, this);
+    const req = new MockXhrRequest(requestData, this);
+
+    this._uploadCompleteFlag = false;
+    this._timedOutFlag = false;
+    this._uploadCompleteFlag = req.body === null;
+    this._sendFlag = true;
+
+    this._fireProgressEvent('loadstart', 0, 0);
+    if (!this._uploadCompleteFlag && this._uploadListenerFlag) {
+      this._fireUploadProgressEvent('loadstart', 0, req.getRequestBodySize());
+    }
+
+    if (this._readyState !== MockXhr.OPENED || !this._sendFlag) {
+      return;
+    }
+
+    // Other interactions are triggered by the mock's MockXhrResponseReceiver API
+
+    this._currentRequest = req;
+
+    this._timeoutReference = Date.now();
+    this._scheduleRequestTimeout();
 
     this._callOnSend(MockXhr.onSend);
     const prototype = this._getPrototype();
@@ -608,7 +623,8 @@ export default class MockXhr
     if (this._readyState === MockXhr.LOADING || this._readyState === MockXhr.DONE) {
       throwError('InvalidStateError');
     }
-    // noop
+
+    // The other steps are not implemented
   }
 
   /**
@@ -629,8 +645,7 @@ export default class MockXhr
 
     // The spec doesn't mandate throwing anything on invalid values since values must be of type
     // XMLHttpRequestResponseType. Observed browser behavior is to ignore invalid values.
-    const responseTypes = ['', 'arraybuffer', 'blob', 'document', 'json', 'text'];
-    if (responseTypes.includes(value)) {
+    if (RESPONSE_TYPES.includes(value)) {
       this._responseType = value;
     }
   }
@@ -644,14 +659,14 @@ export default class MockXhr
       if (this._readyState !== MockXhr.LOADING && this._readyState !== MockXhr.DONE) {
         return '';
       }
-
-      // No support for charset decoding as outlined in https://xhr.spec.whatwg.org/#text-response
-      return this._response.body ?? '';
+      return this._getTextResponse();
     }
 
     if (this._readyState !== MockXhr.DONE) {
       return null;
     }
+
+    // No specific handling of 'arraybuffer', 'blob', or 'document' response types
 
     if (this._responseType === 'json') {
       if (this._response.body === null) {
@@ -676,13 +691,10 @@ export default class MockXhr
     if (this._responseType !== '' && this._responseType !== 'text') {
       throwError('InvalidStateError');
     }
-
     if (this._readyState !== MockXhr.LOADING && this._readyState !== MockXhr.DONE) {
       return '';
     }
-
-    // No support for charset decoding as outlined in https://xhr.spec.whatwg.org/#text-response
-    return this._response.body as string ?? '';
+    return this._getTextResponse();
   }
 
   /**
@@ -698,9 +710,8 @@ export default class MockXhr
       return null;
     }
 
-    // Since this library is meant to run on node, there is no support for charset decoding as
-    // outlined in https://xhr.spec.whatwg.org/#text-response
-    // If needed, a document response can be given to setResponseBody() to be returned here.
+    // The response body is not converted to a document response. To get a document
+    // response, pass it directly as the response body in setResponseBody().
     return this._response.body ?? '';
   }
 
@@ -711,19 +722,22 @@ export default class MockXhr
   /**
    * Steps for when the request upload is complete.
    *
-   * @param bodySize request body size in bytes
+   * @param requestBodyTransmitted Bytes transmitted
+   * @param requestBodyLength Request body's length
    * @see {@link https://xhr.spec.whatwg.org/#the-send()-method "processRequestEndOfBody" steps}
    */
-  private _processRequestEndOfBody(bodySize: number) {
+  private _processRequestEndOfBody(requestBodyTransmitted: number, requestBodyLength: number) {
     this._uploadCompleteFlag = true;
 
-    if (this._uploadListenerFlag) {
-      // If no listeners were registered before send(), these steps do not run.
-      const transmitted = bodySize;
-      this._fireUploadProgressEvent('progress', transmitted, bodySize);
-      this._fireUploadProgressEvent('load', transmitted, bodySize);
-      this._fireUploadProgressEvent('loadend', transmitted, bodySize);
+    // There must be at least one Upload listener registered before send() to emit upload progress
+    // events.
+    if (!this._uploadListenerFlag) {
+      return;
     }
+
+    this._fireUploadProgressEvent('progress', requestBodyTransmitted, requestBodyLength);
+    this._fireUploadProgressEvent('load', requestBodyTransmitted, requestBodyLength);
+    this._fireUploadProgressEvent('loadend', requestBodyTransmitted, requestBodyLength);
   }
 
   /**
@@ -748,7 +762,12 @@ export default class MockXhr
     if (this._response.body === null) {
       this._handleResponseEndOfBody();
     }
-    // Further steps are triggered by the MockXhr response methods
+
+    // Don't do the step that extract a length from the response's header list. The
+    // downloadProgress() method of the mock's MockXhrResponseReceiver API has a length argument
+    // that is used instead.
+
+    // Further steps are triggered by the mock's MockXhrResponseReceiver API
   }
 
   /**
@@ -783,6 +802,10 @@ export default class MockXhr
     if (this._timedOutFlag) {
       // Timeout
       this._requestErrorSteps('timeout');
+
+      // We don't check the aborted flag because it can't be set in the context of this library.
+      // In a browser, the aborted flag can be set if the user presses Esc, the browser stop button,
+      // or the document the fetch is associated with is unloaded.
     } else if (this._response.isNetworkError) {
       // Network error
       this._requestErrorSteps('error');
@@ -813,6 +836,15 @@ export default class MockXhr
     this._fireProgressEvent('loadend', 0, 0);
   }
 
+  private _getTextResponse() {
+    // Skip support for charset decoding as outlined in https://xhr.spec.whatwg.org/#text-response
+    // Users of this library should instead directly set a string response body as needed.
+
+    // The spec allows access to a text response while it's being received (i.e. LOADING state).
+    // This library current offers no way to simulate this.
+    return this._response.body?.toString() ?? '';
+  }
+
   //----------
   // Internals
   //----------
@@ -826,8 +858,6 @@ export default class MockXhr
   }
 
   private _terminateFetchController() {
-    delete this._requestMethod;
-    delete this._requestUrl;
     delete this._currentRequest;
   }
 
