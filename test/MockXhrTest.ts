@@ -196,6 +196,25 @@ describe('MockXhr', () => {
         });
       });
 
+      it('should record empty header value', () => {
+        const xhr = new MockXhr();
+        const done: Promise<MockXhrRequest> = new Promise((resolve) => { xhr.onSend = resolve; });
+        xhr.open('GET', '/url');
+        xhr.setRequestHeader('empty-value', '');
+        xhr.setRequestHeader('2-empty-values', '');
+        xhr.setRequestHeader('2-empty-values', '');
+        xhr.setRequestHeader('empty-mid-value', 'a');
+        xhr.setRequestHeader('empty-mid-value', '');
+        xhr.setRequestHeader('empty-mid-value', 'b');
+        xhr.send();
+
+        return done.then((request) => {
+          assert.strictEqual(request.requestHeaders.getHeader('empty-value'), '');
+          assert.strictEqual(request.requestHeaders.getHeader('2-empty-values'), ', ');
+          assert.strictEqual(request.requestHeaders.getHeader('empty-mid-value'), 'a, , b');
+        });
+      });
+
       it('should throw InvalidStateError if not opened', () => {
         assert.throws(() => {
           new MockXhr().setRequestHeader('Head', '1');
