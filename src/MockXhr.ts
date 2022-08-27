@@ -498,6 +498,8 @@ export default class MockXhr
         let contentType = null;
         if (typeof body === 'string') {
           contentType = 'text/plain;charset=UTF-8';
+        } else if (typeof FormData !== 'undefined' && body instanceof FormData) {
+          contentType = 'multipart/form-data; boundary=-----MochXhr1234';
         } else if (body.type) {
           // As specified for Blob
           contentType = body.type;

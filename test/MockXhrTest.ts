@@ -10,6 +10,8 @@ import { XHR_PROGRESS_EVENT_NAMES } from '../src/XhrProgressEventsNames';
 
 import type XhrProgressEvent from '../src/XhrProgressEvent';
 
+class FormDataMock {}
+
 describe('MockXhr', () => {
   // Returns an array which contains all events fired by the xhr
   function recordEvents(xhr: MockXhr) {
@@ -505,6 +507,30 @@ describe('MockXhr', () => {
             'Content-Type set'
           );
         });
+      });
+
+      it('should handle FormData body', () => {
+        // The FormData code path of send() requires FormData in the global context.
+        const savedFormData = globalThis.FormData;
+        globalThis.FormData = FormDataMock as unknown as typeof globalThis.FormData;
+        try {
+          const xhr = new MockXhr();
+          const body = new FormDataMock();
+
+          const done: Promise<MockXhrRequest> = new Promise((resolve) => { xhr.onSend = resolve; });
+          xhr.open('POST', '/url');
+          xhr.send(body);
+
+          return done.then((request) => {
+            assert.strictEqual(
+              request.requestHeaders.getHeader('Content-Type'),
+              'multipart/form-data; boundary=-----MochXhr1234',
+              'Content-Type set'
+            );
+          });
+        } finally {
+          globalThis.FormData = savedFormData;
+        }
       });
 
       it('should use body mime type in request header', () => {
