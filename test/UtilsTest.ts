@@ -12,10 +12,6 @@ class BlobMock {
   get size() { return BlobMock.testSize; }
 }
 
-class BufferSourceMock {
-  constructor(public byteLength: number) {}
-}
-
 class FormDataMock {
   private _values: any[];
 
@@ -52,7 +48,7 @@ describe('Utils', () => {
       }
     });
 
-    it('should return string byte length using BufferSource', () => {
+    it('should return string byte length using Buffer', () => {
       assert.strictEqual(Utils.getBodyByteSize('abcd'), 4, 'single code unit characters');
       assert.strictEqual(Utils.getBodyByteSize('😂👍'), 8, 'multi code unit characters');
       assert.strictEqual(Utils.getBodyByteSize('a😂b👍c'), 11, 'mixed code unit characters');
@@ -66,8 +62,8 @@ describe('Utils', () => {
     });
 
     it('should return BufferSource byte size', () => {
-      const bufferSource = new BufferSourceMock(10);
-      assert.strictEqual(Utils.getBodyByteSize(bufferSource as BufferSource), 10);
+      const bufferSource = new ArrayBuffer(10);
+      assert.strictEqual(Utils.getBodyByteSize(bufferSource), 10);
     });
 
     it('should return FormData byte size', () => {
