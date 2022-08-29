@@ -9,7 +9,7 @@ export interface RequestHandlerResponse {
   status: number;
   statusText: string;
   headers: Record<string, string>;
-  body: string;
+  body: any;
 }
 
 type RequestHandlerCallback = (request: MockXhrRequest) => void;
