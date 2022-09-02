@@ -1,6 +1,6 @@
 {
   "name": "mock-xmlhttprequest",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "description": "XMLHttpRequest mock for testing",
   "exports": {
     "import": "./dist/esm/index.mjs",
