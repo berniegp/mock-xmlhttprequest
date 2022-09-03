@@ -1,37 +1,16 @@
 import { assert } from 'chai';
 
+import { recordEvents } from './TestUtils';
 import HeadersContainer from '../src/HeadersContainer';
 import MockXhr from '../src/MockXhr';
 import MockXhrRequest from '../src/MockXhrRequest';
 import RequestData from '../src/RequestData';
 import { upperCaseMethods } from '../src/Utils';
 import XhrEventTarget from '../src/XhrEventTarget';
-import { XHR_PROGRESS_EVENT_NAMES } from '../src/XhrProgressEventsNames';
-
-import type XhrProgressEvent from '../src/XhrProgressEvent';
 
 class FormDataMock {}
 
 describe('MockXhr', () => {
-  // Returns an array which contains all events fired by the xhr
-  function recordEvents(xhr: MockXhr) {
-    const events: string[] = [];
-    const makeEventRecorder = (prefix = '') => {
-      return (evt: Event) => {
-        const e = evt as unknown as XhrProgressEvent;
-        events.push(`${prefix}${e.type}(${e.loaded},${e.total},${e.lengthComputable})`);
-      };
-    };
-    XHR_PROGRESS_EVENT_NAMES.forEach((event) => {
-      xhr.addEventListener(event, makeEventRecorder());
-      xhr.upload.addEventListener(event, makeEventRecorder('upload.'));
-    });
-    xhr.addEventListener('readystatechange', function readystatechange(this: MockXhr) {
-      events.push(`readystatechange(${this.readyState})`);
-    });
-    return events;
-  }
-
   // Asserts that the response is a network error
   function assertNetworkErrorResponse(xhr: MockXhr) {
     assert.strictEqual(xhr.getAllResponseHeaders(), '', 'Response headers');
@@ -1392,7 +1371,7 @@ describe('MockXhr', () => {
           const events = recordEvents(xhr);
           request.setResponseBody(responseBody);
 
-          assert.strictEqual(xhr.getAllResponseHeaders(), '', 'Response headers');
+          assert.strictEqual(xhr.getAllResponseHeaders(), 'content-length: 8\r\n', 'Response headers');
           assert.strictEqual(xhr.status, 200, 'xhr.status');
           assert.strictEqual(xhr.statusText, 'OK', 'xhr.statusText');
           assert.strictEqual(xhr.response, responseBody, 'xhr.response');

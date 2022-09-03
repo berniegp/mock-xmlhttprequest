@@ -1,5 +1,5 @@
 import MockXhr from './MockXhr';
-import { normalizeHTTPMethodName } from './Utils';
+import { getBodyByteSize, normalizeHTTPMethodName } from './Utils';
 
 import type MockXhrRequest from './MockXhrRequest';
 
@@ -40,6 +40,14 @@ interface RequestLogEntry {
  * matching and request handlers to make test harness creation easier.
  */
 export default class MockXhrServer {
+  /**
+   * When this is greater than 0, the server automatically generates request (upload) and response
+   * (download) progress events. The progress events have increments of "progressRate" bytes.
+   *
+   * This only applies to request handlers of type "object".
+   */
+  public progressRate: number;
+
   private _MockXhr: typeof MockXhr;
 
   private _requests: RequestLogEntry[];
@@ -63,6 +71,7 @@ export default class MockXhrServer {
    * @param routes Routes
    */
   constructor(xhrMock: typeof MockXhr, routes?: Record<string, [UrlMatcher, RequestHandler]>) {
+    this.progressRate = 0;
     this._MockXhr = xhrMock;
     this._requests = [];
     this._routes = {};
@@ -246,10 +255,9 @@ export default class MockXhrServer {
     if (route) {
       // Routes can have arrays of handlers. Each one is used once and the last one is used if out
       // of elements.
-      let { handler } = route;
-      if (Array.isArray(handler)) {
-        handler = handler[Math.min(handler.length - 1, route.count)];
-      }
+      const handler = Array.isArray(route.handler)
+        ? route.handler[Math.min(route.handler.length - 1, route.count)]
+        : route.handler;
       route.count += 1;
 
       if (typeof handler === 'function') {
@@ -259,7 +267,61 @@ export default class MockXhrServer {
       } else if (handler === 'timeout') {
         request.setRequestTimeout();
       } else {
-        request.respond(handler.status, handler.headers, handler.body, handler.statusText);
+        const responseHeaders = { ...handler.headers };
+        const responseBodySize = getBodyByteSize(handler.body);
+
+        // Add the Content-Length header if it's not present.
+        if (!Object.keys(responseHeaders).some((k) => k.toUpperCase() === 'CONTENT-LENGTH')) {
+          responseHeaders['content-length'] = String(responseBodySize);
+        }
+
+        if (this.progressRate <= 0) {
+          request.respond(handler.status, responseHeaders, handler.body, handler.statusText);
+        } else {
+          let responseTransmitted = 0;
+          const responsePhase = () => {
+            if (responseTransmitted === 0) {
+              request.setResponseHeaders(handler.status, responseHeaders, handler.statusText);
+            }
+            if (this.progressRate <= 0) {
+              // Final operation for this request
+              request.setResponseBody(handler.body);
+            } else {
+              const nextTransmitted = responseTransmitted + this.progressRate;
+              if (nextTransmitted < responseBodySize) {
+                responseTransmitted = nextTransmitted;
+                request.downloadProgress(responseTransmitted, responseBodySize);
+                Promise.resolve().then(() => responsePhase());
+              } else {
+                // Final operation for this request
+                request.setResponseBody(handler.body);
+              }
+            }
+          };
+
+          const requestBodySize = request.getRequestBodySize();
+          if (requestBodySize === 0) {
+            responsePhase();
+          } else {
+            let requestTransmitted = 0;
+            const requestPhase = () => {
+              if (this.progressRate <= 0) {
+                // Final operation for this request
+                request.respond(handler.status, responseHeaders, handler.body, handler.statusText);
+              } else {
+                const nextTransmitted = requestTransmitted + this.progressRate;
+                if (nextTransmitted < requestBodySize) {
+                  requestTransmitted = nextTransmitted;
+                  request.uploadProgress(requestTransmitted);
+                  Promise.resolve().then(() => requestPhase());
+                } else {
+                  responsePhase();
+                }
+              }
+            };
+            requestPhase();
+          }
+        }
       }
     }
   }

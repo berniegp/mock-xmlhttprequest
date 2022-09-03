@@ -1,11 +1,12 @@
 import { assert } from 'chai';
 
+import { recordEvents } from './TestUtils';
 import HeadersContainer from '../src/HeadersContainer';
 import MockXhr, { type OnSendCallback } from '../src/MockXhr';
 import MockXhrRequest from '../src/MockXhrRequest';
 import MockXhrServer from '../src/MockXhrServer';
 import RequestData from '../src/RequestData';
-import { getStatusText, upperCaseMethods } from '../src/Utils';
+import { getBodyByteSize, getStatusText, upperCaseMethods } from '../src/Utils';
 
 import type { RequestHandlerResponse } from '../src/MockXhrServer';
 
@@ -21,15 +22,23 @@ describe('MockXhrServer', () => {
       method: string,
       url: string,
       headers: Record<string, string> = {},
-      body: any = null
+      body: any = null,
+      delayedSend = false
     ) {
       const xhr = new MockXhrClass();
       xhr.open(method, url);
       Object.entries(headers).forEach(([name, value]) => xhr.setRequestHeader(name, value));
-      xhr.send(body);
       onSendPromises.push(new Promise((resolve) => {
         xhr.addEventListener('loadend', () => resolve(xhr));
       }));
+
+      if (delayedSend) {
+        // Run in an empty callstack to give users a chance to modify the xhr before send().
+        // e.g. to add (upload) listeners.
+        Promise.resolve().then(() => xhr.send(body));
+      } else {
+        xhr.send(body);
+      }
       return xhr;
     }
 
@@ -43,8 +52,13 @@ describe('MockXhrServer', () => {
   function assertResponse(xhr: MockXhr, response: Partial<RequestHandlerResponse>) {
     const status = response.status ?? 200;
     assert.strictEqual(xhr.status, status, 'response status');
-    assert.deepEqual(xhr.getResponseHeadersHash(), response.headers ?? {}, 'response headers');
-    assert.strictEqual(xhr.response, response.body ?? null, 'response body');
+
+    const headers = {
+      'content-length': String(getBodyByteSize(response.body)),
+      ...response.headers,
+    };
+    assert.deepEqual(xhr.getResponseHeadersHash(), headers, 'response headers');
+    assert.strictEqual(xhr.response, response.body ?? '', 'response body');
     assert.strictEqual(xhr.statusText, response.statusText ?? getStatusText(status), 'status text');
   }
 
@@ -381,6 +395,19 @@ describe('MockXhrServer', () => {
       });
     });
 
+    it('should support response hash handler with null body', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+      const response = { body: null };
+
+      server.setDefaultHandler(response);
+      const xhr = doRequest('method', '/path');
+
+      return waitForResponses().then(() => {
+        assertResponse(xhr, response);
+      });
+    });
+
     it('should support Function handler', () => {
       const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
       const server = new MockXhrServer(MockXhrClass);
@@ -530,6 +557,149 @@ describe('MockXhrServer', () => {
 
       return waitForResponses().then(() => {
         assert.strictEqual(xhr.status, 404);
+      });
+    });
+  });
+
+  describe('progressRate', () => {
+    it('should produce upload and download progress events', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+      const response = {
+        status: 201,
+        headers: { header: '123' },
+        body: 'some body',
+        statusText: 'Status Text',
+      };
+
+      server.addHandler('method', '/path', response);
+      server.progressRate = 3;
+      const xhr = doRequest('method', '/path', {}, 'request', true);
+      const events = recordEvents(xhr);
+
+      return waitForResponses().then(() => {
+        assertResponse(xhr, response);
+        assert.deepEqual(events, [
+          'loadstart(0,0,false)',
+          'upload.loadstart(0,7,true)',
+          'upload.progress(3,7,true)',
+          'upload.progress(6,7,true)',
+          'upload.progress(7,7,true)',
+          'upload.load(7,7,true)',
+          'upload.loadend(7,7,true)',
+          'readystatechange(2)',
+          'readystatechange(3)',
+          'progress(3,9,true)',
+          'readystatechange(3)',
+          'progress(6,9,true)',
+          'readystatechange(3)',
+          'progress(9,9,true)',
+          'readystatechange(4)',
+          'load(9,9,true)',
+          'loadend(9,9,true)',
+        ], 'fired events');
+      });
+    });
+
+    it('should work with empty request and response bodies', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+      const response = {};
+
+      server.addHandler('GET', '/path', response);
+      server.progressRate = 3;
+      const xhr = doRequest('GET', '/path', {}, null, true);
+      const events = recordEvents(xhr);
+
+      return waitForResponses().then(() => {
+        assertResponse(xhr, response);
+        assert.deepEqual(events, [
+          'loadstart(0,0,false)',
+          'readystatechange(2)',
+          'readystatechange(3)',
+          'progress(0,0,false)',
+          'readystatechange(4)',
+          'load(0,0,false)',
+          'loadend(0,0,false)',
+        ], 'fired events');
+      });
+    });
+
+    it('can be modified while a request is in progress', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+      const response = {
+        status: 201,
+        headers: { header: '123' },
+        body: 'some body',
+        statusText: 'Status Text',
+      };
+
+      server.addHandler('method', '/path', response);
+      server.progressRate = 2;
+      const xhr = doRequest('method', '/path', {}, 'request', true);
+      xhr.upload.addEventListener('progress', () => { server.progressRate = 10; }, { once: true });
+      xhr.upload.addEventListener('loadend', () => { server.progressRate = 2; }, { once: true });
+      xhr.addEventListener('progress', () => { server.progressRate = 0; }, { once: true });
+      const events = recordEvents(xhr);
+
+      return waitForResponses().then(() => {
+        assertResponse(xhr, response);
+        assert.deepEqual(events, [
+          'loadstart(0,0,false)',
+          'upload.loadstart(0,7,true)',
+          'upload.progress(2,7,true)',
+          // progressRate = 10
+          'upload.progress(7,7,true)',
+          'upload.load(7,7,true)',
+          'upload.loadend(7,7,true)',
+          // progressRate = 2
+          'readystatechange(2)',
+          'readystatechange(3)',
+          'progress(2,9,true)',
+          // progressRate = 0
+          'readystatechange(3)',
+          'progress(9,9,true)',
+          'readystatechange(4)',
+          'load(9,9,true)',
+          'loadend(9,9,true)',
+        ], 'fired events');
+      });
+    });
+
+    it('can be disabled while a request is in progress', () => {
+      const { MockXhrClass, doRequest, waitForResponses } = makeTestHarness();
+      const server = new MockXhrServer(MockXhrClass);
+      const response = {
+        status: 201,
+        headers: { header: '123' },
+        body: 'some body',
+        statusText: 'Status Text',
+      };
+
+      server.addHandler('method', '/path', response);
+      server.progressRate = 2;
+      const xhr = doRequest('method', '/path', {}, 'request', true);
+      xhr.upload.addEventListener('progress', () => { server.progressRate = 0; }, { once: true });
+      const events = recordEvents(xhr);
+
+      return waitForResponses().then(() => {
+        assertResponse(xhr, response);
+        assert.deepEqual(events, [
+          'loadstart(0,0,false)',
+          'upload.loadstart(0,7,true)',
+          'upload.progress(2,7,true)',
+          // progressRate = 0
+          'upload.progress(7,7,true)',
+          'upload.load(7,7,true)',
+          'upload.loadend(7,7,true)',
+          'readystatechange(2)',
+          'readystatechange(3)',
+          'progress(9,9,true)',
+          'readystatechange(4)',
+          'load(9,9,true)',
+          'loadend(9,9,true)',
+        ], 'fired events');
       });
     });
   });

@@ -15,6 +15,7 @@ You can simulate responses, upload progress, errors, and other interactions with
 - [Quick start](#quick-start)
 - [Usage](#usage)
   - [Using the mock server](#using-the-mock-server)
+    - [Simulating progress](#simulating-progress)
   - [Asynchronous responses](#asynchronous-responses)
   - [Responding to `MockXhr` requests programmatically](#responding-to-mockxhr-requests-programmatically)
   - [The `timeout` attribute and request timeouts](#the-timeout-attribute-and-request-timeouts)
@@ -136,6 +137,11 @@ There are two ways to add routes to the `MockXhrServer`:
 
 The `MockXhrServer` records all `MockXhr` requests it receives in a [request log](#getrequestlog). Use this to validate the `XMLHttpRequest` requests that your code sends.
 
+#### Simulating progress
+The `MockXhrServer` can generate request (upload) and response (download) progress events automatically. This is disabled by default. Use the [`progressRate` field](#progressrate) to enable this.
+
+You can also generate progress events if you [respond to `MockXhr` requests programmatically](#responding-to-mockxhr-requests-programmatically) with a [request handler](#request-handler) of type `Function`.
+
 ### Asynchronous responses
 Responses to `MockXhr` requests are asynchronous. This reproduces how a real `XMLHttpRequest` request works. You therefore most likely need to use your test framework's asynchronous test support. For example, the relevant documentation for the Mocha test framework [is here](https://mochajs.org/#asynchronous-code).
 
@@ -225,6 +231,11 @@ Installs the server's `MockXhr` mock in the global context to replace the `XMLHt
 ##### `remove()`
 Reverts the changes made by [install()](#installcontext--globalthis). Call this after your tests.
 
+##### `progressRate`
+If you set this to a value greater than 0, the server automatically generates request (upload) and response (download) progress events. The progress events have increments of `progressRate` bytes.
+
+`progressRate` only applies to [request handlers](#request-handler) of type `object`.
+
 ##### `disableTimeout()` and `enableTimeout()`
 Controls whether the `timeout` attribute of a `MockXhr` instance can trigger `timeout` events. See ["The `timeout` attribute and request timeouts"](#the-timeout-attribute-and-request-timeouts).
 
@@ -251,10 +262,12 @@ This supports three options:
 - A `string` with the value `'error'` or `'timeout'`. This triggers either an [error](#setnetworkerror) or [timeout](#setrequesttimeout) respectively.
 - An array of the request handler options above. The first request gets the first handler, the second gets the second handler and so on. The last handler is reused when there are more requests than handlers.
 
-These handlers are all equivalent:
+For `object` request handlers, the server automatically adds the `Content-Length` response header with a value equal to the length of the response body.
+
+All these handlers are equivalent:
 ```javascript
 const handlerObj = {};
-const handlerFn = (request) => { request.respond(); };
+const handlerFn = (request) => { request.respond(200, { 'Content-Length': '0' }); };
 const handlerArray = [{}];
 ```
 
@@ -421,7 +434,7 @@ Sets the response body. Changes the request's `readyState` to `DONE`.
 
 Fires the appropriate events such as `readystatechange`, `progress`, and `load`.
 
-Calls [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok) if not already called.
+Calls [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok) if not already called. The response headers then only contain `Content-Length` with a value equal to the length of the response body.
 
 After you call this method, you can't use other mock response methods. This restriction is lifted if you call `open()` again.
 

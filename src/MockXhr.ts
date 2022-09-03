@@ -297,9 +297,10 @@ export default class MockXhr
       }
 
       if (this._readyState === MockXhr.OPENED) {
-        // Apply default "200 - OK" response headers if the user didn't call setResponseHeaders()
-        // before this point.
-        this.setResponseHeaders(request);
+        // Apply default "200 - OK" response headers with a Content-Length if the user didn't call
+        // setResponseHeaders() before this point.
+        const headers = { 'content-length': String(Utils.getBodyByteSize(body)) };
+        this.setResponseHeaders(request, 200, headers);
       }
 
       // As stated in https://xhr.spec.whatwg.org/#the-send()-method
