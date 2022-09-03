@@ -16,24 +16,24 @@ You can simulate responses, upload progress, errors, and other interactions with
 - [Usage](#usage)
   - [Using the mock server](#using-the-mock-server)
   - [Asynchronous responses](#asynchronous-responses)
-  - [Responding to MockXhr requests programmatically](#responding-to-mockxhr-requests-programmatically)
+  - [Responding to `MockXhr` requests programmatically](#responding-to-mockxhr-requests-programmatically)
   - [The `timeout` attribute and request timeouts](#the-timeout-attribute-and-request-timeouts)
-  - [Using the MockXhr lifecycle hooks](#using-the-mockxhr-lifecycle-hooks)
+  - [Using the `MockXhr` lifecycle hooks](#using-the-mockxhr-lifecycle-hooks)
 - [API reference](#api-reference)
-  - [MockXhrServer class](#mockxhrserver-class)
-    - [MockXhrServer setup](#mockxhrserver-setup)
+  - [`MockXhrServer` class](#mockxhrserver-class)
+    - [`MockXhrServer` setup](#mockxhrserver-setup)
     - [Routes](#routes)
     - [Adding routes](#adding-routes)
     - [Utilities](#utilities)
-  - [MockXhr class](#mockxhr-class)
+  - [`MockXhr` class](#mockxhr-class)
     - [Mock API](#mock-api)
-    - [MockXhr lifecycle hooks](#mockxhr-lifecycle-hooks)
-  - [MockXhrRequest class](#mockxhrrequest-class)
+    - [`MockXhr` lifecycle hooks](#mockxhr-lifecycle-hooks)
+  - [`MockXhrRequest` class](#mockxhrrequest-class)
     - [Request data](#request-data)
     - [Mock response methods](#mock-response-methods)
-  - [newMockXhr()](#newmockxhr)
-  - [newServer()](#newserverroutes)
-- [XMLHttpRequest features](#xmlhttprequest-features)
+  - [`newMockXhr()`](#newmockxhr)
+  - [`newServer()`](#newserverroutes)
+- [`XMLHttpRequest` features](#xmlhttprequest-features)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -141,7 +141,7 @@ Responses to `MockXhr` requests are asynchronous. This reproduces how a real `XM
 
 The `onSend` [lifecycle hook](#mockxhr-lifecycle-hooks) is necessary to respond to `MockXhr` requests. [The mock server](#using-the-mock-server) handles this automatically. The other option is to [use the `MockXhr` lifecycle hooks](#using-the-mockxhr-lifecycle-hooks) directly. In both cases, the `onSend` lifecycle hook executes after the execution context that calls `XMLHttpRequest.send()` is done or cleared. Internally this library uses an immediately resolved `Promise` to get an empty callstack.
 
-### Responding to MockXhr requests programmatically
+### Responding to `MockXhr` requests programmatically
 There are several `MockXhr` methods and properties to respond to requests. These methods allow the following interactions:
 - Inspect request parameters.
 - Simulate upload and download progress.
@@ -160,7 +160,7 @@ Disable automatic request timeouts with one of these options:
 - [`MockXhr.timeoutEnabled = false`](#mockxhrtimeoutenabled). This static property on the `MockXhr` class affects each of its instances.
 - Set [`timeoutEnabled`](#timeoutenabled) to `false` on a `MockXhr` instance. This affects that instance only.
 
-### Using the MockXhr lifecycle hooks
+### Using the `MockXhr` lifecycle hooks
 This is an alternative usage pattern that does not use the `MockXhrServer`. You instead use the [`MockXhr` lifecycle hooks](#mockxhr-lifecycle-hooks) directly. This requires more code, but you have more control over `MockXhr` requests.
 
 Note that you can also use the `MockXhr` lifecycle hooks together with `MockXhrServer` if you only need to extend the mock server.
@@ -200,11 +200,11 @@ it('should produce a success response', () => {
 ```
 
 ## API reference
-### MockXhrServer class
+### `MockXhrServer` class
 This class is a mock server that responds to `MockXhr` requests.
 
-#### MockXhrServer setup
-##### MockXhrServer(routes)
+#### `MockXhrServer` setup
+##### `MockXhrServer(routes)`
 In most cases you should use [`newServer`](#newserverroutes) instead of this constructor directly.
 
 Add an initial set of [routes](#routes) to a `MockXhrServer` with the optional `routes` argument. The property keys of the `routes` object are HTTP methods. Each corresponding value is a two-element array containing `[url_matcher, request_handler]`. See also [Request URL matcher](#request-url-matcher) and [Request handler](#request-handler).
@@ -219,13 +219,13 @@ newServer({
 });
 ```
 
-##### install(context = globalThis)
+##### `install(context = globalThis)`
 Installs the server's `MockXhr` mock in the global context to replace the `XMLHttpRequest` class. Specify a different context with the optional `context` argument. Revert with [remove()](#remove).
 
-##### remove()
+##### `remove()`
 Reverts the changes made by [install()](#installcontext--globalthis). Call this after your tests.
 
-##### disableTimeout() and enableTimeout()
+##### `disableTimeout()` and `enableTimeout()`
 Controls whether the `timeout` attribute of a `MockXhr` instance can trigger `timeout` events. See ["The `timeout` attribute and request timeouts"](#the-timeout-attribute-and-request-timeouts).
 
 #### Routes
@@ -259,55 +259,55 @@ const handlerArray = [{}];
 ```
 
 #### Adding routes
-##### get(urlMatcher, handler)
+##### `get(urlMatcher, handler)`
 Adds a [route](#routes) for the `GET` HTTP method.
 
-##### post(urlMatcher, handler)
+##### `post(urlMatcher, handler)`
 Adds a [route](#routes) for the `POST` HTTP method.
 
-##### put(urlMatcher, handler)
+##### `put(urlMatcher, handler)`
 Adds a [route](#routes) for the `PUT` HTTP method.
 
-##### delete(urlMatcher, handler)
+##### `delete(urlMatcher, handler)`
 Adds a [route](#routes) for the `DELETE` HTTP method.
 
-##### addHandler(method, urlMatcher, handler)
+##### `addHandler(method, urlMatcher, handler)`
 Adds a [route](#routes) for the `method` HTTP method.
 
-##### setDefaultHandler(handler)
+##### `setDefaultHandler(handler)`
 Sets a default request handler for requests that don't match any route.
 
-##### setDefault404()
+##### `setDefault404()`
 Sets a [default request handler](#setdefaulthandlerhandler) that returns 404 responses.
 
 #### Utilities
-##### xhrFactory
+##### `xhrFactory`
 Function that returns a new `MockXhr` instance.
 
-##### MockXhr
+##### `MockXhr`
 The `MockXhr` class that the server handles. This is the class of the instances created by [`xhrFactory`](#xhrfactory).
 
-##### getRequestLog()
+##### `getRequestLog()`
 Returns an array of all requests received by the server so far. Each array element is an object with these properties:
 - `method`: HTTP method `string`.
 - `url`: URL `string`.
 - `body`: request body
 - `headers`: request headers as an object. The header names are in lower-case.
 
-### MockXhr class
+### `MockXhr` class
 This class is a mock of `XMLHttpRequest`. This section documents its methods and properties that are not in the specification.
 
 #### Mock API
-##### MockXhr.timeoutEnabled
+##### `MockXhr.timeoutEnabled`
 This static property controls [automatic timeout](#the-timeout-attribute-and-request-timeouts) of requests of all instances of the class.
 
-##### timeoutEnabled
+##### `timeoutEnabled`
 This property controls [automatic timeout](#the-timeout-attribute-and-request-timeouts) of this `MockXhr` instance.
 
-##### getResponseHeadersHash()
+##### `getResponseHeadersHash()`
 Returns all response headers as an object. The header names are in lower-case.
 
-#### MockXhr lifecycle hooks
+#### `MockXhr` lifecycle hooks
 The `MockXhr` lifecycle hooks can be configured at these locations:
 1. A static property on the `MockXhr` class. This affects all instances of `MockXhr` and all its subclasses.
 2. A static property on a `MockXhr` subclass as exposed by [`MockXhrServer.MockXhr`](#mockxhr) or returned by [`newMockXhr()`](#newmockxhr). This affects all instances of that class.
@@ -317,7 +317,7 @@ If you define multiple hooks for a lifecycle event, they are called in the order
 
 You should generally prefer the third option over the second one because it makes it easier to isolate your test cases.
 
-##### onCreate
+##### `onCreate`
 Called when an instance of `MockXhr` is created, at the end of its constructor. The hook function receives the created `MockXhr` as an argument.
 
 Use this lifecycle hook to intercept instances of `MockXhr` when they are constructed.
@@ -335,7 +335,7 @@ const MockXhrSubclass = newMockXhr();
 MockXhrSubclass.onCreate = (xhr) => { /*...*/ };
 ```
 
-##### onSend
+##### `onSend`
 Called [asynchronously](#asynchronous-responses) after each call to `send()`. Each call to `send()` generates a call to `onSend` with a matching [`MockXhrRequest`](#mockxhrrequest-class) instance as an argument.
 
 Use this lifecycle hook to respond to a request with the [mock response methods](#mock-response-methods).
@@ -355,26 +355,26 @@ const xhr = new MockXhrSubclass();
 xhr.onSend = (request) => { /*...*/ };
 ```
 
-### MockXhrRequest class
+### `MockXhrRequest` class
 This class encapsulates an `XMLHttpRequest` request when you call `send()` and provides methods to respond to it programmatically.
 
 #### Request data
-##### requestHeaders
+##### `requestHeaders`
 A copy of the request's headers. This is an instance of `HeadersContainer`.
 
-##### method
+##### `method`
 The request's HTTP method.
 
-##### url
+##### `url`
 The request's URL.
 
-##### body
+##### `body`
 The request's body.
 
-##### withCredentials
+##### `withCredentials`
 The request's `withCredentials` value.
 
-##### getRequestBodySize()
+##### `getRequestBodySize()`
 The request's body size in bytes.
 
 Note: this isn't completely accurate when the `body` is a `multipart/form-data` encoded `FormData`. Headers, encoding, and other factors that contribute to a non-mocked `XMLHttpRequest`'s true `body` size are not considered. You can use this method to get a floor value for the request's true `body` size. This is useful to simulate upload progress events.
@@ -384,14 +384,14 @@ These methods provide a programmatic interface to respond to `MockXhr` requests.
 
 If a call to a response method is invalid, it throws an `Error` with a message that contains "Mock usage error detected".
 
-##### uploadProgress(transmitted)
+##### `uploadProgress(transmitted)`
 Fires a request upload progress event where `transmitted` is the number of bytes transmitted.
 
 You can only call this when the request's `body` isn't `null` and the upload isn't complete.
 
 After you call this method, you can use any other mock response method.
 
-##### respond(status = 200, headers = {}, body = null, statusText = 'OK')
+##### `respond(status = 200, headers = {}, body = null, statusText = 'OK')`
 Complete response method that sets both the response headers and body. Changes the request's `readyState` to `DONE`.
 
 Fires the appropriate events such as `readystatechange`, `progress`, and `load`.
@@ -400,7 +400,7 @@ This is a shorthand for [`setResponseHeaders()`](#setresponseheadersstatus--200-
 
 After you call this method, you can't use other mock response methods. This restriction is lifted if you call `open()` again.
 
-##### setResponseHeaders(status = 200, headers = {}, statusText = 'OK')
+##### `setResponseHeaders(status = 200, headers = {}, statusText = 'OK')`
 Sets the response headers. Changes the request's `readyState` to `HEADERS_RECEIVED`.
 
 Fires the appropriate events such as `readystatechange`, `progress`, and `load`.
@@ -411,12 +411,12 @@ After you call this method, you can use the following mock response methods:
 - [`setNetworkError()`](#setnetworkerror)
 - [`setRequestTimeout()`](#setrequesttimeout).
 
-##### downloadProgress(transmitted, length)
+##### `downloadProgress(transmitted, length)`
 Fires a response progress event. Changes the request's `readyState` to `LOADING` if it is `HEADERS_RECEIVED`.
 
 You must call [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok) before this method.
 
-##### setResponseBody(body = null)
+##### `setResponseBody(body = null)`
 Sets the response body. Changes the request's `readyState` to `DONE`.
 
 Fires the appropriate events such as `readystatechange`, `progress`, and `load`.
@@ -425,14 +425,14 @@ Calls [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statuste
 
 After you call this method, you can't use other mock response methods. This restriction is lifted if you call `open()` again.
 
-##### setNetworkError()
+##### `setNetworkError()`
 Simulates a network error. Changes the request's `readyState` to `DONE`.
 
 Fires the appropriate events including the `error` event.
 
 After you call this method, you can't use other mock response methods. This restriction is lifted if you call `open()` again.
 
-##### setRequestTimeout()
+##### `setRequestTimeout()`
 Simulates a request timeout. Changes the request's `readyState` to `DONE`.
 
 Fires the appropriate events including the `timeout` event.
@@ -441,17 +441,17 @@ Throws an error if the `request` attribute is equal to 0 since timeouts do not o
 
 After you call this method, you can't use other mock response methods. This restriction is lifted if you call `open()` again.
 
-### newMockXhr()
+### `newMockXhr()`
 Returns a new `MockXhr` subclass.
 
 If you use a different subclass of `MockXhr` in each test case, it is easier to ensure they are self-contained. For example, if you set the [`timeoutEnabled`](#mockxhrtimeoutenabled) static property on a subclass, it only affects that subclass and not the other subclasses created in other test cases. Since subclasses aren't reused, cleanup code that reverts the changes made to a subclass is not required.
 
-### newServer(routes)
+### `newServer(routes)`
 Returns a new `MockXhrServer` with its own unique `MockXhr` subclass. See [`newMockXhr()`](#newmockxhr).
 
 Add [routes](#routes) to the `MockXhrServer` with the optional `routes` argument. See the [constructor](#mockxhrserverroutes) for details.
 
-## XMLHttpRequest features
+## `XMLHttpRequest` features
 Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org) version '15 August 2022'.
 
 ### Supported
