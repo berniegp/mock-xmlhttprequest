@@ -657,8 +657,8 @@ describe('MockXhr', () => {
         xhr.send();
 
         return done.then((request) => {
-          request.setResponseHeaders();
-          request.downloadProgress(2, 8);
+          request.setResponseHeaders(200, { 'content-length': '8' });
+          request.downloadProgress(2);
           const events = recordEvents(xhr);
           xhr.abort();
 
@@ -802,8 +802,8 @@ describe('MockXhr', () => {
         xhr.send();
 
         return done.then((request) => {
-          request.setResponseHeaders();
-          request.downloadProgress(0, 4);
+          request.setResponseHeaders(200, { 'content-length': '4' });
+          request.downloadProgress(0);
           assert.throws(() => { xhr.overrideMimeType('text/plain'); });
           request.setResponseBody('body');
           assert.throws(() => { xhr.overrideMimeType('text/plain'); });
@@ -824,8 +824,8 @@ describe('MockXhr', () => {
         xhr.send();
 
         return done.then((request) => {
-          request.setResponseHeaders();
-          request.downloadProgress(0, 4);
+          request.setResponseHeaders(200, { 'content-length': '4' });
+          request.downloadProgress(0);
           assert.throws(() => { xhr.responseType = 'text'; });
           request.setResponseBody('body');
           assert.throws(() => { xhr.responseType = 'text'; });
@@ -1249,7 +1249,7 @@ describe('MockXhr', () => {
       it('should set response headers and body', () => {
         const xhr = new MockXhr();
         const status = 201;
-        const headers = { test: 'ok' };
+        const headers = { test: 'ok', 'content-length': '8' };
         const responseBody = 'response';
         const statusText = 'all good!';
 
@@ -1340,10 +1340,10 @@ describe('MockXhr', () => {
         xhr.send();
 
         return done.then((request) => {
-          request.setResponseHeaders();
+          request.setResponseHeaders(200, { 'content-length': '8' });
           const events = recordEvents(xhr);
-          request.downloadProgress(2, 8);
-          request.downloadProgress(4, 8);
+          request.downloadProgress(2);
+          request.downloadProgress(4);
 
           assert.strictEqual(xhr.readyState, MockXhr.LOADING, 'readyState LOADING');
           assert.deepEqual(events, [
@@ -1408,10 +1408,10 @@ describe('MockXhr', () => {
           assert.strictEqual(xhr.readyState, MockXhr.DONE, 'readyState DONE');
           assert.deepEqual(events, [
             'readystatechange(3)',
-            'progress(8,8,true)',
+            'progress(8,0,false)',
             'readystatechange(4)',
-            'load(8,8,true)',
-            'loadend(8,8,true)',
+            'load(8,0,false)',
+            'loadend(8,0,false)',
           ], 'fired events');
         });
       });
@@ -1466,8 +1466,8 @@ describe('MockXhr', () => {
         xhr.send();
 
         return done.then((request) => {
-          request.setResponseHeaders();
-          request.downloadProgress(2, 8);
+          request.setResponseHeaders(200, { 'content-length': '8' });
+          request.downloadProgress(2);
           const events = recordEvents(xhr);
           request.setNetworkError();
 
@@ -1572,8 +1572,8 @@ describe('MockXhr', () => {
         xhr.timeout = 1;
 
         return done.then((request) => {
-          request.setResponseHeaders();
-          request.downloadProgress(2, 8);
+          request.setResponseHeaders(200, { 'content-length': '8' });
+          request.downloadProgress(2);
           const events = recordEvents(xhr);
           request.setRequestTimeout();
 

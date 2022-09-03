@@ -174,4 +174,46 @@ describe('Utils', () => {
       assert.strictEqual(Utils.getStatusText(1234), 'Unknown Status');
     });
   });
+
+  describe('decodeAndSplitHeaderValue()', () => {
+    const testCases = [
+      { header: null, expected: null },
+      { header: '', expected: [''] },
+      { header: 'nosniff,', expected: ['nosniff', ''] },
+      { header: 'text/html;", x/x', expected: ['text/html;", x/x'] },
+      { header: ' \ttext/html;", x/x \t', expected: ['text/html;", x/x'] },
+      { header: 'x/x;test="hi",y/y', expected: ['x/x;test="hi"', 'y/y'] },
+      { header: 'x / x,,,1', expected: ['x / x', '', '', '1'] },
+      { header: '"1,2", 3', expected: ['"1,2"', '3'] },
+      { header: '"Hello ", World"', expected: ['"Hello "', 'World"'] },
+      { header: '"Hello \\", World\\""', expected: ['"Hello \\", World\\""'] },
+      { header: '"Hello \\\\", World\\""', expected: ['"Hello \\\\"', 'World\\""'] },
+    ];
+    testCases.forEach(({ header, expected }) => {
+      const expectedString = Array.isArray(expected) ? expected.join('\'], [\'') : expected;
+      it(`should decode '${header}' to ['${expectedString}']`, () => {
+        const result = Utils.decodeAndSplitHeaderValue(header);
+        assert.deepEqual(result, expected);
+      });
+    });
+  });
+
+  describe('extractLengthFromHeader()', () => {
+    const testCases = [
+      { header: null, expected: null },
+      { header: '', expected: null },
+      { header: ',,', expected: null },
+      { header: 'a23', expected: null },
+      { header: '12c', expected: null },
+      { header: '123', expected: 123 },
+      { header: '123, 123', expected: 123 },
+      { header: '123, 456', expected: false },
+    ];
+    testCases.forEach(({ header, expected }) => {
+      it(`should extract '${expected}' from '${header}'`, () => {
+        const result = Utils.extractLengthFromHeader(header);
+        assert.deepEqual(result, expected);
+      });
+    });
+  });
 });

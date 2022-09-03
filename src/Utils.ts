@@ -201,3 +201,88 @@ const statusTexts: Record<number, string> = {
 export function getStatusText(status: number) {
   return statusTexts[status] ?? 'Unknown Status';
 }
+
+/**
+ * @param headerValue Header value
+ * @returns Split header value list or null
+ * @see {@link https://fetch.spec.whatwg.org/#concept-header-list-get-decode-split}
+ */
+export function decodeAndSplitHeaderValue(headerValue: string | null) {
+  if (headerValue === null) {
+    return null;
+  }
+
+  const values: string[] = [];
+  const codePoints = [...headerValue];
+
+  function sliceAndTrimString(start: number, end: number) {
+    // Remove all HTTP tab or space from the start and end of value
+    while (start < end
+      && (codePoints[start] === ' ' || codePoints[start] === '\t')) {
+      start += 1;
+    }
+    while (start < end
+      && (codePoints[end - 1] === ' ' || codePoints[end - 1] === '\t')) {
+      end -= 1;
+    }
+    return codePoints.slice(start, end).join('');
+  }
+
+  let currentValueStart = 0;
+  let inQuotedString = false;
+  let inQuotedStringEscape = false;
+  codePoints.forEach((codePoint, index) => {
+    if (inQuotedString) {
+      if (inQuotedStringEscape) {
+        inQuotedStringEscape = false;
+      } else if (codePoint === '"') {
+        inQuotedString = false;
+      } else if (codePoint === '\\') {
+        inQuotedStringEscape = true;
+      }
+      return;
+    } else if (codePoint === '"') {
+      inQuotedString = true;
+      return;
+    } else if (codePoint !== ',') {
+      return;
+    }
+
+    values.push(sliceAndTrimString(currentValueStart, index));
+    currentValueStart = index + 1;
+  });
+
+  if (currentValueStart < codePoints.length) {
+    values.push(sliceAndTrimString(currentValueStart, codePoints.length));
+  } else {
+    values.push('');
+  }
+  return values;
+}
+
+const isDigitsRegEx = /^\d+$/;
+
+/**
+ * @param headerValue Header value
+ * @returns Extracted length, null, or false (failure)
+ * @see {@link https://fetch.spec.whatwg.org/#header-list-extract-a-length}
+ */
+export function extractLengthFromHeader(headerValue: string | null) {
+  if (headerValue === null) {
+    return null;
+  }
+
+  const values = decodeAndSplitHeaderValue(headerValue);
+  if (values === null) {
+    return null;
+  }
+
+  const value = values[0];
+  if (values.slice(1).some((other) => other !== value)) {
+    return false;
+  }
+  if (value === '' || !isDigitsRegEx.test(value)) {
+    return null;
+  }
+  return Number(value);
+}

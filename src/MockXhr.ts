@@ -14,6 +14,7 @@ interface MockXhrResponse {
   status: number,
   statusMessage: string,
   headers: HeadersContainer,
+  length: number,
   body?: any,
 }
 
@@ -241,10 +242,13 @@ export default class MockXhr
       }
       status = typeof status === 'number' ? status : 200;
       const statusMessage = statusText ?? Utils.getStatusText(status);
+      const responseHeaders = new HeadersContainer(headers);
+      const contentLength = Utils.extractLengthFromHeader(responseHeaders.getHeader('Content-Length'));
       this._processResponse({
         status,
         statusMessage,
-        headers: new HeadersContainer(headers),
+        headers: responseHeaders,
+        length: typeof contentLength === 'number' ? contentLength : 0,
       });
     }
   }
@@ -254,10 +258,9 @@ export default class MockXhr
    *
    * @param request Originating request
    * @param receivedBytesLength Received bytes' length
-   * @param length Body length in bytes
    * @see {@link https://xhr.spec.whatwg.org/#the-send()-method "processBodyChunk" steps}
    */
-  downloadProgress(request: RequestData, receivedBytesLength: number, length: number) {
+  downloadProgress(request: RequestData, receivedBytesLength: number) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
       if (this._readyState !== MockXhr.HEADERS_RECEIVED
@@ -273,7 +276,7 @@ export default class MockXhr
       // As stated in https://xhr.spec.whatwg.org/#the-send()-method
       // Web compatibility is the reason readystatechange fires more often than state changes.
       this._fireReadyStateChangeEvent();
-      this._fireProgressEvent('progress', receivedBytesLength, length);
+      this._fireProgressEvent('progress', receivedBytesLength, this._response.length);
     }
   }
 
@@ -783,14 +786,14 @@ export default class MockXhr
     if (this._response.isNetworkError) {
       return;
     }
-    const length = this._response.body?.length ?? 0;
-    this._fireProgressEvent('progress', length, length);
+    const transmitted = Utils.getBodyByteSize(this._response.body);
+    this._fireProgressEvent('progress', transmitted, this._response.length);
     this._readyState = MockXhr.DONE;
     this._sendFlag = false;
     this._terminateFetchController();
     this._fireReadyStateChangeEvent();
-    this._fireProgressEvent('load', length, length);
-    this._fireProgressEvent('loadend', length, length);
+    this._fireProgressEvent('load', transmitted, this._response.length);
+    this._fireProgressEvent('loadend', transmitted, this._response.length);
   }
 
   /**
@@ -917,6 +920,7 @@ function makeNetworkErrorResponse(): MockXhrResponse {
     status: 0,
     statusMessage: '',
     headers: new HeadersContainer(),
+    length: 0,
     body: null,
   };
 }

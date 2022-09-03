@@ -419,12 +419,12 @@ Sets the response headers. Changes the request's `readyState` to `HEADERS_RECEIV
 Fires the appropriate events such as `readystatechange`, `progress`, and `load`.
 
 After you call this method, you can use the following mock response methods:
-- [`downloadProgress()`](#downloadprogresstransmitted-length)
+- [`downloadProgress()`](#downloadprogresstransmitted)
 - [`setResponseBody()`](#setresponsebodybody--null)
 - [`setNetworkError()`](#setnetworkerror)
 - [`setRequestTimeout()`](#setrequesttimeout).
 
-##### `downloadProgress(transmitted, length)`
+##### `downloadProgress(transmitted)`
 Fires a response progress event. Changes the request's `readyState` to `LOADING` if it is `HEADERS_RECEIVED`.
 
 You must call [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok) before this method.
@@ -470,7 +470,7 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org) version
 ### Supported
 - Events and states.
 - `open()`, `setRequestHeader()`, `send()` and `abort()`.
-- [Upload](#uploadprogresstransmitted) and [download](#downloadprogresstransmitted-length) progress events.
+- [Upload](#uploadprogresstransmitted) and [download](#downloadprogresstransmitted) progress events.
 - Response status, `statusText`, headers and body.
 - The [`timeout` attribute](#the-timeout-attribute-and-request-timeouts) (can be disabled).
 - Simulating a network error (see [`MockXhr.setNetworkError()`](#setnetworkerror)).

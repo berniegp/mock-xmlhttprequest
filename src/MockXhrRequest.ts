@@ -87,10 +87,9 @@ export default class MockXhrRequest {
    * Fire a response progress event. Changes the request's readyState to LOADING.
    *
    * @param transmitted Transmitted bytes
-   * @param length Body length in bytes
    */
-  downloadProgress(transmitted: number, length: number) {
-    this._responseReceiver.downloadProgress(this._requestData, transmitted, length);
+  downloadProgress(transmitted: number) {
+    this._responseReceiver.downloadProgress(this._requestData, transmitted);
   }
 
   /**

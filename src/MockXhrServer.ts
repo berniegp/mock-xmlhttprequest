@@ -290,7 +290,7 @@ export default class MockXhrServer {
               const nextTransmitted = responseTransmitted + this.progressRate;
               if (nextTransmitted < responseBodySize) {
                 responseTransmitted = nextTransmitted;
-                request.downloadProgress(responseTransmitted, responseBodySize);
+                request.downloadProgress(responseTransmitted);
                 Promise.resolve().then(() => responsePhase());
               } else {
                 // Final operation for this request
