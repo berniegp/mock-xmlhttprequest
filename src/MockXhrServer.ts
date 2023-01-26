@@ -143,16 +143,22 @@ export default class MockXhrServer {
 
   /**
    * Disable the effects of the timeout attribute on the XMLHttpRequest mock used by the server.
+   *
+   * @returns this
    */
   disableTimeout() {
     this._MockXhr.timeoutEnabled = false;
+    return this;
   }
 
   /**
    * Enable the effects of the timeout attribute on the XMLHttpRequest mock used by the server.
+   *
+   * @returns this
    */
   enableTimeout() {
     this._MockXhr.timeoutEnabled = true;
+    return this;
   }
 
   /**
