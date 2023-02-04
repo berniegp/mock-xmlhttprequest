@@ -350,7 +350,7 @@ describe('MockXhr', () => {
         xhr.open('GET', '/url');
         xhr.send();
         xhr.timeout = 1;
-        Promise.resolve(true).then(() => { xhr.timeout = 0; });
+        Promise.resolve().then(() => { xhr.timeout = 0; });
 
         // Wait to make sure the timeout has no effect
         setTimeout(() => {
@@ -591,7 +591,7 @@ describe('MockXhr', () => {
           });
           xhr.send();
 
-          return Promise.resolve(true).then(() => {
+          return Promise.resolve().then(() => {
             assert.strictEqual(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
             assert.strictEqual(onSendCount, 0, 'onSend() should not be called');
             assert.strictEqual(onSendXhrCount, 0, 'onSend() should not be called');
@@ -729,7 +729,7 @@ describe('MockXhr', () => {
           });
           xhr.send();
 
-          return Promise.resolve(true).then(() => {
+          return Promise.resolve().then(() => {
             assert.isFalse(onSendCalled, 'onSend() should not be called');
             assert.isFalse(onSendXhrCalled, 'onSend() should not be called');
             assert.strictEqual(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
@@ -1179,7 +1179,7 @@ describe('MockXhr', () => {
         xhr.setRequestHeader('header2', 'val2');
         xhr.send({ body: 1 });
 
-        return Promise.resolve(true).then(() => {
+        return Promise.resolve().then(() => {
           assertSameRequest(requests[0], new RequestData(
             new HeadersContainer().addHeader('header1', 'val1'),
             'GET',

@@ -856,7 +856,7 @@ export default class MockXhr
     // Saves the callback and request data in case they change before then() executes
     if (onSend) {
       const request = this._currentRequest as MockXhrRequest;
-      Promise.resolve(true).then(() => onSend.call(request, request));
+      Promise.resolve().then(() => onSend.call(request, request));
     }
   }
 
