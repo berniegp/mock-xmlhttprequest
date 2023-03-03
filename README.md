@@ -384,6 +384,7 @@ MockXhrSubclass.onCreate = (xhr) => { /*...*/ };
 ##### `onSend`
 Callback method that receives these arguments:
 - `request`: [`MockXhrRequest`](#mockxhrrequest-class) for the request.
+- `xhr`: The `MockXhr` instance.
 
 Use this lifecycle hook to respond to a request with the [mock response methods](#mock-response-methods).
 

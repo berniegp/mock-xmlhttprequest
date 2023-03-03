@@ -1073,26 +1073,26 @@ describe('MockXhr', () => {
           class LocalMockXhr extends MockXhr {}
           const xhr = new LocalMockXhr();
           const calls: string[] = [];
-          const thisValues: MockXhrRequest[] = [];
-          const args: MockXhrRequest[] = [];
+          const thisValues: any[] = [];
+          const argValues: any[] = [];
 
           const done = new Promise((resolve) => {
-            MockXhr.onSend = function onSend(arg) {
+            MockXhr.onSend = function onSend(...args) {
               calls.push('global');
               thisValues.push(this);
-              args.push(arg);
+              argValues.push(args);
             };
 
-            LocalMockXhr.onSend = function onSendLocal(arg) {
+            LocalMockXhr.onSend = function onSendLocal(...args) {
               calls.push('subclass');
               thisValues.push(this);
-              args.push(arg);
+              argValues.push(args);
             };
 
-            xhr.onSend = function onSendXhr(arg) {
+            xhr.onSend = function onSendXhr(...args) {
               calls.push('xhr');
               thisValues.push(this);
-              args.push(arg);
+              argValues.push(args);
               resolve(true);
             };
           });
@@ -1104,7 +1104,7 @@ describe('MockXhr', () => {
             assert.instanceOf(req, MockXhrRequest);
             assert.deepEqual(calls, ['global', 'subclass', 'xhr'], 'hooks called in the right order');
             assert.deepEqual(thisValues, [req, req, req], 'correct contexts for callbacks');
-            assert.deepEqual(args, [req, req, req], 'correct parameters for callbacks');
+            assert.deepEqual(argValues, [[req, xhr], [req, xhr], [req, xhr]], 'correct parameters for callbacks');
           });
         } finally {
           delete MockXhr.onSend;
