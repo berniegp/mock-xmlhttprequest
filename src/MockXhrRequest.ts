@@ -53,10 +53,10 @@ export default class MockXhrRequest {
    * Complete response method that sets the response headers and body. Changes the request's
    * readyState to DONE.
    *
-   * @param status Response http status (default 200)
+   * @param status Response HTTP status (default 200)
    * @param headers Name-value headers (optional)
    * @param body Response body (default null)
-   * @param statusText Response http status text (optional)
+   * @param statusText Response HTTP status text (optional)
    */
   respond(
     status?: number,
@@ -71,9 +71,9 @@ export default class MockXhrRequest {
   /**
    * Set the response headers. Changes the request's readyState to HEADERS_RECEIVED.
    *
-   * @param status Response http status (default 200)
+   * @param status Response HTTP status (default 200)
    * @param headers Name-value headers (optional)
-   * @param statusText Response http status text (optional)
+   * @param statusText Response HTTP status text (optional)
    */
   setResponseHeaders(
     status?: number,

@@ -8,7 +8,7 @@ This library implements the `XMLHttpRequest` interface and handles requests and 
 - [Programmatic responses](#responding-to-mockxhr-requests-programmatically).
 - [Request lifecycle hooks](#mockxhr-lifecycle-hooks).
 
-You can simulate responses, upload progress, errors, and other interactions with the [mock response methods](#mock-response-methods). These automatically handle lower-level processing like emitting events and changing the `readystate` property of `XMLHttpRequest`.
+You can simulate responses, upload progress, errors, and other interactions with the [mock response methods](#mock-response-methods). These automatically handle lower-level processing such as emitting events and changing the `readystate` property of `XMLHttpRequest`.
 
 ## Table of contents
 - [Installation](#installation)
@@ -207,13 +207,18 @@ it('should produce a success response', () => {
 
 ## API reference
 ### `MockXhrServer` class
-This class is a mock server that responds to `MockXhr` requests.
+This class is a mock server that responds to `MockXhr` requests based on their URL and method.
 
 #### `MockXhrServer` setup
 ##### `MockXhrServer(routes)`
+Arguments:
+- `routes`: Object with the initial set of [routes](#routes) of the server. (optional)
+
 In most cases you should use [`newServer`](#newserverroutes) instead of this constructor directly.
 
-Add an initial set of [routes](#routes) to a `MockXhrServer` with the optional `routes` argument. The property keys of the `routes` object are HTTP methods. Each corresponding value is a two-element array containing `[url_matcher, request_handler]`. See also [Request URL matcher](#request-url-matcher) and [Request handler](#request-handler).
+The keys of the `routes` object are HTTP methods. The values are arrays with two elements: `[url_matcher, request_handler]`.
+
+See also [Request URL matcher](#request-url-matcher) and [Request handler](#request-handler).
 
 Example:
 ```javascript
@@ -226,43 +231,46 @@ newServer({
 ```
 
 ##### `install(context = globalThis)`
-Installs the server's `MockXhr` mock in the global context to replace the `XMLHttpRequest` class. Specify a different context with the optional `context` argument. Revert with [remove()](#remove).
+Arguments:
+- `context`: If you provide a value, the `install` method sets the `XMLHttpRequest` property in this context instead of the global context. (optional)
+
+Installs the server's `MockXhr` mock in the global context to replace the `XMLHttpRequest` class. Revert with [remove()](#remove).
 
 ##### `remove()`
 Reverts the changes made by [install()](#installcontext--globalthis). Call this after your tests.
 
 ##### `progressRate`
-If you set this to a value greater than 0, the server automatically generates request (upload) and response (download) progress events. The progress events have increments of `progressRate` bytes.
+If you set `progressRate` to a `number` greater than 0, the server automatically generates request (upload) and response (download) progress events. Each progress event increments by `progressRate` bytes.
 
 `progressRate` only applies to [request handlers](#request-handler) of type `object`.
 
 ##### `disableTimeout()` and `enableTimeout()`
-Controls whether the `timeout` attribute of a `MockXhr` instance can trigger `timeout` events. See ["The `timeout` attribute and request timeouts"](#the-timeout-attribute-and-request-timeouts).
+These methods disable or enable the effects of the `timeout` attribute of `MockXhr`. See ["The `timeout` attribute and request timeouts"](#the-timeout-attribute-and-request-timeouts).
 
 #### Routes
-Routes respond to `MockXhr` requests and have three parts described below.
+Routes configure how the server responds to `MockXhr` requests. Their three parts are described below.
 
 The route concept is loosely based on the [Express framework](https://expressjs.com/).
 
 ##### HTTP request method
-Any `string` with a valid [HTTP request method](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods) is allowed. This includes standard methods like `GET`, `POST`, `PUT` and `DELETE`, but also other method names. The standard method names are case insensitive.
+Any `string` with a valid [HTTP request method](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol#Request_methods) is allowed. The valid methods include standard methods such as `GET`, `POST`, `PUT` and `DELETE`, as well as other method names. The standard method names are case insensitive.
 
 ##### Request URL matcher
-This supports three options:
+The request URL matcher can be one of these types:
 - A `string` (e.g. `'/my-url'`) to match the request's URL exactly.
 - A `RegExp` to match the request's URL.
 - A `Function` that returns `true` if the request's URL matches. The function receives the URL as an argument.
 
 ##### Request handler
-This supports three options:
+The request handler can be one of these types:
 - An `object` with the response properties. The default values are:
 
       { status: 200, headers: {}, body: null, statusText: 'OK' }
 - A `Function` that calls the [mock response methods](#mock-response-methods) directly. The function receives a [`MockXhrRequest`](#mockxhrrequest-class) instance as an argument.
 - A `string` with the value `'error'` or `'timeout'`. This triggers either an [error](#setnetworkerror) or [timeout](#setrequesttimeout) respectively.
-- An array of the request handler options above. The first request gets the first handler, the second gets the second handler and so on. The last handler is reused when there are more requests than handlers.
+- An array of the other request handler types above. The first request gets the first handler, the second gets the second handler and so on. The last handler is reused when there are no further handlers in the array.
 
-For `object` request handlers, the server automatically adds the `Content-Length` response header with a value equal to the length of the response body.
+For `object` request handlers, the server automatically adds the `Content-Length` response header with the length of the response body.
 
 All these handlers are equivalent:
 ```javascript
@@ -273,21 +281,45 @@ const handlerArray = [{}];
 
 #### Adding routes
 ##### `get(urlMatcher, handler)`
+Arguments:
+- `urlMatcher`: [Request URL matcher](#request-url-matcher).
+- `handler`: [Request handler](#request-handler).
+
 Adds a [route](#routes) for the `GET` HTTP method.
 
 ##### `post(urlMatcher, handler)`
+Arguments:
+- `urlMatcher`: [Request URL matcher](#request-url-matcher).
+- `handler`: [Request handler](#request-handler).
+
 Adds a [route](#routes) for the `POST` HTTP method.
 
 ##### `put(urlMatcher, handler)`
+Arguments:
+- `urlMatcher`: [Request URL matcher](#request-url-matcher).
+- `handler`: [Request handler](#request-handler).
+
 Adds a [route](#routes) for the `PUT` HTTP method.
 
 ##### `delete(urlMatcher, handler)`
+Arguments:
+- `urlMatcher`: [Request URL matcher](#request-url-matcher).
+- `handler`: [Request handler](#request-handler).
+
 Adds a [route](#routes) for the `DELETE` HTTP method.
 
 ##### `addHandler(method, urlMatcher, handler)`
+Arguments:
+- `method`: HTTP method as a `string`.
+- `urlMatcher`: [Request URL matcher](#request-url-matcher).
+- `handler`: [Request handler](#request-handler).
+
 Adds a [route](#routes) for the `method` HTTP method.
 
 ##### `setDefaultHandler(handler)`
+Arguments:
+- `handler`: [Request handler](#request-handler).
+
 Sets a default request handler for requests that don't match any route.
 
 ##### `setDefault404()`
@@ -298,10 +330,10 @@ Sets a [default request handler](#setdefaulthandlerhandler) that returns 404 res
 Function that returns a new `MockXhr` instance.
 
 ##### `MockXhr`
-The `MockXhr` class that the server handles. This is the class of the instances created by [`xhrFactory`](#xhrfactory).
+The `MockXhr` class that the server hooks into. [`xhrFactory`](#xhrfactory) creates instances of this class.
 
 ##### `getRequestLog()`
-Returns an array of all requests received by the server so far. Each array element is an object with these properties:
+Returns an array of all requests received by the server so far. Each call returns a new array. Each array element is an object with these properties:
 - `method`: HTTP method `string`.
 - `url`: URL `string`.
 - `body`: request body
@@ -312,30 +344,31 @@ This class is a mock of `XMLHttpRequest`. This section documents its methods and
 
 #### Mock API
 ##### `MockXhr.timeoutEnabled`
-This static property controls [automatic timeout](#the-timeout-attribute-and-request-timeouts) of requests of all instances of the class.
+This static `boolean` property controls [automatic timeout](#the-timeout-attribute-and-request-timeouts) of requests from all instances of the class.
 
 ##### `timeoutEnabled`
-This property controls [automatic timeout](#the-timeout-attribute-and-request-timeouts) of this `MockXhr` instance.
+This `boolean` property controls [automatic timeout](#the-timeout-attribute-and-request-timeouts) from this `MockXhr` instance.
 
 ##### `getResponseHeadersHash()`
 Returns all response headers as an object. The header names are in lower-case.
 
 #### `MockXhr` lifecycle hooks
-The `MockXhr` lifecycle hooks can be configured at these locations:
-1. A static property on the `MockXhr` class. This affects all instances of `MockXhr` and all its subclasses.
-2. A static property on a `MockXhr` subclass as exposed by [`MockXhrServer.MockXhr`](#mockxhr) or returned by [`newMockXhr()`](#newmockxhr). This affects all instances of that class.
-3. A property on an instance of `MockXhr`. This affects that instance only.
+You can define callback methods for the `MockXhr` lifecycle hooks at these locations:
+1. A static property on the `MockXhr` class. The hook applies to all instances of `MockXhr` and of its subclasses.
+2. A static property on a `MockXhr` subclass returned by [`MockXhrServer.MockXhr`](#mockxhr) or [`newMockXhr()`](#newmockxhr). The hook applies to all instances of that class.
+3. A property on an instance of `MockXhr`. The hook applies to that instance only.
 
-If you define multiple hooks for a lifecycle event, they are called in the order from the list above.
+If you define multiple hooks for a lifecycle event, they are called in the order above.
 
-You should generally prefer the third option over the second one because it makes it easier to isolate your test cases.
+You should generally prefer the third option which makes it easier to isolate your test cases.
 
 ##### `onCreate`
-Called when an instance of `MockXhr` is created, at the end of its constructor. The hook function receives the created `MockXhr` as an argument.
+Callback method that receives these arguments:
+- `xhr`: New `MockXhr` instance.
 
 Use this lifecycle hook to intercept instances of `MockXhr` when they are constructed.
 
-This lifecycle hook does not exist as a `MockXhr` instance property because it is called as part of an instance's constructor.
+Called when an instance of `MockXhr` is created, at the end of its constructor. This lifecycle hook is therefore only available as a static property.
 
 ```javascript
 import { MockXhr, newMockXhr } from 'mock-xmlhttprequest';
@@ -349,9 +382,12 @@ MockXhrSubclass.onCreate = (xhr) => { /*...*/ };
 ```
 
 ##### `onSend`
-Called [asynchronously](#asynchronous-responses) after each call to `send()`. Each call to `send()` generates a call to `onSend` with a matching [`MockXhrRequest`](#mockxhrrequest-class) instance as an argument.
+Callback method that receives these arguments:
+- `request`: [`MockXhrRequest`](#mockxhrrequest-class) for the request.
 
 Use this lifecycle hook to respond to a request with the [mock response methods](#mock-response-methods).
+
+Called [asynchronously](#asynchronous-responses) after each call to `send()`. Each call to `send()` generates a call to `onSend` with a separate instance of [`MockXhrRequest`](#mockxhrrequest-class).
 
 ```javascript
 import { MockXhr, newMockXhr } from 'mock-xmlhttprequest';
@@ -369,42 +405,51 @@ xhr.onSend = (request) => { /*...*/ };
 ```
 
 ### `MockXhrRequest` class
-This class encapsulates an `XMLHttpRequest` request when you call `send()` and provides methods to respond to it programmatically.
+Each call to `send()` creates a `MockXhrRequest` that contains information about the `XMLHttpRequest` and provides methods to respond programmatically.
 
 #### Request data
 ##### `requestHeaders`
-A copy of the request's headers. This is an instance of `HeadersContainer`.
+A `HeadersContainer` that contains a copy of the request's headers.
 
 ##### `method`
-The request's HTTP method.
+A `string` with the request's HTTP method.
 
 ##### `url`
-The request's URL.
+A `string` with the request's URL.
 
 ##### `body`
 The request's body.
 
 ##### `withCredentials`
-The request's `withCredentials` value.
+A `boolean` with the request's `withCredentials` value.
 
 ##### `getRequestBodySize()`
-The request's body size in bytes.
+`number` of bytes in the request body.
 
 Note: this isn't completely accurate when the `body` is a `multipart/form-data` encoded `FormData`. Headers, encoding, and other factors that contribute to a non-mocked `XMLHttpRequest`'s true `body` size are not considered. You can use this method to get a floor value for the request's true `body` size. This is useful to simulate upload progress events.
 
 #### Mock response methods
 These methods provide a programmatic interface to respond to `MockXhr` requests.
 
-If a call to a response method is invalid, it throws an `Error` with a message that contains "Mock usage error detected".
+If a call to a response method is invalid, it throws an `Error` with a message that contains `"Mock usage error detected"`.
 
 ##### `uploadProgress(transmitted)`
-Fires a request upload progress event where `transmitted` is the number of bytes transmitted.
+Arguments:
+- `transmitted`: `number` of bytes transmitted.
+
+Fires a request upload progress.
 
 You can only call this when the request's `body` isn't `null` and the upload isn't complete.
 
 After you call this method, you can use any other mock response method.
 
 ##### `respond(status = 200, headers = {}, body = null, statusText = 'OK')`
+Arguments:
+- `status`: Response HTTP status `number`. (optional)
+- `headers`: `object` with the response headers. (optional)
+- `body`: Response body. (optional)
+- `statusText`: `string` response HTTP status text. (optional)
+
 Complete response method that sets both the response headers and body. Changes the request's `readyState` to `DONE`.
 
 Fires the appropriate events such as `readystatechange`, `progress`, and `load`.
@@ -414,6 +459,11 @@ This is a shorthand for [`setResponseHeaders()`](#setresponseheadersstatus--200-
 After you call this method, you can't use other mock response methods. This restriction is lifted if you call `open()` again.
 
 ##### `setResponseHeaders(status = 200, headers = {}, statusText = 'OK')`
+Arguments:
+- `status`: Response HTTP status `number`. (optional)
+- `headers`: `object` with the response headers. (optional)
+- `statusText`: `string` response HTTP status text. (optional)
+
 Sets the response headers. Changes the request's `readyState` to `HEADERS_RECEIVED`.
 
 Fires the appropriate events such as `readystatechange`, `progress`, and `load`.
@@ -425,11 +475,18 @@ After you call this method, you can use the following mock response methods:
 - [`setRequestTimeout()`](#setrequesttimeout).
 
 ##### `downloadProgress(transmitted, length)`
+Arguments:
+- `transmitted`: `number` of bytes transmitted.
+- `length`: `number` of bytes in the response.
+
 Fires a response progress event. Changes the request's `readyState` to `LOADING` if it is `HEADERS_RECEIVED`.
 
 You must call [`setResponseHeaders()`](#setresponseheadersstatus--200-headers---statustext--ok) before this method.
 
 ##### `setResponseBody(body = null)`
+Arguments:
+- `body`: Response body. (optional)
+
 Sets the response body. Changes the request's `readyState` to `DONE`.
 
 Fires the appropriate events such as `readystatechange`, `progress`, and `load`.
@@ -460,6 +517,9 @@ Returns a new `MockXhr` subclass.
 If you use a different subclass of `MockXhr` in each test case, it is easier to ensure they are self-contained. For example, if you set the [`timeoutEnabled`](#mockxhrtimeoutenabled) static property on a subclass, it only affects that subclass and not the other subclasses created in other test cases. Since subclasses aren't reused, cleanup code that reverts the changes made to a subclass is not required.
 
 ### `newServer(routes)`
+Arguments:
+- `routes`: Object with the initial set of [routes](#routes) of the server. (optional)
+
 Returns a new `MockXhrServer` with its own unique `MockXhr` subclass. See [`newMockXhr()`](#newmockxhr).
 
 Add [routes](#routes) to the `MockXhrServer` with the optional `routes` argument. See the [constructor](#mockxhrserverroutes) for details.
