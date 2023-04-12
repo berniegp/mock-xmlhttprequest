@@ -51,7 +51,7 @@ describe('Factories', () => {
         xhr.open('GET', '/url');
         xhr.send();
 
-        return Promise.resolve(true).then(() => {
+        return Promise.resolve().then(() => {
           assert.strictEqual(onSend1Count, 0, 'onSend() from first mock not called');
           assert.strictEqual(onSend2Count, 1, 'onSend() from second mock called');
         });

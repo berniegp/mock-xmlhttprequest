@@ -335,7 +335,7 @@ describe('MockXhrServer', () => {
 
       const xhr = doRequest('method', '/path');
 
-      return Promise.resolve(true).then(() => {
+      return Promise.resolve().then(() => {
         assert.strictEqual(xhr.readyState, MockXhr.OPENED, 'final state UNSENT');
       });
     });
@@ -713,7 +713,7 @@ describe('MockXhrServer', () => {
       doRequest('GET', '/path2');
       doRequest('POST', '/post', { header: '123' }, 12345);
 
-      return Promise.resolve(true).then(() => {
+      return Promise.resolve().then(() => {
         const log = server.getRequestLog();
         assert.strictEqual(log.length, 3, 'handler called');
         assert.deepEqual(log[0], {

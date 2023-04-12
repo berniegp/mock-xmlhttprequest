@@ -350,7 +350,7 @@ describe('MockXhr', () => {
         xhr.open('GET', '/url');
         xhr.send();
         xhr.timeout = 1;
-        Promise.resolve(true).then(() => { xhr.timeout = 0; });
+        Promise.resolve().then(() => { xhr.timeout = 0; });
 
         // Wait to make sure the timeout has no effect
         setTimeout(() => {
@@ -591,7 +591,7 @@ describe('MockXhr', () => {
           });
           xhr.send();
 
-          return Promise.resolve(true).then(() => {
+          return Promise.resolve().then(() => {
             assert.strictEqual(xhr.readyState, MockXhr.OPENED, 'final state OPENED');
             assert.strictEqual(onSendCount, 0, 'onSend() should not be called');
             assert.strictEqual(onSendXhrCount, 0, 'onSend() should not be called');
@@ -729,7 +729,7 @@ describe('MockXhr', () => {
           });
           xhr.send();
 
-          return Promise.resolve(true).then(() => {
+          return Promise.resolve().then(() => {
             assert.isFalse(onSendCalled, 'onSend() should not be called');
             assert.isFalse(onSendXhrCalled, 'onSend() should not be called');
             assert.strictEqual(xhr.readyState, MockXhr.UNSENT, 'final state UNSENT');
@@ -1073,26 +1073,26 @@ describe('MockXhr', () => {
           class LocalMockXhr extends MockXhr {}
           const xhr = new LocalMockXhr();
           const calls: string[] = [];
-          const thisValues: MockXhrRequest[] = [];
-          const args: MockXhrRequest[] = [];
+          const thisValues: any[] = [];
+          const argValues: any[] = [];
 
           const done = new Promise((resolve) => {
-            MockXhr.onSend = function onSend(arg) {
+            MockXhr.onSend = function onSend(...args) {
               calls.push('global');
               thisValues.push(this);
-              args.push(arg);
+              argValues.push(args);
             };
 
-            LocalMockXhr.onSend = function onSendLocal(arg) {
+            LocalMockXhr.onSend = function onSendLocal(...args) {
               calls.push('subclass');
               thisValues.push(this);
-              args.push(arg);
+              argValues.push(args);
             };
 
-            xhr.onSend = function onSendXhr(arg) {
+            xhr.onSend = function onSendXhr(...args) {
               calls.push('xhr');
               thisValues.push(this);
-              args.push(arg);
+              argValues.push(args);
               resolve(true);
             };
           });
@@ -1104,7 +1104,7 @@ describe('MockXhr', () => {
             assert.instanceOf(req, MockXhrRequest);
             assert.deepEqual(calls, ['global', 'subclass', 'xhr'], 'hooks called in the right order');
             assert.deepEqual(thisValues, [req, req, req], 'correct contexts for callbacks');
-            assert.deepEqual(args, [req, req, req], 'correct parameters for callbacks');
+            assert.deepEqual(argValues, [[req, xhr], [req, xhr], [req, xhr]], 'correct parameters for callbacks');
           });
         } finally {
           delete MockXhr.onSend;
@@ -1179,7 +1179,7 @@ describe('MockXhr', () => {
         xhr.setRequestHeader('header2', 'val2');
         xhr.send({ body: 1 });
 
-        return Promise.resolve(true).then(() => {
+        return Promise.resolve().then(() => {
           assertSameRequest(requests[0], new RequestData(
             new HeadersContainer().addHeader('header1', 'val1'),
             'GET',

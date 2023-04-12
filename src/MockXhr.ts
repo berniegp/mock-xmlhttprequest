@@ -19,7 +19,7 @@ interface MockXhrResponse {
 
 export type OnCreateCallback = (xhr: MockXhr) => void;
 
-export type OnSendCallback = (this: MockXhrRequest, request: MockXhrRequest) => void;
+export type OnSendCallback = (this: MockXhrRequest, request: MockXhrRequest, xhr: MockXhr) => void;
 
 const RESPONSE_TYPES = ['', 'arraybuffer', 'blob', 'document', 'json', 'text'];
 
@@ -856,7 +856,7 @@ export default class MockXhr
     // Saves the callback and request data in case they change before then() executes
     if (onSend) {
       const request = this._currentRequest as MockXhrRequest;
-      Promise.resolve(true).then(() => onSend.call(request, request));
+      Promise.resolve().then(() => onSend.call(request, request, this));
     }
   }
 
