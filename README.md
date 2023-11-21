@@ -551,4 +551,4 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org) version
 Contributors are welcome! See [this guide](CONTRIBUTING.md) for more info.
 
 ## License
-[ISC](LICENSE)
+[MIT](LICENSE)

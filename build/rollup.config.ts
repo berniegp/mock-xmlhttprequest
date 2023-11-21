@@ -16,7 +16,7 @@ const banner =
 `/**
  * mock-xmlhttprequest v${version}
  * (c) ${new Date().getFullYear()} Bertrand Guay-Paquet
- * @license ISC
+ * @license MIT
  */`;
 
 const commonOutputOptions: Partial<OutputOptions> = {
