@@ -42,7 +42,7 @@
     "request"
   ],
   "author": "Bertrand Guay-Paquet <bernie@step.polymtl.ca>",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/berniegp/mock-xmlhttprequest/issues"
   },
