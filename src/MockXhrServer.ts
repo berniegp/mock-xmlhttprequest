@@ -1,4 +1,4 @@
-import MockXhr from './MockXhr';
+import type MockXhr from './MockXhr';
 import { getBodyByteSize, normalizeHTTPMethodName } from './Utils';
 
 import type MockXhrRequest from './MockXhrRequest';
