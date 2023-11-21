@@ -33,7 +33,6 @@ const outputOptions: OutputOptions[] = [
     preserveModules: true,
     dir: resolvePath('../dist/cjs'),
     entryFileNames: '[name].cjs',
-    exports: 'auto', // Gets rid of a warning. All library exports are named so we're fine.
   },
   {
     ...commonOutputOptions,
