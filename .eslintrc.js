@@ -8,7 +8,7 @@ const forOfStatementRuleIndex = baseStyleRules['no-restricted-syntax'].findIndex
 
 // Rules that apply to both TypeScript and JavaScript
 const commonRules = {
-  // Allow to use braces if desired
+  // Allow braces in arrow functions if desired
   'arrow-body-style': 0,
 
   // Generally makes sense, but too strict to enforce
@@ -91,13 +91,13 @@ module.exports = {
     'airbnb-base',
   ],
   overrides: [
-    // Enable TypeScript ESLint only for TS files
+    // Enable typescript-eslint only for TypeScript source files
     {
       files: ['./**/*.ts'],
       parser: '@typescript-eslint/parser',
       parserOptions: {
         tsconfigRootDir: __dirname,
-        project: 'tsconfig.eslint.json',
+        project: true,
       },
       plugins: [
         '@typescript-eslint',
@@ -109,7 +109,7 @@ module.exports = {
     },
   ],
   parserOptions: {
-    ecmaVersion: 2019,
+    ecmaVersion: 2020,
   },
   rules: jsRules,
 };
