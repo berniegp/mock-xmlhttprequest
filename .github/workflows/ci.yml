@@ -6,25 +6,56 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  BUILD_ARTIFACT_NAME: build_artifact
+  BUILD_ARTIFACT_FILENAME: build_artifact.tgz
+
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [
-          16,
-          18,
-          20,
-          21,
-        ]
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: .nvmrc
       - run: npm ci
       - run: npm run test:ci
+      - name: Make build tarball
+        run: mv "$(npm pack | tail -1)" $BUILD_ARTIFACT_FILENAME
+      - name: Archive build dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BUILD_ARTIFACT_NAME }}
+          path: ${{ env.BUILD_ARTIFACT_FILENAME }}
+
+  packageTest:
+    needs: build
+    # runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+
+    # strategy:
+    #   matrix:
+    #     os:
+    #       - ubuntu-latest
+    #       - windows-latest
+    #       - macos-latest
+    #     node-version:
+    #       - 16
+    #       - 18
+    #       - 20
+    #       - 22
+    #       - 23
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - name: Download the build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.BUILD_ARTIFACT_NAME }}
+      - run: npm install $BUILD_ARTIFACT_FILENAME --only=prod
+      - run: ls node_modules
