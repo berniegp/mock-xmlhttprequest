@@ -59,6 +59,5 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.BUILD_ARTIFACT_NAME }}
-      - run: ls node_modules
       - run: npm install $BUILD_ARTIFACT_FILENAME
       - run: ls node_modules
