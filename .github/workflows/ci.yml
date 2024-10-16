@@ -50,7 +50,7 @@ jobs:
     #       - 23
 
     steps:
-      - uses: actions/checkout@v4
+      # - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           # node-version: ${{ matrix.node-version }}
@@ -59,5 +59,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.BUILD_ARTIFACT_NAME }}
-      - run: npm install $BUILD_ARTIFACT_FILENAME
+      - run: |
+          npm init -y
+          npm install $BUILD_ARTIFACT_FILENAME
       - run: ls node_modules
