@@ -28,8 +28,8 @@ jobs:
       - name: Archive build dist
         uses: actions/upload-artifact@v4
         with:
-          name: $BUILD_ARTIFACT_NAME
-          path: $BUILD_ARTIFACT_FILENAME
+          name: ${{ env.BUILD_ARTIFACT_NAME }}
+          path: ${{ env.BUILD_ARTIFACT_FILENAME }}
 
   packageTest:
     needs: build
@@ -58,5 +58,5 @@ jobs:
       - name: Download the build artifact
         uses: actions/download-artifact@v4
         with:
-          name: $BUILD_ARTIFACT_NAME
+          name: ${{ env.BUILD_ARTIFACT_NAME }}
       - run: npm install $BUILD_ARTIFACT_FILENAME
