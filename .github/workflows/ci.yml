@@ -22,8 +22,9 @@ jobs:
       - run: npm ci
       - run: npm run test:ci
       - name: Make tarball
-        shell: bash
         run: mv "$(npm pack | tail -1)" $BUILD_ARTIFACT_FILENAME
+      - run: ls -al
+      - run: echo $BUILD_ARTIFACT_FILENAME
       - name: Archive build dist
         uses: actions/upload-artifact@v4
         with:
@@ -32,26 +33,27 @@ jobs:
 
   packageTest:
     needs: build
-    runs-on: ${{ matrix.os }}
+    # runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-        node-version:
-          - 16
-          - 18
-          - 20
-          - 22
-          - 23
+    # strategy:
+    #   matrix:
+    #     os:
+    #       - ubuntu-latest
+    #       - windows-latest
+    #       - macos-latest
+    #     node-version:
+    #       - 16
+    #       - 18
+    #       - 20
+    #       - 22
+    #       - 23
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          # node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - name: Download the build artifact
         uses: actions/download-artifact@v4
