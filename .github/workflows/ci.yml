@@ -21,7 +21,7 @@ jobs:
           node-version-file: .nvmrc
       - run: npm ci
       - run: npm run test:ci
-      - name: Make tarball
+      - name: Make build tarball
         run: mv "$(npm pack | tail -1)" $BUILD_ARTIFACT_FILENAME
       - run: ls -al
       - run: echo $BUILD_ARTIFACT_FILENAME
@@ -59,4 +59,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.BUILD_ARTIFACT_NAME }}
+      - run: ls node_modules
       - run: npm install $BUILD_ARTIFACT_FILENAME
+      - run: ls node_modules
