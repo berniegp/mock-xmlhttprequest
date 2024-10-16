@@ -23,8 +23,6 @@ jobs:
       - run: npm run test:ci
       - name: Make build tarball
         run: mv "$(npm pack | tail -1)" $BUILD_ARTIFACT_FILENAME
-      - run: ls -al
-      - run: echo $BUILD_ARTIFACT_FILENAME
       - name: Archive build dist
         uses: actions/upload-artifact@v4
         with:
@@ -50,7 +48,7 @@ jobs:
     #       - 23
 
     steps:
-      # - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           # node-version: ${{ matrix.node-version }}
@@ -59,7 +57,5 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.BUILD_ARTIFACT_NAME }}
-      - run: |
-          npm init -y
-          npm install $BUILD_ARTIFACT_FILENAME
+      - run: npm install $BUILD_ARTIFACT_FILENAME --only=prod
       - run: ls node_modules
