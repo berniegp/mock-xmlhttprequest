@@ -10,6 +10,9 @@ PR requirements:
 
 Please place an x (no spaces - [x]) in all [ ] that apply.
 -->
+**Description**
+<!-- A clear and concise description of the problem being solved. -->
+
 
 **This PR contains:**
 - [ ] bugfix
@@ -23,7 +26,7 @@ Please place an x (no spaces - [x]) in all [ ] that apply.
 - [ ] no
 
 **Breaking Changes?**
-- [ ] yes (_breaking changes will not be merged unless necessary_)
+- [ ] yes (_breaking changes are only considered with a good reason_)
 - [ ] no
 
 **Related issue numbers:**
@@ -35,6 +38,3 @@ If this PR resolves any issues, list them as
 
 where 123 is the issue number. GitHub automatically handles closing the linked issue once the PR is merged.
 -->
-
-**Description**
-<!-- A clear and consice description of the problem being solved. -->
