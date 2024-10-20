@@ -1,0 +1,11 @@
+{
+  "name": "mock-xmlhttprequest-integration-test-esm",
+  "description": "Integration test for XMLHttpRequest in a Node.js module project",
+  "type": "module",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

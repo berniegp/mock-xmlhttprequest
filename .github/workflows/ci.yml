@@ -6,25 +6,81 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  BUILD_ARTIFACT_NAME: build_artifact
+
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [
-          16,
-          18,
-          20,
-          21,
-        ]
-
+    runs-on: ubuntu-latest
+    outputs:
+      tarball: ${{ steps.tarball.outputs.filename }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: .nvmrc
       - run: npm ci
       - run: npm run test:ci
+      - name: Make build tarball
+        id: tarball
+        run: echo "filename=$(npm pack | tail -1)" >> $GITHUB_OUTPUT
+      - name: Archive build dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BUILD_ARTIFACT_NAME }}
+          path: ${{ steps.tarball.outputs.filename }}
+
+  packageTest:
+    needs: build
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        node-version:
+          - 16
+          - 18
+          - 20
+          - 22
+          - 23
+
+    runs-on: ${{ matrix.os }}
+    env:
+      BUILD_ARTIFACT_FILENAME: ${{ needs.build.outputs.tarball }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Download the build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.BUILD_ARTIFACT_NAME }}
+
+      # Linux and macOS setup
+      - if: ${{ runner.os != 'Windows' }}
+        name: Integration test - setup (non-Windows)
+        working-directory: ./integration_tests/esm
+        run: |
+          npm install "../../$BUILD_ARTIFACT_FILENAME" --omit=dev
+          cd ../cjs
+          npm install "../../$BUILD_ARTIFACT_FILENAME" --omit=dev
+
+      # Windows setup
+      - if: ${{ runner.os == 'Windows' }}
+        name: Integration test - setup (Windows)
+        working-directory: ./integration_tests/esm
+        run: |
+          npm install "../../$Env:BUILD_ARTIFACT_FILENAME" --omit=dev
+          cd ../cjs
+          npm install "../../$Env:BUILD_ARTIFACT_FILENAME" --omit=dev
+
+      # Run test
+      - name: Integration test - module format
+        working-directory: ./integration_tests/esm
+        run: npm run test
+      - name: Integration test - commonjs format
+        working-directory: ./integration_tests/cjs
+        run: npm run test
