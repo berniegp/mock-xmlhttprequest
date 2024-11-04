@@ -1,24 +1,25 @@
 {
   "compilerOptions": {
     /* Language and Environment */
-    "target": "es2020",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
+    "target": "es2021",                                  /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */
     "lib": [                                             /* Specify a set of bundled library declaration files that describe the target runtime environment. */
-      // Restrict the lib to the minimal set of features that are needed.
+      // Restrict the lib to the minimal set of features that we need.
       "dom",
       "dom.iterable",
-      "es2020",
+      "es2021",
     ],
 
     /* Modules */
-    "module": "es2020",                                  /* Specify what module code is generated. */
+    "module": "preserve",                                /* Specify what module code is generated. */
     "moduleResolution": "bundler",                       /* Specify how TypeScript looks up a file from a given module specifier. */
     "types": [                                           /* Specify type package names to be included without being referenced in a source file. */
-      // Restrict the types to the minimal set of features that are needed.
+      // Restrict the types to the minimal set of features that we need.
       "node",
     ],
+    "allowImportingTsExtensions": true,                  /* Allow imports to include TypeScript file extensions. Requires '--moduleResolution bundler' and either '--noEmit' or '--emitDeclarationOnly' to be set. */
 
     /* Emit */
-    "newLine": "lf",                                     /* Set the newline character for emitting files. */
+    "noEmit": true,                                      /* Disable emitting files from a compilation. */
 
     /* Interop Constraints */
     "verbatimModuleSyntax": true,                        /* Do not transform or elide any imports or exports not marked as type-only, ensuring they are written in the output file's format based on the 'module' setting. */

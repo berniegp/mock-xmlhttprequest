@@ -78,7 +78,6 @@ export default class HeadersContainer {
    */
   addHeader(name: string, value: string) {
     name = name.toUpperCase();
-    value = value ?? '';
     const currentValue = this._headers.get(name);
     if (currentValue !== undefined) {
       value = `${currentValue}, ${value}`;

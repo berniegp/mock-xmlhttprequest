@@ -1,6 +1,6 @@
-import XhrEvent from './XhrEvent';
+import XhrEvent from './XhrEvent.ts';
 
-import type { TXhrProgressEventNames } from './XhrProgressEventsNames';
+import type { TXhrProgressEventNames } from './XhrProgressEventsNames.ts';
 
 /**
  * XMLHttpRequest ProgressEvent

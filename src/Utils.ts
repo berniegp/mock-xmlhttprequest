@@ -1,17 +1,23 @@
-export function getBodyByteSize(body?: string | FormData | Blob | BufferSource | null) {
+export function getBodyByteSize(body?: unknown) {
   if (!body) {
     return 0;
   }
 
   if (typeof body === 'string') {
     return getStringByteLength(body);
-  } else if ((typeof FormData !== 'undefined' && body instanceof FormData)
-    || (body.constructor && body.constructor.name === 'FormData')) {
+  } else if ((typeof FormData !== 'undefined' && body instanceof FormData) ||
+    (body.constructor.name === 'FormData')) {
     // A FormData has field-value pairs. This testing code only sums the individual sizes of the
     // values. The full multipart/form-data encoding also adds headers, encoding, etc. which we
     // don't reproduce here.
     return [...(body as FormData).values()].reduce((sum, value) => {
-      const valueSize = (value as File).size ?? getStringByteLength(String(value.toString()));
+      // We don't know if value really is a file, but we want to make mocks easier to achieve so we
+      // just check for a size property.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const valueSize = (value as File).size ??
+        // Value should already a string if there's no size property, but just in case it's not...
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        getStringByteLength(value.toString());
       return sum + valueSize;
     }, 0);
   }
@@ -52,9 +58,9 @@ export function isHeaderName(headerName?: string) {
  * @returns Whether headerValue is a valid header value
  */
 export function isHeaderValue(headerValue: string) {
-  return typeof headerValue === 'string'
-    && headerValue.trim().length === headerValue.length
-    && headerValue.indexOf('\0') === -1;
+  return typeof headerValue === 'string' &&
+    headerValue.trim().length === headerValue.length &&
+    !headerValue.includes('\0');
 }
 
 // Disallowed request headers for setRequestHeader()

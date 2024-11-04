@@ -1,17 +1,29 @@
-import HeadersContainer from './HeadersContainer';
-import { getBodyByteSize } from './Utils';
+import HeadersContainer from './HeadersContainer.ts';
+import { getBodyByteSize } from './Utils.ts';
 
 /**
  * Request parameters from MockXhr.send()
  */
 export default class RequestData {
+  private readonly _requestHeaders: HeadersContainer;
+  private readonly _method: string;
+  private readonly _url: string;
+  private readonly _body: unknown;
+  private readonly _credentialsMode: boolean;
+
   constructor(
-    private readonly _requestHeaders: HeadersContainer,
-    private readonly _method: string,
-    private readonly _url: string,
-    private readonly _body: any = null,
-    private readonly _credentialsMode: boolean = false
-  ) {}
+    requestHeaders: HeadersContainer,
+    method: string,
+    url: string,
+    body: unknown = null,
+    credentialsMode = false
+  ) {
+    this._requestHeaders = requestHeaders;
+    this._method = method;
+    this._url = url;
+    this._body = body;
+    this._credentialsMode = credentialsMode;
+  }
 
   /**
    * @returns Request headers container
@@ -22,7 +34,9 @@ export default class RequestData {
 
   get url() { return this._url; }
 
-  get body() { return this._body; }
+  // Changing the return type to unknown is a breaking change with little to no benefit to users
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+  get body() { return this._body as any; }
 
   get withCredentials() { return this._credentialsMode; }
 

@@ -1,6 +1,7 @@
-import { assert } from 'chai';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
-import HeadersContainer from '../src/HeadersContainer';
+import HeadersContainer from '../src/HeadersContainer.ts';
 
 describe('HeadersContainer', () => {
   describe('constructor', () => {
@@ -90,7 +91,7 @@ describe('HeadersContainer', () => {
       headers.addHeader('HEADER', '1');
       headers.addHeader('header-2', 'a');
       assert.deepEqual(headers.getHash(), {
-        header: '1',
+        'header': '1',
         'header-2': 'a',
       });
     });

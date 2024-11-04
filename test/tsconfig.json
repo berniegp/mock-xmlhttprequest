@@ -1,19 +1,9 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    // ts-node only has experimental support for ES modules for now
-    // https://stackoverflow.com/questions/59042716/trying-es6-style-import-gives-cannot-use-import-statement-outside-a-module
-    // https://github.com/mochajs/mocha-examples/tree/master/packages/typescript#es-modules
-    "module": "node16",
-    "moduleResolution": "node16",
-
     "types": [
-      "mocha",
       "node",
     ],
-
-    // Not comptabile with the commonjs module options above
-    "verbatimModuleSyntax": false,                        /* Do not transform or elide any imports or exports not marked as type-only, ensuring they are written in the output file's format based on the 'module' setting. */
   },
   "include": ["./**/*.ts"],
 }

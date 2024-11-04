@@ -1,10 +1,11 @@
-import { assert } from 'chai';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
-import * as Utils from '../src/Utils';
+import * as Utils from '../src/Utils.ts';
 
 class BlobMock {
-  constructor(array: any[]) {
-    assert.isArray(array);
+  constructor(array: unknown[]) {
+    assert.ok(Array.isArray(array));
   }
 
   static testSize = 0;
@@ -13,13 +14,13 @@ class BlobMock {
 }
 
 class FormDataMock {
-  private _values: any[];
+  private _values: unknown[];
 
   constructor() {
     this._values = [];
   }
 
-  append(name: any, value: any) {
+  append(name: unknown, value: unknown) {
     this._values.push(value);
   }
 
@@ -88,53 +89,53 @@ describe('Utils', () => {
   describe('isHeaderName', () => {
     ['Content-Length', 'CONNECT', 'MyMethod', '!#$%&\'*+-.^_`|~'].forEach((method) => {
       it(`accepts '${method}' as a header name`, () => {
-        assert.isTrue(Utils.isHeaderName(method));
+        assert.ok(Utils.isHeaderName(method));
       });
     });
 
     it('rejects invalid header names', () => {
-      assert.isFalse(Utils.isHeaderName('\\'));
-      assert.isFalse(Utils.isHeaderName(';'));
+      assert.ok(!Utils.isHeaderName('\\'));
+      assert.ok(!Utils.isHeaderName(';'));
     });
   });
 
   describe('isHeaderValue', () => {
     ['value', '', 'gzip , chunked', 'abrowser/0.001 (C O M M E N T)', '", , ,"'].forEach((method) => {
       it(`accepts '${method}' as a header value`, () => {
-        assert.isTrue(Utils.isHeaderValue(method));
+        assert.ok(Utils.isHeaderValue(method));
       });
     });
 
     it('rejects invalid header values', () => {
-      assert.isFalse(Utils.isHeaderValue(' with leading space'));
-      assert.isFalse(Utils.isHeaderValue('with trailing space '));
-      assert.isFalse(Utils.isHeaderValue('with null (\0) char'));
+      assert.ok(!Utils.isHeaderValue(' with leading space'));
+      assert.ok(!Utils.isHeaderValue('with trailing space '));
+      assert.ok(!Utils.isHeaderValue('with null (\0) char'));
     });
   });
 
   describe('isRequestMethodForbidden', () => {
     ['CONNECT', 'TRACE', 'TRACK'].forEach((method) => {
       it(`forbids '${method}'`, () => {
-        assert.isTrue(Utils.isRequestMethodForbidden(method));
-        assert.isTrue(Utils.isRequestMethodForbidden(method.toLowerCase()));
+        assert.ok(Utils.isRequestMethodForbidden(method));
+        assert.ok(Utils.isRequestMethodForbidden(method.toLowerCase()));
       });
     });
 
     it('accepts valid methods', () => {
-      assert.isFalse(Utils.isRequestMethodForbidden('MyMethod'));
+      assert.ok(!Utils.isRequestMethodForbidden('MyMethod'));
     });
   });
 
   describe('isRequestMethod', () => {
     ['get', 'CONNECT', 'MyMethod', '!#$%&\'*+-.^_`|~'].forEach((method) => {
       it(`accepts '${method}' as a method`, () => {
-        assert.isTrue(Utils.isRequestMethod(method));
+        assert.ok(Utils.isRequestMethod(method));
       });
     });
 
     it('rejects invalid methods', () => {
-      assert.isFalse(Utils.isRequestMethod('\\'));
-      assert.isFalse(Utils.isRequestMethod(';'));
+      assert.ok(!Utils.isRequestMethod('\\'));
+      assert.ok(!Utils.isRequestMethod(';'));
     });
   });
 
@@ -153,15 +154,15 @@ describe('Utils', () => {
   describe('isRequestHeaderForbidden', () => {
     ['Content-Length', 'proxy-123', 'sec-234'].forEach((header) => {
       it(`forbids '${header}'`, () => {
-        assert.isTrue(Utils.isRequestHeaderForbidden(header));
-        assert.isTrue(Utils.isRequestHeaderForbidden(header.toUpperCase()));
-        assert.isTrue(Utils.isRequestHeaderForbidden(header.toLowerCase()));
+        assert.ok(Utils.isRequestHeaderForbidden(header));
+        assert.ok(Utils.isRequestHeaderForbidden(header.toUpperCase()));
+        assert.ok(Utils.isRequestHeaderForbidden(header.toLowerCase()));
       });
     });
 
     it('accepts valid headers', () => {
-      assert.isFalse(Utils.isRequestMethodForbidden('My-Header'));
-      assert.isFalse(Utils.isRequestMethodForbidden('My-Proxy-123'));
+      assert.ok(!Utils.isRequestMethodForbidden('My-Header'));
+      assert.ok(!Utils.isRequestMethodForbidden('My-Proxy-123'));
     });
   });
 

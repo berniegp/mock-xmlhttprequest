@@ -50,7 +50,7 @@ import { functionToTest } from '../src/SomethingToTest';
 
 // Adapt based on your testing framework. This example uses Mocha and Chai's syntax.
 
-it('should produce a success response', () => {
+it('should produce a success response', async () => {
   const server = newServer({
     get: ['/my/url', {
       // status: 200 is the default
@@ -65,10 +65,9 @@ it('should produce a success response', () => {
     server.install(/* optional context; defaults to globalThis */);
 
     // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
-    return functionToTest().then((result) => {
-      // This assumes the returned Promise resolves to the parsed JSON response
-      assert.equal(result.message, 'Success!');
-    });
+    // that resolves to the parsed JSON response
+    const result = await functionToTest();
+    assert.equal(result.message, 'Success!');
   } finally {
     // Restore the original XMLHttpRequest
     server.remove();
@@ -178,7 +177,7 @@ import { functionToTest } from '../src/SomethingToTest';
 
 // Adapt based on your testing framework. This example uses Mocha and Chai's syntax.
 
-it('should produce a success response', () => {
+it('should produce a success response', async () => {
   // Get a "local" MockXhr subclass
   const MockXhr = newMockXhr();
 
@@ -194,10 +193,9 @@ it('should produce a success response', () => {
     global.XMLHttpRequest = MockXhr;
 
     // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
-    return functionToTest().then((result) => {
-      // This assumes the returned Promise resolves to the parsed JSON response
-      assert.equal(result.message, 'Success!');
-    });
+    // that resolves to the parsed JSON response
+    const result = await functionToTest();
+    assert.equal(result.message, 'Success!');
   } finally {
     // Restore the original XMLHttpRequest
     delete global.XMLHttpRequest;

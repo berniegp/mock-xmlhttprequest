@@ -1,8 +1,7 @@
-/* eslint-disable import/prefer-default-export */
-import { XHR_PROGRESS_EVENT_NAMES } from '../src/XhrProgressEventsNames';
+import { XHR_PROGRESS_EVENT_NAMES } from '../src/XhrProgressEventsNames.ts';
 
-import type MockXhr from '../src/MockXhr';
-import type XhrProgressEvent from '../src/XhrProgressEvent';
+import type MockXhr from '../src/MockXhr.ts';
+import type XhrProgressEvent from '../src/XhrProgressEvent.ts';
 
 /**
  *

@@ -2,8 +2,12 @@
  * XMLHttpRequest Event
  */
 export default class XhrEvent {
+  readonly type: string;
+
   /**
    * @param type Event type
    */
-  constructor(readonly type: string) {}
+  constructor(type: string) {
+    this.type = type;
+  }
 }

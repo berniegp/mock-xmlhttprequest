@@ -1,7 +1,8 @@
-import { assert } from 'chai';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
-import XhrEventTarget from '../src/XhrEventTarget';
-import { XHR_PROGRESS_EVENT_NAMES } from '../src/XhrProgressEventsNames';
+import XhrEventTarget from '../src/XhrEventTarget.ts';
+import { XHR_PROGRESS_EVENT_NAMES } from '../src/XhrProgressEventsNames.ts';
 
 describe('EventTarget', () => {
   describe('addEventListener()', () => {
@@ -144,14 +145,14 @@ describe('EventTarget', () => {
         let propertyHandlerCount = 0;
         eventTarget[`on${event.type}`] = function onEventListener(e) {
           propertyHandlerCount += 1;
-          assert.strictEqual(this, eventTarget as any);
-          assert.strictEqual(e, event as any, 'event parameter');
+          assert.strictEqual(this, eventTarget);
+          assert.strictEqual(e, event, 'event parameter');
         };
         let listenerCount = 0;
         eventTarget.addEventListener(event.type, function propertyEventListener(e) {
           listenerCount += 1;
           assert.strictEqual(this, eventTarget);
-          assert.strictEqual(e, event as any, 'event parameter');
+          assert.strictEqual(e, event, 'event parameter');
         });
 
         eventTarget.dispatchEvent(event);
@@ -199,19 +200,19 @@ describe('EventTarget', () => {
       let callback2Called = false;
       function callback2() {
         callback2Called = true;
-        assert.isTrue(callback1Called, 'callback2 after callback1');
+        assert.ok(callback1Called, 'callback2 after callback1');
       }
       let callback3Called = false;
       function callback3() {
         callback3Called = true;
-        assert.isTrue(callback2Called, 'callback3 after callback2');
+        assert.ok(callback2Called, 'callback3 after callback2');
       }
       eventTarget.addEventListener(event.type, callback1);
       eventTarget.onerror = callback2;
       eventTarget.addEventListener(event.type, callback3, { once: true });
 
       eventTarget.dispatchEvent({ type: 'error' });
-      assert.isTrue(callback3Called, 'callback3 called');
+      assert.ok(callback3Called, 'callback3 called');
     });
 
     it('should not call listeners added in dispatchEvent() listeners', () => {
@@ -272,7 +273,7 @@ describe('EventTarget', () => {
       const context = new XhrEventTarget();
       const eventTarget = new XhrEventTarget(context);
       eventTarget.onprogress = function listener() {
-        assert.strictEqual(this, context as any, 'custom context');
+        assert.strictEqual(this, context, 'custom context');
       };
       eventTarget.dispatchEvent({ type: 'progress' });
     });
@@ -280,12 +281,12 @@ describe('EventTarget', () => {
 
   it('hasListeners()', () => {
     const eventTarget = new XhrEventTarget();
-    assert.isFalse(eventTarget.hasListeners());
+    assert.ok(!eventTarget.hasListeners());
     eventTarget.onerror = () => {};
-    assert.isTrue(eventTarget.hasListeners());
+    assert.ok(eventTarget.hasListeners());
     eventTarget.onerror = null;
-    assert.isFalse(eventTarget.hasListeners());
+    assert.ok(!eventTarget.hasListeners());
     eventTarget.addEventListener('error', () => {});
-    assert.isTrue(eventTarget.hasListeners());
+    assert.ok(eventTarget.hasListeners());
   });
 });

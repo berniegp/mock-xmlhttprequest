@@ -1,6 +1,6 @@
-import RequestData from './RequestData';
+import RequestData from './RequestData.ts';
 
-import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver';
+import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver.ts';
 
 /**
  * A request produced by MockXhr.send() and methods to respond to it.
@@ -10,10 +10,13 @@ import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver';
  * the last one is considered. Responses to previous MockXhrRequests are ignored.
  */
 export default class MockXhrRequest {
-  constructor(
-    private readonly _requestData: RequestData,
-    private readonly _responseReceiver: MockXhrResponseReceiver
-  ) {}
+  private readonly _requestData: RequestData;
+  private readonly _responseReceiver: MockXhrResponseReceiver;
+
+  constructor(requestData: RequestData, responseReceiver: MockXhrResponseReceiver) {
+    this._requestData = requestData;
+    this._responseReceiver = responseReceiver;
+  }
 
   get requestData() { return this._requestData; }
 
@@ -26,6 +29,7 @@ export default class MockXhrRequest {
 
   get url() { return this._requestData.url; }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   get body() { return this._requestData.body; }
 
   get withCredentials() { return this._requestData.withCredentials; }
@@ -61,7 +65,7 @@ export default class MockXhrRequest {
   respond(
     status?: number,
     headers?: Record<string, string> | null,
-    body?: any,
+    body?: unknown,
     statusText?: string
   ) {
     this.setResponseHeaders(status, headers, statusText);
@@ -98,7 +102,7 @@ export default class MockXhrRequest {
    *
    * @param body Response body (default null)
    */
-  setResponseBody(body: any = null) {
+  setResponseBody(body: unknown = null) {
     this._responseReceiver.setResponseBody(this._requestData, body);
   }
 

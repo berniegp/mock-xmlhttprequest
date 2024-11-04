@@ -58,7 +58,8 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
    */
   addEventListener<K extends keyof XMLHttpRequestEventTargetEventMap>(
     type: K,
-    listener: (this: XMLHttpRequestEventTarget, ev: XMLHttpRequestEventTargetEventMap[K]) => any,
+    listener:
+    (this: XMLHttpRequestEventTarget, ev: XMLHttpRequestEventTargetEventMap[K]) => unknown,
     options?: boolean | AddEventListenerOptions
   ): void;
   addEventListener(
@@ -80,9 +81,9 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
       // append listener to eventTarget’s event listener list.
       // See https://dom.spec.whatwg.org/#add-an-event-listener
       if (listeners.every(({ isEventHandlerProperty, listener, useCapture }) => {
-        return isEventHandlerProperty
-         || listenerEntry.listener !== listener
-         || listenerEntry.useCapture !== useCapture;
+        return isEventHandlerProperty ||
+         listenerEntry.listener !== listener ||
+         listenerEntry.useCapture !== useCapture;
       })) {
         listeners.push(listenerEntry);
         this._listeners.set(type, listeners);
@@ -100,7 +101,8 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
    */
   removeEventListener<K extends keyof XMLHttpRequestEventTargetEventMap>(
     type: K,
-    listener: (this: XMLHttpRequestEventTarget, ev: XMLHttpRequestEventTargetEventMap[K]) => any,
+    listener:
+    (this: XMLHttpRequestEventTarget, ev: XMLHttpRequestEventTargetEventMap[K]) => unknown,
     options?: boolean | EventListenerOptions
   ): void;
   removeEventListener(
@@ -118,9 +120,9 @@ export default class XhrEventTarget implements XMLHttpRequestEventTarget {
       if (listeners) {
         const listenerEntry = makeListenerEntry(listener, false, options);
         const index = listeners.findIndex(({ isEventHandlerProperty, listener, useCapture }) => {
-          return !isEventHandlerProperty
-            && listenerEntry.listener === listener
-            && listenerEntry.useCapture === useCapture;
+          return !isEventHandlerProperty &&
+            listenerEntry.listener === listener &&
+            listenerEntry.useCapture === useCapture;
         });
         if (index >= 0) {
           listeners[index].removed = true;
@@ -207,7 +209,7 @@ interface EventMock {
   type: string;
 }
 
-type EventHandlerProperty = ((this: XMLHttpRequest, ev: ProgressEvent) => any);
+type EventHandlerProperty = ((this: XMLHttpRequest, ev: ProgressEvent) => unknown);
 
 interface EventListenerEntry {
   listener: EventListenerOrEventListenerObject,
