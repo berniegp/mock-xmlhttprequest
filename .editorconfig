@@ -4,7 +4,7 @@ root = true
 end_of_line = lf
 charset = utf-8
 
-[*.{js,cjs,mjs,ts}]
+[*.{js,cjs,mjs,ts,cts,mts}]
 insert_final_newline = true
 trim_trailing_whitespace = true
 indent_style = space

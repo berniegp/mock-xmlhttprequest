@@ -1,7 +1,7 @@
-import type MockXhr from './MockXhr';
-import { getBodyByteSize, normalizeHTTPMethodName } from './Utils';
+import type MockXhr from './MockXhr.ts';
+import { getBodyByteSize, normalizeHTTPMethodName } from './Utils.ts';
 
-import type MockXhrRequest from './MockXhrRequest';
+import type MockXhrRequest from './MockXhrRequest.ts';
 
 export type UrlMatcher = ((url: string) => boolean) | string | RegExp;
 
@@ -9,7 +9,7 @@ export interface RequestHandlerResponse {
   status: number;
   statusText: string;
   headers: Record<string, string>;
-  body: any;
+  body: unknown;
 }
 
 type RequestHandlerCallback = (request: MockXhrRequest) => void;
@@ -28,11 +28,18 @@ interface Route {
   count: number,
 }
 
-interface RequestLogEntry {
+interface RequestLogEntryInternal {
   method: string;
   url: string;
   headers: Record<string, string>;
-  body?: any
+  body?: unknown;
+}
+
+// Isolate the any type to the external facing API
+interface RequestLogEntry extends RequestLogEntryInternal {
+  // Changing the body type to unknown is a breaking change with little to no benefit to users
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  body?: any;
 }
 
 /**
@@ -52,15 +59,15 @@ export default class MockXhrServer {
 
   private _requests: RequestLogEntry[];
 
-  private _routes: Record<string, Route[]>;
+  private _routes: Record<string, Route[] | undefined>;
 
   private _xhrFactory: () => MockXhr;
 
-  private _savedContext?: any;
+  private _savedContext?: { XMLHttpRequest?: unknown };
 
   private _savedContextHadXMLHttpRequest?: boolean;
 
-  private _savedXMLHttpRequest?: any;
+  private _savedXMLHttpRequest?: unknown;
 
   private _defaultRoute?: { handler: RequestHandler; count: number; };
 
@@ -110,7 +117,7 @@ export default class MockXhrServer {
    * @param context Context object (e.g. global, window)
    * @returns this
    */
-  install(context: any = globalThis) {
+  install(context: { XMLHttpRequest?: unknown } = globalThis) {
     this._savedContext = context;
 
     // Distinguish between an undefined and a missing XMLHttpRequest property
@@ -254,6 +261,7 @@ export default class MockXhrServer {
       method: request.method,
       url: request.url,
       headers: request.requestHeaders.getHash(),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       body: request.body,
     });
 
@@ -297,7 +305,7 @@ export default class MockXhrServer {
               if (nextTransmitted < responseBodySize) {
                 responseTransmitted = nextTransmitted;
                 request.downloadProgress(responseTransmitted, responseBodySize);
-                Promise.resolve().then(() => responsePhase());
+                void Promise.resolve().then(() => { responsePhase(); });
               } else {
                 // Final operation for this request
                 request.setResponseBody(handler.body);
@@ -319,7 +327,7 @@ export default class MockXhrServer {
                 if (nextTransmitted < requestBodySize) {
                   requestTransmitted = nextTransmitted;
                   request.uploadProgress(requestTransmitted);
-                  Promise.resolve().then(() => requestPhase());
+                  void Promise.resolve().then(() => { requestPhase(); });
                 } else {
                   responsePhase();
                 }

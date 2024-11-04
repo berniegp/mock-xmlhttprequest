@@ -1,19 +1,20 @@
-import HeadersContainer from './HeadersContainer';
-import MockXhrRequest from './MockXhrRequest';
-import RequestData from './RequestData';
-import XhrEvent from './XhrEvent';
-import XhrProgressEvent from './XhrProgressEvent';
-import * as Utils from './Utils';
-import XhrEventTarget from './XhrEventTarget';
+import HeadersContainer from './HeadersContainer.ts';
+import MockXhrRequest from './MockXhrRequest.ts';
+import RequestData from './RequestData.ts';
+import XhrEvent from './XhrEvent.ts';
+import XhrProgressEvent from './XhrProgressEvent.ts';
+import * as Utils from './Utils.ts';
+import XhrEventTarget from './XhrEventTarget.ts';
 
-import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver';
-import type { TXhrProgressEventNames } from './XhrProgressEventsNames';
+import type { MockXhrResponseReceiver } from './MockXhrResponseReceiver.ts';
+import type { TXhrProgressEventNames } from './XhrProgressEventsNames.ts';
 
 interface MockXhrResponse {
   isNetworkError?: boolean,
   status: number,
   statusMessage: string,
   headers: HeadersContainer,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: any,
 }
 
@@ -53,38 +54,26 @@ export default class MockXhr
   extends XhrEventTarget
   implements XMLHttpRequest, MockXhrResponseReceiver {
   private _authorRequestHeaders: HeadersContainer;
-
   private _requestMethod?: string;
-
   private _requestUrl?: string;
 
   private _readyState: number;
-
   private _timeout: number;
-
   private _crossOriginCredentials: boolean;
-
   private _currentRequest?: MockXhrRequest;
-
   private readonly _uploadObject: XhrEventTarget;
 
   responseURL: string;
-
   private _responseType: XMLHttpRequestResponseType;
-
   private _response: MockXhrResponse;
 
   private _sendFlag?: boolean;
-
   private _uploadListenerFlag?: boolean;
-
   private _uploadCompleteFlag?: boolean;
 
   private _timedOutFlag?: boolean;
-
   private _timeoutReference: number;
-
-  private _timeoutTask: any;
+  private _timeoutTask?: NodeJS.Timeout;
 
   constructor() {
     super();
@@ -110,30 +99,22 @@ export default class MockXhr
   //-------
 
   static readonly UNSENT = 0;
-
   static readonly OPENED = 1;
-
   static readonly HEADERS_RECEIVED = 2;
-
   static readonly LOADING = 3;
-
   static readonly DONE = 4;
 
   readonly UNSENT = MockXhr.UNSENT;
-
   readonly OPENED = MockXhr.OPENED;
-
   readonly HEADERS_RECEIVED = MockXhr.HEADERS_RECEIVED;
-
   readonly LOADING = MockXhr.LOADING;
-
   readonly DONE = MockXhr.DONE;
 
   get onreadystatechange() {
-    return this._getEventHandlerProperty('readystatechange') as ((this: XMLHttpRequest, ev: Event) => any);
+    return this._getEventHandlerProperty('readystatechange') as ((this: XMLHttpRequest, ev: Event) => unknown);
   }
 
-  set onreadystatechange(value: ((this: XMLHttpRequest, ev: Event) => any) | null) {
+  set onreadystatechange(value: ((this: XMLHttpRequest, ev: Event) => unknown) | null) {
     this._setEventHandlerProperty('readystatechange', value);
   }
 
@@ -200,8 +181,8 @@ export default class MockXhr
       }
       const requestBodyLength = request.getRequestBodySize();
       if (requestBodyTransmitted > requestBodyLength) {
-        throw new Error(`Mock usage error detected: upload progress "requestBodyTransmitted" (${requestBodyTransmitted}) `
-          + `is greater than "requestBodyLength" (${requestBodyLength})`);
+        throw new Error('Mock usage error detected: upload progress "requestBodyTransmitted" ' +
+          `(${requestBodyTransmitted}) is greater than "requestBodyLength" (${requestBodyLength})`);
       }
 
       // Don't throttle events based on elapsed time because it would make tests much slower and
@@ -260,10 +241,9 @@ export default class MockXhr
   downloadProgress(request: RequestData, receivedBytesLength: number, length: number) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
-      if (this._readyState !== MockXhr.HEADERS_RECEIVED
-        && this._readyState !== MockXhr.LOADING) {
-        throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be `
-          + `HEADERS_RECEIVED (${MockXhr.HEADERS_RECEIVED}) or LOADING (${MockXhr.LOADING})`);
+      if (this._readyState !== MockXhr.HEADERS_RECEIVED && this._readyState !== MockXhr.LOADING) {
+        throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must ` +
+          `be HEADERS_RECEIVED (${MockXhr.HEADERS_RECEIVED}) or LOADING (${MockXhr.LOADING})`);
       }
 
       if (this._readyState === MockXhr.HEADERS_RECEIVED) {
@@ -283,17 +263,17 @@ export default class MockXhr
    * @param request Originating request
    * @param body Response body
    */
-  setResponseBody(request: RequestData, body: any) {
+  setResponseBody(request: RequestData, body: unknown) {
     // Only act if the originating request is the current active request
     if (this._currentRequest?.requestData === request) {
       if (!this._sendFlag) {
         throw new Error('Mock usage error detected: call send() first (the "send() flag" is not set)');
       }
-      if (this._readyState !== MockXhr.OPENED
-          && this._readyState !== MockXhr.HEADERS_RECEIVED
-          && this._readyState !== MockXhr.LOADING) {
-        throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be `
-          + `OPENED (${MockXhr.OPENED}), HEADERS_RECEIVED (${MockXhr.HEADERS_RECEIVED}) or LOADING (${MockXhr.LOADING})`);
+      if (this._readyState !== MockXhr.OPENED &&
+          this._readyState !== MockXhr.HEADERS_RECEIVED &&
+          this._readyState !== MockXhr.LOADING) {
+        throw new Error(`Mock usage error detected: readyState is ${this._readyState}, but it must be ` +
+          `OPENED (${MockXhr.OPENED}), HEADERS_RECEIVED (${MockXhr.HEADERS_RECEIVED}) or LOADING (${MockXhr.LOADING})`);
       }
 
       if (this._readyState === MockXhr.OPENED) {
@@ -462,8 +442,8 @@ export default class MockXhr
    * @see {@link https://xhr.spec.whatwg.org/#dom-xmlhttprequest-withcredentials}
    */
   set withCredentials(value: boolean) {
-    if ((this._readyState !== MockXhr.UNSENT && this._readyState !== MockXhr.OPENED)
-      || this._sendFlag) {
+    if ((this._readyState !== MockXhr.UNSENT && this._readyState !== MockXhr.OPENED) ||
+      this._sendFlag) {
       throwError('InvalidStateError');
     }
     this._crossOriginCredentials = !!value;
@@ -481,7 +461,7 @@ export default class MockXhr
    * @param body Request body
    * @see {@link https://xhr.spec.whatwg.org/#the-send()-method}
    */
-  send(body: any = null) {
+  send(body: unknown = null) {
     if (this._readyState !== MockXhr.OPENED || this._sendFlag) {
       throwError('InvalidStateError');
     }
@@ -489,8 +469,8 @@ export default class MockXhr
       body = null;
     }
 
-    if (body !== null) {
-      let extractedContentType = null;
+    if (body) {
+      let extractedContentType: null | string = null;
 
       // Document body type not supported
 
@@ -501,10 +481,15 @@ export default class MockXhr
           contentType = 'text/plain;charset=UTF-8';
         } else if (typeof FormData !== 'undefined' && body instanceof FormData) {
           contentType = 'multipart/form-data; boundary=-----MochXhr1234';
-        } else if (body.type) {
-          // As specified for Blob
-          contentType = body.type;
+        } else {
+          // As specified for Blob, but don't check with instanceof Blob to make mocks easier to do
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+          const blobType = (body as any).type;
+          if (typeof blobType === 'string') {
+            contentType = blobType;
+          }
         }
+
         extractedContentType = contentType;
       }
 
@@ -522,8 +507,10 @@ export default class MockXhr
 
     const requestData = new RequestData(
       new HeadersContainer(this._authorRequestHeaders),
-      this._requestMethod as string,
-      this._requestUrl as string,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this._requestMethod!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this._requestUrl!,
       body,
       this._crossOriginCredentials
     );
@@ -532,7 +519,7 @@ export default class MockXhr
     this._uploadCompleteFlag = false;
     this._timedOutFlag = false;
     this._uploadCompleteFlag = req.body === null;
-    this._sendFlag = true;
+    this._sendFlag = true as boolean;
 
     this._fireProgressEvent('loadstart', 0, 0);
     if (!this._uploadCompleteFlag && this._uploadListenerFlag) {
@@ -565,9 +552,9 @@ export default class MockXhr
   abort() {
     this._terminateFetchController();
 
-    if ((this._readyState === MockXhr.OPENED && this._sendFlag)
-      || this._readyState === MockXhr.HEADERS_RECEIVED
-      || this._readyState === MockXhr.LOADING) {
+    if ((this._readyState === MockXhr.OPENED && this._sendFlag) ||
+      this._readyState === MockXhr.HEADERS_RECEIVED ||
+      this._readyState === MockXhr.LOADING) {
       this._requestErrorSteps('abort');
     }
 
@@ -676,13 +663,15 @@ export default class MockXhr
         return null;
       }
       try {
-        return JSON.parse(this._response.body);
-      } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return JSON.parse(this._response.body as string);
+      } catch {
         return null;
       }
     }
 
     // Other responseTypes are sent as-is. They can be given directly by setResponseBody() anyway.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this._response.body;
   }
 
@@ -715,6 +704,7 @@ export default class MockXhr
 
     // The response body is not converted to a document response. To get a document
     // response, pass it directly as the response body in setResponseBody().
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this._response.body ?? '';
   }
 
@@ -783,7 +773,9 @@ export default class MockXhr
     if (this._response.isNetworkError) {
       return;
     }
-    const length = this._response.body?.length ?? 0;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const length = (this._response.body?.length ?? 0) as number;
     this._fireProgressEvent('progress', length, length);
     this._readyState = MockXhr.DONE;
     this._sendFlag = false;
@@ -845,7 +837,8 @@ export default class MockXhr
 
     // The spec allows access to a text response while it's being received (i.e. LOADING state).
     // This library current offers no way to simulate this.
-    return this._response.body?.toString() ?? '';
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    return (this._response.body?.toString() ?? '') as string;
   }
 
   //----------
@@ -855,8 +848,9 @@ export default class MockXhr
   protected _callOnSend(onSend?: OnSendCallback) {
     // Saves the callback and request data in case they change before then() executes
     if (onSend) {
-      const request = this._currentRequest as MockXhrRequest;
-      Promise.resolve().then(() => onSend.call(request, request, this));
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const request = this._currentRequest!;
+      void Promise.resolve().then(() => { onSend.call(request, request, this); });
     }
   }
 
@@ -893,7 +887,7 @@ export default class MockXhr
       const delay = Math.max(0, this._timeout - (Date.now() - this._timeoutReference));
       this._timeoutTask = setTimeout(() => {
         if (this._sendFlag) {
-          this._currentRequest!.setRequestTimeout();
+          this._currentRequest?.setRequestTimeout();
         }
         delete this._timeoutTask;
       }, delay);

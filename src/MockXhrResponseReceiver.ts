@@ -1,4 +1,4 @@
-import type RequestData from './RequestData';
+import type RequestData from './RequestData.ts';
 
 /**
  * Methods for responding to MockXhr requests
@@ -15,7 +15,7 @@ export interface MockXhrResponseReceiver {
 
   downloadProgress(request: RequestData, receivedBytesLength: number, length: number): void;
 
-  setResponseBody(request: RequestData, body: any): void;
+  setResponseBody(request: RequestData, body: unknown): void;
 
   setNetworkError(request: RequestData): void;
 
