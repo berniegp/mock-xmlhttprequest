@@ -331,19 +331,15 @@ describe('MockXhr', () => {
         context.mock.timers.enable();
         const xhr = new MockXhr();
 
-        const onSend = new Promise<MockXhrRequest>((resolve) => {
-          xhr.onSend = (request) => {
-            request.respond();
-            resolve(request);
-          };
-        });
+        const onSend = new Promise<MockXhrRequest>((resolve) => { xhr.onSend = resolve; });
         let timedOut = false;
         xhr.addEventListener('timeout', () => { timedOut = true; });
         xhr.open('GET', '/url');
         xhr.send();
         xhr.timeout = 1;
 
-        await onSend;
+        const request = await onSend;
+        request.respond();
 
         // Move past the timeout
         context.mock.timers.tick(20);

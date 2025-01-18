@@ -188,9 +188,10 @@ it('should produce a success response', async () => {
     request.respond(200, responseHeaders, response);
   };
 
+  const savedXMLHttpRequest = globalThis.XMLHttpRequest;
   try {
     // Install in the global context so "new XMLHttpRequest()" creates MockXhr instances
-    global.XMLHttpRequest = MockXhr;
+    globalThis.XMLHttpRequest = MockXhr;
 
     // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
     // that resolves to the parsed JSON response
@@ -198,7 +199,7 @@ it('should produce a success response', async () => {
     assert.equal(result.message, 'Success!');
   } finally {
     // Restore the original XMLHttpRequest
-    delete global.XMLHttpRequest;
+    globalThis.XMLHttpRequest = savedXMLHttpRequest;
   }
 });
 ```
