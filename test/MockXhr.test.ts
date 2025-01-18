@@ -331,19 +331,15 @@ describe('MockXhr', () => {
         context.mock.timers.enable();
         const xhr = new MockXhr();
 
-        const onSend = new Promise<MockXhrRequest>((resolve) => {
-          xhr.onSend = (request) => {
-            request.respond();
-            resolve(request);
-          };
-        });
+        const onSend = new Promise<MockXhrRequest>((resolve) => { xhr.onSend = resolve; });
         let timedOut = false;
         xhr.addEventListener('timeout', () => { timedOut = true; });
         xhr.open('GET', '/url');
         xhr.send();
         xhr.timeout = 1;
 
-        await onSend;
+        const request = await onSend;
+        request.respond();
 
         // Move past the timeout
         context.mock.timers.tick(20);
@@ -438,6 +434,95 @@ describe('MockXhr', () => {
           assert.strictEqual(timedOut, false, 'there should be no timeout event');
         } finally {
           MockXhr.timeoutEnabled = true;
+        }
+      });
+
+      it('does not leak timer handles after response', async () => {
+        let nextTimerHandle = 1;
+        const activeTimerHandles: number[] = [];
+        const savedSetTimeout = globalThis.setTimeout;
+        const savedClearTimeout = globalThis.clearTimeout;
+        try {
+          const setTimeoutMock = Object.assign(() => {
+            activeTimerHandles.push(nextTimerHandle);
+            return nextTimerHandle++;
+          }, setTimeout);
+          globalThis.setTimeout = setTimeoutMock;
+          globalThis.clearTimeout = (handle) => {
+            activeTimerHandles.splice(activeTimerHandles.indexOf(handle as number));
+          };
+
+          const xhr = new MockXhr();
+
+          const onSend = new Promise<MockXhrRequest>((resolve) => { xhr.onSend = resolve; });
+          xhr.open('GET', '/url');
+          xhr.send();
+          xhr.timeout = 1;
+
+          const request = await onSend;
+          request.respond();
+          assert.strictEqual(activeTimerHandles.length, 0, 'all timers should be cleared');
+        } finally {
+          globalThis.setTimeout = savedSetTimeout;
+          globalThis.clearTimeout = savedClearTimeout;
+        }
+      });
+
+      it('does not leak timer handles after re-open', () => {
+        let nextTimerHandle = 1;
+        const activeTimerHandles: number[] = [];
+        const savedSetTimeout = globalThis.setTimeout;
+        const savedClearTimeout = globalThis.clearTimeout;
+        try {
+          const setTimeoutMock = Object.assign(() => {
+            activeTimerHandles.push(nextTimerHandle);
+            return nextTimerHandle++;
+          }, setTimeout);
+          globalThis.setTimeout = setTimeoutMock;
+          globalThis.clearTimeout = (handle) => {
+            activeTimerHandles.splice(activeTimerHandles.indexOf(handle as number));
+          };
+
+          const xhr = new MockXhr();
+
+          xhr.open('GET', '/url');
+          xhr.send();
+          xhr.timeout = 1;
+          xhr.open('GET', '/url');
+
+          assert.strictEqual(activeTimerHandles.length, 0, 'all timers should be cleared');
+        } finally {
+          globalThis.setTimeout = savedSetTimeout;
+          globalThis.clearTimeout = savedClearTimeout;
+        }
+      });
+
+      it('does not leak timer handles after abort', () => {
+        let nextTimerHandle = 1;
+        const activeTimerHandles: number[] = [];
+        const savedSetTimeout = globalThis.setTimeout;
+        const savedClearTimeout = globalThis.clearTimeout;
+        try {
+          const setTimeoutMock = Object.assign(() => {
+            activeTimerHandles.push(nextTimerHandle);
+            return nextTimerHandle++;
+          }, setTimeout);
+          globalThis.setTimeout = setTimeoutMock;
+          globalThis.clearTimeout = (handle) => {
+            activeTimerHandles.splice(activeTimerHandles.indexOf(handle as number));
+          };
+
+          const xhr = new MockXhr();
+
+          xhr.open('GET', '/url');
+          xhr.send();
+          xhr.timeout = 1;
+          xhr.abort();
+
+          assert.strictEqual(activeTimerHandles.length, 0, 'all timers should be cleared');
+        } finally {
+          globalThis.setTimeout = savedSetTimeout;
+          globalThis.clearTimeout = savedClearTimeout;
         }
       });
     });

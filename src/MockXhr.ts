@@ -856,6 +856,7 @@ export default class MockXhr
 
   private _terminateFetchController() {
     delete this._currentRequest;
+    this._clearScheduleTimeout();
   }
 
   private _fireProgressEvent(name: TXhrProgressEventNames, transmitted: number, length: number) {
@@ -877,9 +878,7 @@ export default class MockXhr
 
   private _scheduleRequestTimeout() {
     // Cancel any previous timeout task
-    if (this._timeoutTask) {
-      clearTimeout(this._timeoutTask);
-    }
+    this._clearScheduleTimeout();
 
     if (this._timeout > 0) {
       // The timeout delay must be measured relative to the start of fetching
@@ -889,9 +888,16 @@ export default class MockXhr
         if (this._sendFlag) {
           this._currentRequest?.setRequestTimeout();
         }
-        delete this._timeoutTask;
       }, delay);
     }
+  }
+
+  private _clearScheduleTimeout() {
+    if (this._timeoutTask) {
+      clearTimeout(this._timeoutTask);
+    }
+
+    delete this._timeoutTask;
   }
 
   private _getPrototype() {

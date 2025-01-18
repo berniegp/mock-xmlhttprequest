@@ -5,8 +5,6 @@ import MockXhr from '../src/MockXhr.ts';
 import MockXhrRequest from '../src/MockXhrRequest.ts';
 import { newMockXhr, newServer } from '../src/Factories.ts';
 
-interface Globals { XMLHttpRequest?: typeof XMLHttpRequest }
-
 describe('Factories', () => {
   describe('newMockXhr()', () => {
     describe('Isolation', () => {
@@ -148,11 +146,9 @@ describe('Factories', () => {
     });
 
     it('should work with the low-level quick start code', async () => {
-      const global: Globals = {};
       function functionToTest(): Promise<{ message: string }> {
         return new Promise((resolve, reject) => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const xhr = new global.XMLHttpRequest!() as MockXhr;
+          const xhr = new globalThis.XMLHttpRequest();
           xhr.open('GET', '/my/url');
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           xhr.onload = () => { resolve(JSON.parse(xhr.response)); };
@@ -172,9 +168,10 @@ describe('Factories', () => {
         request.respond(200, responseHeaders, response);
       };
 
+      const savedXMLHttpRequest = globalThis.XMLHttpRequest;
       try {
         // Install in the global context so "new XMLHttpRequest()" creates MockXhr instances
-        global.XMLHttpRequest = MockXhr;
+        globalThis.XMLHttpRequest = MockXhr;
 
         // Do something that send()s an XMLHttpRequest to '/my/url' and returns a Promise
         // that resolves to the parsed JSON response
@@ -182,7 +179,7 @@ describe('Factories', () => {
         assert.equal(result.message, 'Success!');
       } finally {
         // Restore the original XMLHttpRequest
-        delete global.XMLHttpRequest;
+        globalThis.XMLHttpRequest = savedXMLHttpRequest;
       }
     });
   });
