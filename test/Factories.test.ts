@@ -5,8 +5,6 @@ import MockXhr from '../src/MockXhr.ts';
 import MockXhrRequest from '../src/MockXhrRequest.ts';
 import { newMockXhr, newServer } from '../src/Factories.ts';
 
-interface Globals { XMLHttpRequest?: typeof XMLHttpRequest }
-
 describe('Factories', () => {
   describe('newMockXhr()', () => {
     describe('Isolation', () => {
