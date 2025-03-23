@@ -856,6 +856,24 @@ describe('MockXhr', () => {
   describe('response', () => {
     const validResponseTypes = ['', 'arraybuffer', 'blob', 'document', 'json', 'text'] as const;
 
+    it('should have a responseURL attribute', async () => {
+      const xhr = new MockXhr();
+      const finalUrl = '/redirected';
+
+      const onSend = new Promise<MockXhrRequest>((resolve) => {
+        xhr.onSend = (request) => {
+          xhr.responseURL = finalUrl;
+          resolve(request);
+        };
+      });
+      xhr.open('GET', '/url');
+      xhr.send();
+
+      assert.strictEqual(xhr.responseURL, '');
+      await onSend;
+      assert.strictEqual(xhr.responseURL, finalUrl);
+    });
+
     it('should have a status attribute', () => {
       const xhr = new MockXhr();
       assert.strictEqual(xhr.status, 0, 'initial value');
