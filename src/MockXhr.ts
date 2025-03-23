@@ -43,7 +43,7 @@ const RESPONSE_TYPES = ['', 'arraybuffer', 'blob', 'document', 'json', 'text'];
  *    effect on the response body passed to setResponseBody().
  *  - responseXml: the response body is not converted to a document response. To get a document
  *    response, pass it directly as the response body in setResponseBody().
- *  - responseUrl: the final request URL after redirects isn't automatically set. This can be
+ *  - responseURL: the final request URL after redirects isn't automatically set. This can be
  *    emulated in a request handler.
  *
  * Not supported:

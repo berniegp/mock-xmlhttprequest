@@ -540,7 +540,7 @@ Based on the [XMLHTTPRequest specification](https://xhr.spec.whatwg.org) version
 - `overrideMimeType()` throws when required, but has no other effect.
 - `responseType`: `''`, `'text'` and `'json'` are fully supported. The `responseType` values have no effect on the response body passed to [`setResponseBody()`](#setresponsebodybody--null).
 - `responseXml`: the response body isn't converted to a document response. To get a document response, pass it directly as the response body in [`setResponseBody()`](#setresponsebodybody--null).
-- `responseUrl`: the final request URL after redirects isn't automatically set. This can be emulated in a request handler.
+- `responseURL`: the final request URL after redirects isn't automatically set. This can be emulated in a request handler.
 
 ### Not supported
 - Synchronous requests (i.e. `async` set to `false` in `open()`).
